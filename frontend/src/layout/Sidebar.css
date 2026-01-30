@@ -1,0 +1,70 @@
+.sidebar {
+	width: 250px;
+	background-color: var(--surface-color);
+	border-right: 1px solid var(--border-color);
+	padding: 2rem 1.5rem;
+	display: flex;
+	flex-direction: column;
+
+	.sidebar-header {
+		margin-bottom: 3rem;
+
+		.app-logo {
+			line-height: 1;
+			font-size: 1.8rem;
+			color: var(--primary-color);
+			font-weight: 900;
+			text-decoration: none;
+			display: block;
+			text-align: center;
+			letter-spacing: -1px;
+			border: 2px solid var(--primary-color);
+			padding: 0.5rem;
+			border-radius: 8px;
+		}
+	}
+
+	.nav-links {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+
+		.nav-link {
+			color: var(--text-color);
+			text-decoration: none;
+			padding: 0.8rem 1rem;
+			border-radius: 8px;
+			transition: all 0.2s ease;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+
+			&:hover {
+				background-color: rgba(255, 255, 255, 0.05);
+			}
+
+			&.active-link {
+				background-color: var(--primary-color);
+				color: white;
+			}
+		}
+	}
+	.sidebar-footer {
+		margin-top: auto;
+		padding-top: 1rem;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border-top: 1px solid var(--border-color);
+	}
+
+	.sidebar-version {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		padding: 0.35rem 0.6rem;
+		/* background: rgba(255, 255, 255, 0.02); 
+		border-radius: 8px;
+		border: 1px solid var(--border-color);
+		box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5) inset; */
+	}
+}

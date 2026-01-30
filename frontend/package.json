@@ -1,0 +1,20 @@
+{
+	"name": "mularr-frontend",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --host 0.0.0.0",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"postinstall": "chispa-cli --compile-html"
+	},
+	"dependencies": {
+		"chispa": "^0.8.0",
+		"lucide-static": "^0.562.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.2.2",
+		"vite": "^7.0.0"
+	}
+}

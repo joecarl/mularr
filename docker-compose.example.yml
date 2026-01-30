@@ -1,0 +1,17 @@
+services:
+  mularr:
+    image: mularr
+    container_name: mularr
+    ports:
+      - "8940:8940"
+    volumes:
+      - mularr-data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/database.sqlite
+      # Add other environment variables as needed    
+      # - TELEGRAM_BOT_TOKEN=
+      # - TELEGRAM_CHAT_ID=
+    restart: unless-stopped
+
+volumes:
+  mularr-data:

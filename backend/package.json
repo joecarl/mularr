@@ -1,0 +1,27 @@
+{
+	"name": "mularr-backend",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"scripts": {
+		"start": "tsx src/index.ts",
+		"build": "tsc",
+		"dev": "tsx watch src/index.ts"
+	},
+	"dependencies": {
+		"axios": "^1.6.2",
+		"better-sqlite3": "^12.0.0",
+		"cors": "^2.8.5",
+		"dotenv": "^17.0.0",
+		"express": "^5.0.0",
+		"node-telegram-bot-api": "^0.67.0"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.8",
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.0",
+		"@types/node": "^24.0.0",
+		"@types/node-telegram-bot-api": "^0.64.13",
+		"tsx": "^4.21.0",
+		"typescript": "^5.3.2"
+	}
+}

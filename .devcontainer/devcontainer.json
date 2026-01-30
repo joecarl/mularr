@@ -1,0 +1,13 @@
+{
+	"name": "Mularr Dev Environment",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode"
+			]
+		}
+	},
+	"postCreateCommand": "cd frontend && npm install && cd ../backend && npm install"
+}
