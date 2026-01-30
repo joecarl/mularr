@@ -9,5 +9,5 @@
 			]
 		}
 	},
-	"postCreateCommand": "cd frontend && npm install && cd ../backend && npm install"
+	"postCreateCommand": "./install-amule.sh && cd frontend && npm install && cd ../backend && npm install"
 }

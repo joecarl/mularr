@@ -31,7 +31,10 @@ WORKDIR /app
 
 # Install production dependencies for backend
 # better-sqlite3 requires some build tools during install if no prebuilt binary is available for Alpine
-RUN apk add --no-cache python3 make g++ 
+RUN apk add --no-cache python3 make g++ bash
+
+COPY install-amule.sh ./
+RUN chmod +x install-amule.sh && ./install-amule.sh
 
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --omit=dev
@@ -40,6 +43,9 @@ RUN cd backend && npm install --omit=dev
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 # Copy frontend build results to the backend's public directory
 COPY --from=frontend-builder /app/frontend/dist ./backend/public
+
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data && chown node:node /app/data
@@ -54,4 +60,5 @@ USER node
 EXPOSE 8940
 
 # Start the application
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "backend/dist/index.js"]
