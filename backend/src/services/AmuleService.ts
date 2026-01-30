@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import util from 'util';
+import fs from 'fs';
+import path from 'path';
 
 const execPromise = util.promisify(exec);
 
@@ -18,10 +20,10 @@ export class AmuleService {
                We might need to clean the output.
             */
 			return stdout;
-		} catch (error) {
+		} catch (error: any) {
 			console.error('AmuleCmd Error:', error);
 			// If amulecmd is missing (dev env), return mock data
-			if ((error as any).code === 127 || (error as any).message.includes('not found')) {
+			if (error.code === 127 || error.message.includes('not found')) {
 				console.warn('amulecmd not found. Returning mock data.');
 				return this.getMockData(cmd);
 			}
@@ -39,6 +41,46 @@ export class AmuleService {
 	async getStats() {
 		const output = await this.runCommand('statistics');
 		return { raw: output };
+	}
+
+	async getConfig() {
+		const output = await this.runCommand('status');
+		const clean = this.cleanOutput(output);
+
+		const config: any = {};
+
+		// Try to read local config file for more details, as amulecmd 2.3.3 is limited
+		try {
+			const home = process.env.HOME || '/home/node';
+			const confPath = path.join(home, '.aMule', 'amule.conf');
+			if (fs.existsSync(confPath)) {
+				const content = fs.readFileSync(confPath, 'utf-8');
+				const lines = content.split('\n');
+				const findVal = (key: string) =>
+					lines
+						.find((l) => l.startsWith(key + '='))
+						?.split('=')[1]
+						?.trim();
+
+				config.nick = findVal('Nick');
+				config.tcpPort = findVal('Port');
+				config.udpPort = findVal('UDPPort');
+				config.maxSources = findVal('MaxSourcesPerFile');
+				config.maxConnections = findVal('MaxConnections');
+				config.downloadCap = findVal('DownloadCapacity');
+				config.uploadCap = findVal('UploadCapacity');
+				config.incomingDir = findVal('IncomingDir');
+				config.tempDir = findVal('TempDir');
+			}
+		} catch (e) {
+			console.warn('Could not read local amule.conf:', e);
+		}
+
+		// Fallback/Supplement with any info from status if needed (though status is mostly connection info)
+		return {
+			raw: clean,
+			values: config,
+		};
 	}
 
 	private cleanOutput(output: string): string {
@@ -105,11 +147,58 @@ export class AmuleService {
 
 	async getSearchResults() {
 		const output = await this.runCommand('results');
-		return { raw: output };
+		const clean = this.cleanOutput(output);
+
+		const results: any[] = [];
+		const lines = clean.split('\n');
+
+		lines.forEach((line) => {
+			const trimmed = line.trim();
+
+			// 1. Try to match the table format: "0.  Filename  Size  Sources"
+			// Example: 0.    Pedro Y El Dragon Eliot (1977)...      700.296     7
+			const tableMatch = trimmed.match(/^(\d+)\.\s+(.+?)\s{2,}(\d+(?:\.\d+)?)\s+(\d+)$/);
+			if (tableMatch) {
+				results.push({
+					name: tableMatch[2].trim(),
+					size: tableMatch[3] + ' MB',
+					link: tableMatch[1], // Use index as "link" for the download command
+				});
+				return;
+			}
+
+			// 2. Fallback to format with ed2k link if present
+			if (trimmed.startsWith('>')) {
+				const content = trimmed.replace(/^>\s*\d+\.\s*/, '');
+				const ed2kMatch = content.match(/ed2k:\/\/\|file\|[^|]+\|\d+\|[A-F0-9]{32}\|(?:\/|[^|]+\|(?:\/|.*\/))/i);
+
+				if (ed2kMatch) {
+					const link = ed2kMatch[0];
+					const beforeLink = content.replace(link, '').trim();
+					const nameMatch = beforeLink.match(/^(.+?)\s*\(/);
+					const name = nameMatch ? nameMatch[1].trim() : beforeLink;
+					const sizeMatch = beforeLink.match(/\(([^)]+)\)/);
+					const size = sizeMatch ? sizeMatch[1].trim() : 'Unknown';
+
+					results.push({
+						name,
+						size,
+						link,
+					});
+				}
+			}
+		});
+
+		return {
+			raw: clean,
+			list: results,
+		};
 	}
 
 	async addDownload(link: string) {
-		const output = await this.runCommand(`add ${link}`);
+		// If it's a number, use 'download' command (for search results), otherwise use 'add' (for ed2k links)
+		const cmd = /^\d+$/.test(link) ? `download ${link}` : `add ${link}`;
+		const output = await this.runCommand(cmd);
 		return output;
 	}
 }

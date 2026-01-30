@@ -6,6 +6,7 @@ export const amuleRoutes = () => {
 	const controller = new AmuleController();
 
 	router.get('/status', controller.getStatus);
+	router.get('/config', controller.getConfig);
 	router.get('/servers', controller.getServers);
 	router.get('/transfers', controller.getTransfers);
 	router.post('/search', controller.search);

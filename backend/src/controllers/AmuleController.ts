@@ -14,6 +14,15 @@ export class AmuleController {
 		}
 	};
 
+	getConfig = async (req: Request, res: Response) => {
+		try {
+			const config = await this.amuleService.getConfig();
+			res.json(config);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getServers = async (req: Request, res: Response) => {
 		try {
 			const servers = await this.amuleService.getServers();
