@@ -1,10 +1,11 @@
 import { component, signal } from 'chispa';
-import { apiService } from '../../services/ApiService';
+import { ApiService, Transfer } from '../../services/ApiService';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
 export const TransfersView = component(() => {
-	const transferList = signal<any[]>([]);
+	const apiService = ApiService.getInstance();
+	const transferList = signal<Transfer[]>([]);
 
 	const loadTransfers = async () => {
 		try {
@@ -29,7 +30,7 @@ export const TransfersView = component(() => {
 				return list.map((t) =>
 					tpl.transferRow({
 						nodes: {
-							nameCol: { inner: t.rawLine || t },
+							nameCol: { inner: t.rawLine },
 						},
 					})
 				);

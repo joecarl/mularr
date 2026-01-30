@@ -1,25 +1,85 @@
-<div style="height: 100%; display: flex; flex-direction: column; padding: 10px;">
+<div style="height: 100%; display: flex; flex-direction: column; padding: 10px; overflow-y: auto;">
 	<div class="win-panel-raised" style="padding: 10px; flex: 1;">
-		<fieldset style="border: 1px solid #d4d0c8; padding: 10px; margin-bottom: 10px;">
-			<legend>General</legend>
-			<p>Backend is configured via Docker environment variables.</p>
-		</fieldset>
+		<div style="display: flex; gap: 10px; flex-wrap: wrap;">
 
-		<fieldset style="border: 1px solid #d4d0c8; padding: 10px;">
-			<legend>Display</legend>
-			<div style="margin-bottom: 5px;">
-				<label>Theme:</label>
-				<select data-cb="themeSelect" style="border: 2px inset;">
-					<option value="classic">Windows Classic</option>
-					<option value="xp">Windows XP</option>
-				</select>
-			</div>
+			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+				<legend>Connection (Read Only)</legend>
+				<div style="display: flex; flex-direction: column; gap: 5px;">
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>TCP Port:</label>
+						<input type="text" data-cb="tcpPort" disabled style="width: 60px; border: 2px inset;" />
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>UDP Port:</label>
+						<input type="text" data-cb="udpPort" disabled style="width: 60px; border: 2px inset;" />
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>Max Sources / file:</label>
+						<input type="text" data-cb="maxSources" disabled style="width: 60px; border: 2px inset;" />
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>Max Connections:</label>
+						<input type="text" data-cb="maxConnections" disabled style="width: 60px; border: 2px inset;" />
+					</div>
+				</div>
+			</fieldset>
 
-			<div>
-				<label>Refresh Interval (ms):</label>
-				<input type="number" data-cb="intervalInput" style="border: 2px inset;" />
-			</div>
-		</fieldset>
+			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+				<legend>Capacities (Read Only)</legend>
+				<div style="display: flex; flex-direction: column; gap: 5px;">
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>Download Capacity:</label>
+						<div style="display: flex; align-items: center; gap: 2px;">
+							<input type="text" data-cb="downloadCap" disabled style="width: 40px; border: 2px inset;" />
+							KB/s
+						</div>
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<label>Upload Capacity:</label>
+						<div style="display: flex; align-items: center; gap: 2px;">
+							<input type="text" data-cb="uploadCap" disabled style="width: 40px; border: 2px inset;" />
+							KB/s
+						</div>
+					</div>
+					<div style="margin-top: 10px; border-top: 1px solid #d4d0c8; padding-top: 5px;">
+						<label><input type="checkbox" data-cb="netEd2k" checked disabled /> Network: ED2K</label><br />
+						<label><input type="checkbox" data-cb="netKad" checked disabled /> Network: Kad</label>
+					</div>
+				</div>
+			</fieldset>
+
+			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+				<legend>Directories</legend>
+				<div style="display: flex; flex-direction: column; gap: 5px;">
+					<label>Incoming Files:</label>
+					<input type="text" data-cb="incomingDir" disabled style="width: 100%; border: 2px inset;" />
+					<label>Temporary Files:</label>
+					<input type="text" data-cb="tempDir" disabled style="width: 100%; border: 2px inset;" />
+				</div>
+			</fieldset>
+
+			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+				<legend>Interface Settings</legend>
+				<div style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+					<label>Theme:</label>
+					<select data-cb="themeSelect" style="border: 2px inset; width: 120px;">
+						<option value="classic">Windows Classic</option>
+						<option value="xp">Windows XP</option>
+					</select>
+				</div>
+
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<label>Refresh Interval (ms):</label>
+					<input type="number" data-cb="intervalInput" style="border: 2px inset; width: 80px;" />
+				</div>
+
+				<div style="margin-top: 10px;">
+					<label><input type="checkbox" data-cb="showSplash" checked disabled /> Show splash
+						screen</label><br />
+					<label><input type="checkbox" data-cb="startMinimized" checked disabled /> Start minimized</label>
+				</div>
+			</fieldset>
+		</div>
 	</div>
 
 	<div style="display: flex; justify-content: flex-end; padding-top: 10px; gap: 5px;">

@@ -17,9 +17,27 @@
 	</div>
 
 	<div
-		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080; font-family: monospace;">
-		<!-- TODO: Real table for results. Current raw output is displayed in a pre for now -->
-		<pre data-cb="resultsList" style="margin: 5px; white-space: pre-wrap;"></pre>
+		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
+		<table class="xp-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Size</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody data-cb="resultsContainer">
+				<tr data-cb="resultRow">
+					<td data-cb="nameCol"
+						style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"></td>
+					<td data-cb="sizeCol"></td>
+					<td>
+						<button class="win-btn" data-cb="downloadMiniBtn">Get</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div data-cb="resultsList" style="padding: 5px; font-style: italic; color: #666;"></div>
 	</div>
 
 	<div class="win-panel-raised"

@@ -1,34 +1,129 @@
-export const apiService = {
-  async getStatus() {
-    const res = await fetch('/api/status');
-    return res.json();
-  },
-  async getServers() {
-    const res = await fetch('/api/servers');
-    return res.json();
-  },
-  async getTransfers() {
-    const res = await fetch('/api/transfers');
-    return res.json();
-  },
-  async search(query: string, type: string) {
-    const res = await fetch('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, type }),
-    });
-    return res.json();
-  },
-  async getSearchResults() {
-    const res = await fetch('/api/search/results');
-    return res.json();
-  },
-  async addDownload(link: string) {
-    const res = await fetch('/api/download', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ link }),
-    });
-    return res.json();
-  },
-};
+export interface StatusResponse {
+	raw: string;
+}
+
+export interface ConfigValues {
+	nick?: string;
+	tcpPort?: string;
+	udpPort?: string;
+	maxSources?: string;
+	maxConnections?: string;
+	downloadCap?: string;
+	uploadCap?: string;
+	incomingDir?: string;
+	tempDir?: string;
+}
+
+export interface ConfigResponse {
+	raw: string;
+	values: ConfigValues;
+}
+
+export interface Server {
+	ip: string;
+	port: string;
+	name: string;
+}
+
+export interface ServersResponse {
+	raw: string;
+	list: Server[];
+}
+
+export interface Transfer {
+	rawLine: string;
+}
+
+export interface TransfersResponse {
+	raw: string;
+	list: Transfer[];
+}
+
+export interface SearchResult {
+	name: string;
+	size: string;
+	link: string;
+}
+
+export interface SearchResultsResponse {
+	raw: string;
+	list: SearchResult[];
+}
+
+export interface SuccessResponse {
+	success: boolean;
+}
+
+export class ApiService {
+	private static instance: ApiService;
+	private baseUrl = '/api';
+
+	private constructor() {}
+
+	public static getInstance(): ApiService {
+		if (!ApiService.instance) {
+			ApiService.instance = new ApiService();
+		}
+		return ApiService.instance;
+	}
+
+	private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+		const response = await fetch(`${this.baseUrl}${path}`, {
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options.headers,
+			},
+		});
+
+		if (!response.ok) {
+			const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+			throw new Error(error.error || `Request failed with status ${response.status}`);
+		}
+
+		if (response.status === 204) {
+			return undefined as any;
+		}
+
+		const contentType = response.headers.get('content-type');
+		if (contentType && contentType.includes('application/json')) {
+			return response.json().catch(() => undefined as any);
+		}
+
+		return response.text() as any;
+	}
+
+	async getStatus(): Promise<StatusResponse> {
+		return this.request<StatusResponse>('/status');
+	}
+
+	async getConfig(): Promise<ConfigResponse> {
+		return this.request<ConfigResponse>('/config');
+	}
+
+	async getServers(): Promise<ServersResponse> {
+		return this.request<ServersResponse>('/servers');
+	}
+
+	async getTransfers(): Promise<TransfersResponse> {
+		return this.request<TransfersResponse>('/transfers');
+	}
+
+	async search(query: string, type: string): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/search', {
+			method: 'POST',
+			body: JSON.stringify({ query, type }),
+		});
+	}
+
+	async getSearchResults(): Promise<SearchResultsResponse> {
+		return this.request<SearchResultsResponse>('/search/results');
+	}
+
+	async addDownload(link: string): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/download', {
+			method: 'POST',
+			body: JSON.stringify({ link }),
+		});
+	}
+}
