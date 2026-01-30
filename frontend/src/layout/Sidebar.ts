@@ -5,8 +5,11 @@ import './Sidebar.css';
 
 export const Sidebar = component(() => {
 	const linksData = [
-		{ to: '/', inner: [getIcon('layout-dashboard'), ' Dashboard'] },
-		{ to: '/settings', inner: [getIcon('settings'), ' Configuración'] },
+		//{ to: '/', inner: [getIcon('layout-dashboard'), ' Dashboard'] },
+		{ to: '/servers', inner: ['🔌', ' Servers'] },
+		{ to: '/transfers', inner: ['🔽', ' Transfers'] },
+		{ to: '/search', inner: ['🔍', ' Search'] },
+		{ to: '/settings', inner: ['⚙️', ' Settings'] },
 	];
 
 	// Como linksData es un array que no va a cambiar, podemos crear una

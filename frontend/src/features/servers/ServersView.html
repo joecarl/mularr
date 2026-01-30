@@ -1,0 +1,30 @@
+<div style="height: 100%; display: flex; flex-direction: column;">
+	<div style="padding: 5px;">
+		<button class="win-btn" data-cb="refreshBtn">Update</button>
+	</div>
+
+	<div
+		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
+		<table class="win-list">
+			<thead>
+				<tr>
+					<th style="width: 250px;">Server Name</th>
+					<th style="width: 120px;">IP</th>
+					<th style="width: 60px;">Port</th>
+				</tr>
+			</thead>
+			<tbody data-cb="serverListContainer">
+				<tr data-cb="serverRow">
+					<td data-cb="nameCol">Server Name</td>
+					<td data-cb="ipCol">IP Address</td>
+					<td data-cb="portCol">Port</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="win-panel-sunken"
+		style="height: 150px; margin-top: 2px; overflow: auto; font-family: monospace; background: white; padding: 2px;">
+		<div data-cb="logContainer">Ready...</div>
+	</div>
+</div>

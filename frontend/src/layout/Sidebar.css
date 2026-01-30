@@ -1,70 +1,107 @@
 .sidebar {
-	width: 250px;
-	background-color: var(--surface-color);
-	border-right: 1px solid var(--border-color);
-	padding: 2rem 1.5rem;
+	width: 200px;
+	background-color: #7a96df; /* XP Blue Sidebar background typical in Explorer */
+	background: linear-gradient(to bottom, #7a96df 0%, #7a96df 100%); /* Or simple solid */
+	padding: 10px;
 	display: flex;
 	flex-direction: column;
+	gap: 10px;
 
 	.sidebar-header {
-		margin-bottom: 3rem;
+		margin-bottom: 1rem;
+		background: linear-gradient(to right, white, transparent);
+		padding: 5px;
+		border-radius: 3px;
 
 		.app-logo {
 			line-height: 1;
-			font-size: 1.8rem;
-			color: var(--primary-color);
+			font-size: 1.2rem;
+			color: #003c74;
 			font-weight: 900;
 			text-decoration: none;
 			display: block;
 			text-align: center;
-			letter-spacing: -1px;
-			border: 2px solid var(--primary-color);
-			padding: 0.5rem;
-			border-radius: 8px;
+			/* letter-spacing: -1px; */
 		}
+	}
+
+	/* XP "System Tasks" box style */
+	.net-box {
+		background: white;
+		border-radius: 3px;
+		overflow: hidden;
+	}
+
+	.net-box-header {
+		background: linear-gradient(to right, #dae5f8, #d1e0f6);
+		padding: 5px;
+		font-weight: bold;
+		color: #215dc6;
+		cursor: default;
+		border-top-left-radius: 3px;
+		border-top-right-radius: 3px;
 	}
 
 	.nav-links {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		background: white;
+		padding: 5px;
 
 		.nav-link {
-			color: var(--text-color);
+			color: #003c74;
 			text-decoration: none;
-			padding: 0.8rem 1rem;
-			border-radius: 8px;
-			transition: all 0.2s ease;
+			padding: 4px 6px;
 			display: flex;
 			align-items: center;
-			gap: 10px;
+			gap: 6px;
+			font-size: 11px;
+			cursor: pointer;
 
 			&:hover {
-				background-color: rgba(255, 255, 255, 0.05);
+				background-color: #eef1f9;
+				text-decoration: underline;
 			}
 
 			&.active-link {
-				background-color: var(--primary-color);
-				color: white;
+				font-weight: bold;
 			}
 		}
 	}
+
 	.sidebar-footer {
 		margin-top: auto;
 		padding-top: 1rem;
 		display: flex;
 		justify-content: center;
-		align-items: center;
-		border-top: 1px solid var(--border-color);
+		color: white;
 	}
 
 	.sidebar-version {
 		font-size: 0.85rem;
-		color: var(--text-muted);
-		padding: 0.35rem 0.6rem;
-		/* background: rgba(255, 255, 255, 0.02); 
-		border-radius: 8px;
-		border: 1px solid var(--border-color);
-		box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5) inset; */
+	}
+
+	.connection-status {
+		background: white;
+		padding: 5px;
+		border-radius: 3px;
+		margin-top: 10px;
+		font-size: 10px;
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.status-indicator {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: gray;
+	}
+	.status-indicator.connected {
+		background: #46d369;
+	}
+	.status-indicator.disconnected {
+		background: red;
 	}
 }

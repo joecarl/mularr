@@ -1,10 +1,33 @@
-<nav class="sidebar">
+<aside class="sidebar">
 	<div class="sidebar-header">
-		<a href="/" class="app-logo">Mularr<br><small style="font-size: 14px;">MANAGER</small></a>
+		<span class="app-logo">Mularr</span>
 	</div>
-	<div class="nav-links" data-cb="navLinks">
+
+	<div class="net-box">
+		<div class="net-box-header">
+			Network
+		</div>
+		<nav class="nav-links" data-cb="navLinks">
+		</nav>
 	</div>
+
+	<!-- 
+<a href="/shared" class="nav-item" data-cb="navShared">
+<span class="icon">📂</span>
+Shared Files
+</a>
+-->
+	<div style="flex: 1"></div>
+
+	<div class="net-box">
+		<div class="net-box-header">Status</div>
+		<div class="connection-status" data-cb="connectionStatus">
+			<div class="status-indicator disconnected" data-cb="statusIndicator"></div>
+			<span data-cb="statusText">Disconnected</span>
+		</div>
+	</div>
+
 	<div class="sidebar-footer">
 		<div class="sidebar-version">v0.1.0</div>
 	</div>
-</nav>
+</aside>

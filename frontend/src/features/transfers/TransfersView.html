@@ -1,0 +1,21 @@
+<div style="height: 100%; display: flex; flex-direction: column;">
+	<div style="padding: 5px;">
+		<button class="win-btn" data-cb="refreshBtn">Reload</button>
+	</div>
+
+	<div
+		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
+		<table class="win-list">
+			<thead>
+				<tr>
+					<th>File Name / Status</th>
+				</tr>
+			</thead>
+			<tbody data-cb="transferListContainer">
+				<tr data-cb="transferRow">
+					<td data-cb="nameCol">Filename</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>

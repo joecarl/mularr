@@ -1,22 +1,29 @@
-<div class="settings-view">
-	<header class="view-header">
-		<h2>
-			<i class="icon-settings" style="font-size: 24px"></i>
-			Configuración
-		</h2>
-	</header>
-	<div class="section-card">
-		<p>Configuración del sistema y conexiones.</p>
-		<form>
-			<div class="form-group">
-				<label>Límite de velocidad de descarga</label>
-				<input type="text" class="form-control" value="10mbps" disabled>
+<div style="height: 100%; display: flex; flex-direction: column; padding: 10px;">
+	<div class="win-panel-raised" style="padding: 10px; flex: 1;">
+		<fieldset style="border: 1px solid #d4d0c8; padding: 10px; margin-bottom: 10px;">
+			<legend>General</legend>
+			<p>Backend is configured via Docker environment variables.</p>
+		</fieldset>
+
+		<fieldset style="border: 1px solid #d4d0c8; padding: 10px;">
+			<legend>Display</legend>
+			<div style="margin-bottom: 5px;">
+				<label>Theme:</label>
+				<select data-cb="themeSelect" style="border: 2px inset;">
+					<option value="classic">Windows Classic</option>
+					<option value="xp">Windows XP</option>
+				</select>
 			</div>
-			<div class="form-group">
-				<label>Límite de velocidad de subida</label>
-				<input type="text" class="form-control" value="10mbps" disabled>
+
+			<div>
+				<label>Refresh Interval (ms):</label>
+				<input type="number" data-cb="intervalInput" style="border: 2px inset;" />
 			</div>
-			<p><small>La configuración se gestiona actualmente vía variables de entorno en el backend.</small></p>
-		</form>
+		</fieldset>
+	</div>
+
+	<div style="display: flex; justify-content: flex-end; padding-top: 10px; gap: 5px;">
+		<button class="win-btn">Apply</button>
+		<button class="win-btn">Cancel</button>
 	</div>
 </div>
