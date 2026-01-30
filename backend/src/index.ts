@@ -2,12 +2,11 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-// import { sessionRoutes } from './routes/sessionRoutes';
-
-// import { SessionManagerService } from './services/SessionManagerService';
-import { TelegramService } from './services/TelegramService';
 
 import { container } from './services/ServiceContainer';
+import { AmuleService } from './services/AmuleService';
+import { TelegramService } from './services/TelegramService';
+import { amuleRoutes } from './routes/amuleRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
@@ -15,22 +14,22 @@ const port = process.env.PORT || 8940;
 app.use(cors());
 app.use(express.json());
 
-
 // -- Initialize & register services in container ------------------------------
 
-const topicId = process.env.TELEGRAM_TOPIC_ID ? parseInt(process.env.TELEGRAM_TOPIC_ID) : undefined;
-const tgService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID, topicId);
-container.register(TelegramService, tgService);
+// Initialize Amule Service
+const amuleService = new AmuleService();
+container.register(AmuleService, amuleService);
 
-// const sessionManager = new SessionManagerService();
-// container.register(SessionManagerService, sessionManager);
-
+// Initialize Telegram Service (Optional)
+if (process.env.TELEGRAM_BOT_TOKEN) {
+	const topicId = process.env.TELEGRAM_TOPIC_ID ? parseInt(process.env.TELEGRAM_TOPIC_ID) : undefined;
+	const tgService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID!, topicId);
+	container.register(TelegramService, tgService);
+}
 
 // -- Setup routes -------------------------------------------------------------
 
-//app.use('/api/users', userRoutes());
-// app.use('/api/sessions', sessionRoutes());
-
+app.use('/api', amuleRoutes());
 
 // -- Serve static files from the 'public' folder ------------------------------
 
@@ -50,9 +49,8 @@ app.get(/.*/, (req, res, next) => {
 	});
 });
 
-
 // -- Start the server ---------------------------------------------------------
 
 app.listen(port, () => {
-	console.log(`Server is running on port ${port}`);
+	console.log(`Server is running at http://localhost:${port}`);
 });
