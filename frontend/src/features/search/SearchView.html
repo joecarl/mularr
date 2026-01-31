@@ -18,19 +18,28 @@
 
 	<div
 		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-		<table class="xp-table">
+		<table class="win-list">
 			<thead>
 				<tr>
 					<th>Name</th>
 					<th>Size</th>
+					<th>Availability</th>
+					<th>Complete</th>
+					<th>Type</th>
 					<th>Actions</th>
 				</tr>
 			</thead>
 			<tbody data-cb="resultsContainer">
 				<tr data-cb="resultRow">
 					<td data-cb="nameCol"
-						style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"></td>
+						style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+						<span data-cb="fileIcon" style="margin-right: 5px; font-size: 14px;"></span>
+						<span data-cb="fileNameText"></span>
+					</td>
 					<td data-cb="sizeCol"></td>
+					<td data-cb="sourcesCol"></td>
+					<td data-cb="completeCol"></td>
+					<td data-cb="typeCol"></td>
 					<td>
 						<button class="win-btn" data-cb="downloadMiniBtn">Get</button>
 					</td>

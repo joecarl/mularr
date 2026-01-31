@@ -43,6 +43,9 @@ export interface SearchResult {
 	name: string;
 	size: string;
 	link: string;
+	type?: string;
+	sources?: string;
+	completeSources?: string;
 }
 
 export interface SearchResultsResponse {

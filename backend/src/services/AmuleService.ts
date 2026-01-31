@@ -156,13 +156,27 @@ export class AmuleService {
 			const trimmed = line.trim();
 
 			// 1. Try to match the table format: "0.  Filename  Size  Sources"
-			// Example: 0.    Pedro Y El Dragon Eliot (1977)...      700.296     7
-			const tableMatch = trimmed.match(/^(\d+)\.\s+(.+?)\s{2,}(\d+(?:\.\d+)?)\s+(\d+)$/);
+			// Example: 0.    FileName [Type]    700.296     7    2
+			// The format is often Index. Name [Type] Size Sources CompleteSources
+			const tableMatch = trimmed.match(/^(\d+)\.\s+(.+?)\s{2,}(\d+(?:\.\d+)?)\s+(\d+)(?:\s+(\d+))?$/);
 			if (tableMatch) {
+				let name = tableMatch[2].trim();
+				let type = '';
+
+				// Check if name ends with [Type]
+				const typeMatch = name.match(/(.+)\s+\[(.+?)\]$/);
+				if (typeMatch) {
+					name = typeMatch[1].trim();
+					type = typeMatch[2].trim();
+				}
+
 				results.push({
-					name: tableMatch[2].trim(),
-					size: tableMatch[3] + ' MB',
-					link: tableMatch[1], // Use index as "link" for the download command
+					name: name,
+					size: tableMatch[3], // Keep it as number string for now, backend usually returns MB in this column
+					sources: tableMatch[4],
+					completeSources: tableMatch[5] || '0',
+					type: type,
+					link: tableMatch[1],
 				});
 				return;
 			}
@@ -183,6 +197,9 @@ export class AmuleService {
 					results.push({
 						name,
 						size,
+						sources: '?',
+						completeSources: '?',
+						type: '',
 						link,
 					});
 				}
@@ -199,6 +216,7 @@ export class AmuleService {
 		// If it's a number, use 'download' command (for search results), otherwise use 'add' (for ed2k links)
 		const cmd = /^\d+$/.test(link) ? `download ${link}` : `add ${link}`;
 		const output = await this.runCommand(cmd);
+		console.log('Add Download Output:', output);
 		return output;
 	}
 }

@@ -26,7 +26,6 @@ export class AmuleController {
 	getServers = async (req: Request, res: Response) => {
 		try {
 			const servers = await this.amuleService.getServers();
-			console.log('Servers fetched:', servers);
 			res.json(servers);
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });

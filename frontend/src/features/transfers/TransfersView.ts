@@ -1,4 +1,4 @@
-import { component, signal } from 'chispa';
+import { component, signal, onUnmount } from 'chispa';
 import { ApiService, Transfer } from '../../services/ApiService';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
@@ -19,6 +19,10 @@ export const TransfersView = component(() => {
 			transferList.set([{ rawLine: 'Error: ' + e.message }]);
 		}
 	};
+
+	// Auto-update transfers every 2 seconds
+	const intervalId = setInterval(loadTransfers, 2000);
+	onUnmount(() => clearInterval(intervalId));
 
 	loadTransfers();
 
