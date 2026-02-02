@@ -2,23 +2,24 @@ import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs';
 import path from 'path';
+import { AmuleClient, SearchType } from 'amule-ec-client';
 
 const execPromise = util.promisify(exec);
 
 export class AmuleService {
-	private host = process.env.AMULE_HOST || 'localhost';
-	private port = process.env.AMULE_PORT || '4712';
-	private password = process.env.AMULE_PASSWORD || 'secret';
+	private readonly host = process.env.AMULE_HOST || 'localhost';
+	private readonly port = process.env.AMULE_PORT || '4712';
+	private readonly password = process.env.AMULE_PASSWORD || 'secret';
+	private readonly client = new AmuleClient({ host: this.host, port: parseInt(this.port), password: this.password });
 
 	private async runCommand(cmd: string): Promise<string> {
-		// -w waits for command completion? amulecmd usually waits.
+		// Set COLUMNS and TERM even if amulecmd 2.3.3 might not respect them for all commands,
+		// some future versions or other utils might.
 		const fullCmd = `amulecmd --host=${this.host} --port=${this.port} --password=${this.password} -c "${cmd}"`;
 		try {
-			const { stdout, stderr } = await execPromise(fullCmd);
-			/* 
-               amulecmd often prints the command prompt in the output, e.g. " > Command: statistics\n ...output... > "
-               We might need to clean the output.
-            */
+			const { stdout, stderr } = await execPromise(fullCmd, {
+				env: { ...process.env, COLUMNS: '1000', TERM: 'xterm' },
+			});
 			return stdout;
 		} catch (error: any) {
 			console.error('AmuleCmd Error:', error);
@@ -39,8 +40,19 @@ export class AmuleService {
 	}
 
 	async getStats() {
-		const output = await this.runCommand('statistics');
-		return { raw: output };
+		try {
+			const stats = await this.client.getStats();
+			return {
+				raw: `Download: ${stats.downloadSpeed} bytes/s\nUpload: ${stats.uploadSpeed} bytes/s`,
+				downloadSpeed: stats.downloadSpeed,
+				uploadSpeed: stats.uploadSpeed,
+			};
+		} catch (error) {
+			console.error('EC Client Stats Error:', error);
+			// Fallback to amulecmd if EC fails
+			const output = await this.runCommand('statistics');
+			return { raw: output };
+		}
 	}
 
 	async getConfig() {
@@ -119,33 +131,116 @@ export class AmuleService {
 	}
 
 	async getTransfers() {
-		const output = await this.runCommand('show dl');
-		const clean = this.cleanOutput(output);
-		// Example: > 1464BC... File.avi [ 700 MB] Status: Downloading
-		// Use a simple splitter for now as format can vary
-		// We'll rely on the raw line for display until we have better parsing
+		try {
+			const queue = await this.client.getDownloadQueue();
+			const transfers = queue.map((file) => {
+				// FileStatus enum mapping
+				// 0=Ready, 1=Empty, 2=WaitingHash, 3=Hashing, 4=Error, 5=Insufficient, 6=Unknown, 7=Paused, 8=Completing, 9=Complete, 10=Allocating
+				const statusMap: Record<number, string> = {
+					0: 'Downloading',
+					1: 'Empty',
+					2: 'Waiting for Hash',
+					3: 'Hashing',
+					4: 'Error',
+					5: 'Insufficient Space',
+					6: 'Unknown',
+					7: 'Paused',
+					8: 'Completing',
+					9: 'Completed',
+					10: 'Allocating',
+				};
+				const status = statusMap[file.fileStatus] || `Status: ${file.fileStatus}`;
+				const sizeFull = file.sizeFull || 0;
+				const sizeDone = file.sizeDone || 0;
+				const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
+				const progress = sizeFull > 0 ? sizeDone / sizeFull : 0;
 
-		const transfers = clean
-			.split('\n')
-			.filter((l) => l.trim().startsWith('>'))
-			.map((l) => {
-				return { rawLine: l.trim().replace(/^>\s*/, '') };
+				return {
+					rawLine: `> ${file.fileName} [${mbSize} MB] ${status} ${(progress * 100).toFixed(1)}%`,
+					name: file.fileName,
+					size: sizeFull,
+					progress: progress,
+					status: status,
+					hash: file.fileHashHexString,
+				};
 			});
 
-		return {
-			raw: clean,
-			list: transfers,
-		};
+			return {
+				raw: `Downloads (${queue.length})`,
+				list: transfers,
+			};
+		} catch (error) {
+			console.error('EC Client Transfers Error:', error);
+			const output = await this.runCommand('show dl');
+			const clean = this.cleanOutput(output);
+			const transfers = clean
+				.split('\n')
+				.filter((l) => l.trim().startsWith('>'))
+				.map((l) => {
+					return { rawLine: l.trim().replace(/^>\s*/, '') };
+				});
+
+			return {
+				raw: clean,
+				list: transfers,
+			};
+		}
 	}
 
+	private lastSearchResults: any[] = [];
+	private isSearching = false;
+
 	async startSearch(query: string, type: string = 'Global') {
-		// amulecmd: "search <type> <keyword>"
-		// types: local, global, kad, http
-		const output = await this.runCommand(`search ${type.toLowerCase()} ${query}`);
-		return output;
+		console.log(`[AmuleService] Starting Search for: ${query}`);
+		this.isSearching = true;
+		this.lastSearchResults = [];
+
+		try {
+			// Convert string type to enum if possible, default to Global
+			// Options: Local, Global, Kad, Web
+			let searchType = SearchType.GLOBAL;
+			const t = type.toLowerCase();
+			if (t === 'local') searchType = SearchType.LOCAL;
+			else if (t === 'kad') searchType = SearchType.KAD;
+
+			await this.client.searchAsync(query, searchType);
+			return 'Search Started';
+		} catch (e) {
+			console.error('Start Search Error:', e);
+			this.isSearching = false;
+			throw e;
+		}
 	}
 
 	async getSearchResults() {
+		try {
+			const results = await this.client.searchResults();
+
+			if (results && results.files) {
+				const list = results.files.map((file) => ({
+					name: file.fileName,
+					size: (file.sizeFull / (1024 * 1024)).toFixed(2), // MB string for frontend
+					sources: file.sourceCount,
+					completeSources: file.sourceCount, // EC might distinguish, but use count for now
+					type: '', // File type extension often in name
+					link: file.hash.toString('hex'), // Link is now the hash for downloading
+					hash: file.hash.toString('hex'),
+				}));
+
+				return {
+					raw: `Found ${list.length} results`,
+					list: list,
+				};
+			}
+			return { raw: 'No results yet', list: [] };
+		} catch (e: any) {
+			console.error('Get Search Results Error:', e);
+			return { raw: 'Error fetching results', list: [] };
+		}
+	}
+	async getSearchResultsAmulecmd() {
+		/* REMOVED LEGACY AMULECMD FALLBACK Code block ... */
+
 		const output = await this.runCommand('results');
 		const clean = this.cleanOutput(output);
 
@@ -184,19 +279,18 @@ export class AmuleService {
 			// 2. Fallback to format with ed2k link if present
 			if (trimmed.startsWith('>')) {
 				const content = trimmed.replace(/^>\s*\d+\.\s*/, '');
-				const ed2kMatch = content.match(/ed2k:\/\/\|file\|[^|]+\|\d+\|[A-F0-9]{32}\|(?:\/|[^|]+\|(?:\/|.*\/))/i);
+				// Match ed2k link and extract filename and size bytes
+				const ed2kMatch = content.match(/ed2k:\/\/\|file\|([^|]+)\|(\d+)\|([A-F0-9]{32})\|/i);
 
 				if (ed2kMatch) {
 					const link = ed2kMatch[0];
-					const beforeLink = content.replace(link, '').trim();
-					const nameMatch = beforeLink.match(/^(.+?)\s*\(/);
-					const name = nameMatch ? nameMatch[1].trim() : beforeLink;
-					const sizeMatch = beforeLink.match(/\(([^)]+)\)/);
-					const size = sizeMatch ? sizeMatch[1].trim() : 'Unknown';
+					const fullName = ed2kMatch[1];
+					const sizeInBytes = ed2kMatch[2];
+					const sizeMB = (parseInt(sizeInBytes) / (1024 * 1024)).toFixed(3);
 
 					results.push({
-						name,
-						size,
+						name: fullName,
+						size: sizeMB,
 						sources: '?',
 						completeSources: '?',
 						type: '',
@@ -213,7 +307,30 @@ export class AmuleService {
 	}
 
 	async addDownload(link: string) {
-		// If it's a number, use 'download' command (for search results), otherwise use 'add' (for ed2k links)
+		console.log('Adding download:', link);
+
+		// If it looks like a hash (32 hex chars), use EC client
+		if (/^[a-fA-F0-9]{32}$/.test(link)) {
+			try {
+				await this.client.downloadSearchResult(Buffer.from(link, 'hex'));
+				return `Added download for hash ${link}`;
+			} catch (e) {
+				console.error('EC Add Download Error:', e);
+				throw e;
+			}
+		}
+
+		// Try to use EC client for ED2K links if supported
+		if (link.startsWith('ed2k://')) {
+			try {
+				await this.client.downloadEd2kLink(link);
+				return `Added download for ed2k link`;
+			} catch (e) {
+				console.warn('EC Client failed to add ed2k link, falling back to amulecmd:', e);
+			}
+		}
+
+		// Fallback to amulecmd for ED2K links or command line indices if any
 		const cmd = /^\d+$/.test(link) ? `download ${link}` : `add ${link}`;
 		const output = await this.runCommand(cmd);
 		console.log('Add Download Output:', output);
