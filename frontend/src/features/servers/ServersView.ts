@@ -1,13 +1,17 @@
-import { component, signal } from 'chispa';
+import { component, computed, signal } from 'chispa';
 import { ApiService, Server } from '../../services/ApiService';
+import { StatsService } from '../../services/StatsService';
 import tpl from './ServersView.html';
 import './ServersView.css';
 
 export const ServersView = component(() => {
 	const apiService = ApiService.getInstance();
+	const statsService = StatsService.getInstance();
 	// We'll treat the list as a signal of objects
 	const servers = signal<Server[]>([]);
-	const connectedServer = signal<{ ip: string; port: number } | null>(null);
+	const connectedServer = computed(() => {
+		return statsService.stats.get()?.connectedServer ?? null;
+	});
 	const logText = signal('Initializing...');
 
 	const loadServers = async () => {
@@ -16,7 +20,6 @@ export const ServersView = component(() => {
 			// data.list should be array of { name, ip, port, ... }
 			if (data.list) {
 				servers.set(data.list);
-				connectedServer.set(data.connectedServer || null);
 			} else {
 				logText.set('Received raw data without list format.\n' + data.raw);
 			}
@@ -28,10 +31,10 @@ export const ServersView = component(() => {
 	loadServers();
 
 	const connectToServer = async (s: Server) => {
-		logText.set(`Connecting to ${s.name || s.ip}...`);
+		logText.set(`Connecting to ${s.name ?? s.ip}...`);
 		try {
 			await apiService.connectToServer(s.ip, s.port);
-			logText.set(`Connected request sent to ${s.name || s.ip}. Refreshing...`);
+			logText.set(`Connected request sent to ${s.name ?? s.ip}. Refreshing...`);
 			setTimeout(loadServers, 1000);
 		} catch (e: any) {
 			logText.set(`Error connecting: ${e.message}`);
@@ -53,17 +56,17 @@ export const ServersView = component(() => {
 						style: rowStyle,
 						ondblclick: () => connectToServer(s),
 						nodes: {
-							nameCol: { inner: s.name || '' },
+							nameCol: { inner: s.name ?? '' },
 							ipCol: { inner: `${s.ip}:${s.port}` },
-							descCol: { inner: s.description || '' },
-							pingCol: { inner: s.ping !== undefined ? s.ping.toString() : '' },
-							usersCol: { inner: s.users !== undefined ? s.users.toString() : '' },
-							maxUsersCol: { inner: s.maxUsers !== undefined ? s.maxUsers.toString() : '' },
-							filesCol: { inner: s.files !== undefined ? s.files.toString() : '' },
-							prefCol: { inner: s.priority !== undefined ? s.priority.toString() : '' },
-							failedCol: { inner: s.failedCount !== undefined ? s.failedCount.toString() : '' },
+							descCol: { inner: s.description ?? '' },
+							pingCol: { inner: s.ping ?? '' },
+							usersCol: { inner: s.users ?? '' },
+							maxUsersCol: { inner: s.maxUsers ?? '' },
+							filesCol: { inner: s.files ?? '' },
+							prefCol: { inner: s.priority ?? '' },
+							failedCol: { inner: s.failedCount ?? '' },
 							staticCol: { inner: s.isStatic ? 'Yes' : 'No' },
-							softLimitCol: { inner: s.softFileLimit !== undefined ? s.softFileLimit.toString() : '' },
+							softLimitCol: { inner: s.softFileLimit ?? '' },
 							lowIDCol: { inner: s.lowID ? 'Yes' : 'No' },
 							obfuscatedCol: { inner: s.obfuscated ? 'Yes' : 'No' },
 						},
