@@ -1,5 +1,34 @@
-export interface StatusResponse {
-	raw: string;
+export interface StatsResponse {
+	raw?: string;
+	id?: number;
+	ed2kId?: number;
+	kadId?: string;
+	connectedServer?: {
+		name?: string;
+		description?: string;
+		ip: string;
+		port: number;
+	};
+	connectionState?: any;
+	uploadOverhead?: number;
+	downloadOverhead?: number;
+	bannedCount?: number;
+	loggerMessage?: string[];
+	totalSentBytes?: number;
+	totalReceivedBytes?: number;
+	sharedFileCount?: number;
+	uploadSpeed?: number;
+	downloadSpeed?: number;
+	uploadSpeedLimit?: number;
+	downloadSpeedLimit?: number;
+	uploadQueueLength?: number;
+	totalSourceCount?: number;
+	ed2kUsers?: number;
+	kadUsers?: number;
+	ed2kFiles?: number;
+	kadFiles?: number;
+	kadNodes?: number;
+	[key: string]: any;
 }
 
 export interface ConfigValues {
@@ -124,8 +153,8 @@ export class ApiService {
 		return response.text() as any;
 	}
 
-	async getStatus(): Promise<StatusResponse> {
-		return this.request<StatusResponse>('/status');
+	async getStatus(): Promise<StatsResponse> {
+		return this.request<StatsResponse>('/status');
 	}
 
 	async getConfig(): Promise<ConfigResponse> {

@@ -21,9 +21,18 @@ Shared Files
 
 	<div class="net-box">
 		<div class="net-box-header">Status</div>
-		<div class="connection-status" data-cb="connectionStatus">
-			<div class="status-indicator disconnected" data-cb="statusIndicator"></div>
-			<span data-cb="statusText">Disconnected</span>
+		<div class="stats-container" data-cb="statsContainer">
+			Loading stats...
+			<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
+			<div data-cb="statRow" style="display:flex; justify-content:space-between; font-size:10px;">
+				<span data-cb="statLabel" style="opacity:0.8"></span>
+				<span>
+					<span data-cb="statValue" style="font-weight:bold; padding-left: 2px"></span>
+					<span data-cb="statUnit" style="color:#5775a3; font-weight:normal; padding-left:2px;"></span>
+				</span>
+			</div>
+			<hr data-cb="statsSep" />
+			<br data-cb="statsBr" />
 		</div>
 	</div>
 

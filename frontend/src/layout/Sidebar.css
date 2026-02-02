@@ -105,3 +105,23 @@
 		background: red;
 	}
 }
+
+.stats-container {
+	background: white;
+	padding: 5px;
+	font-size: 11px;
+	color: #003c74;
+}
+
+.stats-container hr {
+	border: 0;
+	border-top: 1px solid #d1e0f6;
+	margin: 5px 0;
+}
+
+.stats-container .stat-unit {
+	color: #5775a3;
+	font-weight: normal;
+	font-size: 10px;
+	padding-left: 4px;
+}

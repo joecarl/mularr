@@ -19,9 +19,8 @@ export class AmuleService {
 		try {
 			const stats = await this.client.getStats();
 			return {
+				...stats,
 				raw: `Download: ${stats.downloadSpeed} bytes/s\nUpload: ${stats.uploadSpeed} bytes/s`,
-				downloadSpeed: stats.downloadSpeed,
-				uploadSpeed: stats.uploadSpeed,
 			};
 		} catch (error) {
 			console.error('EC Client Stats Error:', error);
