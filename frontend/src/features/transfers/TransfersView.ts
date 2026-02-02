@@ -1,11 +1,14 @@
 import { component, signal, onUnmount } from 'chispa';
 import { ApiService, Transfer } from '../../services/ApiService';
+import { getFileIcon } from '../../utils/Icons';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
 export const TransfersView = component(() => {
 	const apiService = ApiService.getInstance();
 	const transferList = signal<Transfer[]>([]);
+	const sortColumn = signal<keyof Transfer>('name');
+	const sortDirection = signal<'asc' | 'desc'>('asc');
 
 	const loadTransfers = async () => {
 		try {
@@ -26,10 +29,45 @@ export const TransfersView = component(() => {
 
 	loadTransfers();
 
+	const sort = (col: keyof Transfer) => {
+		if (sortColumn.get() === col) {
+			sortDirection.set(sortDirection.get() === 'asc' ? 'desc' : 'asc');
+		} else {
+			sortColumn.set(col);
+			sortDirection.set('asc');
+		}
+	};
+
 	return tpl.fragment({
+		thName: { onclick: () => sort('name') },
+		thSize: { onclick: () => sort('size') },
+		thCompleted: { onclick: () => sort('completed') },
+		thSpeed: { onclick: () => sort('speed') },
+		thProgress: { onclick: () => sort('progress') },
+		thSources: { onclick: () => sort('sources') },
+		thPriority: { onclick: () => sort('priority') },
+		thStatus: { onclick: () => sort('status') },
+		thRemaining: { onclick: () => sort('remaining') },
+		thAddedOn: { onclick: () => sort('addedOn') },
+
 		transferListContainer: {
 			inner: () => {
-				const list = transferList.get();
+				let list = [...transferList.get()];
+				const col = sortColumn.get();
+				const dir = sortDirection.get();
+
+				if (list.length > 0 && !(list.length === 1 && !list[0].name && list[0].rawLine)) {
+					list.sort((a, b) => {
+						const va = a[col];
+						const vb = b[col];
+						if (va === vb) return 0;
+						if (va === undefined) return 1;
+						if (vb === undefined) return -1;
+						if (va < vb) return dir === 'asc' ? -1 : 1;
+						else return dir === 'asc' ? 1 : -1;
+					});
+				}
+
 				if (list.length === 0) return tpl.noTransferRow({});
 
 				const formatBytes = (bytes?: number) => {
@@ -43,11 +81,21 @@ export const TransfersView = component(() => {
 				return list.map((t) => {
 					return tpl.transferRow({
 						nodes: {
-							nameCol: { inner: t.name || 'Unknown' },
+							nameCol: {
+								nodes: {
+									fileNameText: { inner: t.name || 'Unknown' },
+									fileIcon: { inner: getFileIcon(t.name || '') },
+								},
+							},
 							sizeCol: { inner: formatBytes(t.size) },
 							completedCol: { inner: formatBytes(t.completed) },
 							speedCol: { inner: formatBytes(t.speed) + '/s' },
-							progressCol: { inner: ((t.progress || 0) * 100).toFixed(1) + '%' },
+							progressCol: {
+								nodes: {
+									progressBar: { style: { width: `${(t.progress || 0) * 100}%` } },
+									progressText: { inner: ((t.progress || 0) * 100).toFixed(1) + '%' },
+								},
+							},
 							sourcesCol: { inner: (t.sources || 0).toString() },
 							priorityCol: { inner: (t.priority || 0).toString() },
 							statusCol: { inner: t.status || '' },

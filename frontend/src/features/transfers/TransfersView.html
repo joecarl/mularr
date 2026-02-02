@@ -8,25 +8,37 @@
 		<table class="win-list">
 			<thead>
 				<tr>
-					<th>Filename</th>
-					<th>Size</th>
-					<th>Completed</th>
-					<th>Speed</th>
-					<th>Progress</th>
-					<th>Sources</th>
-					<th>Priority</th>
-					<th>Status</th>
-					<th>Remaining</th>
-					<th>Added On</th>
+					<th data-cb="thName" style="cursor: pointer">Filename</th>
+					<th data-cb="thSize" style="cursor: pointer">Size</th>
+					<th data-cb="thCompleted" style="cursor: pointer">Completed</th>
+					<th data-cb="thSpeed" style="cursor: pointer">Speed</th>
+					<th data-cb="thProgress" style="cursor: pointer">Progress</th>
+					<th data-cb="thSources" style="cursor: pointer">Sources</th>
+					<th data-cb="thPriority" style="cursor: pointer">Priority</th>
+					<th data-cb="thStatus" style="cursor: pointer">Status</th>
+					<th data-cb="thRemaining" style="cursor: pointer">Remaining</th>
+					<th data-cb="thAddedOn" style="cursor: pointer">Added On</th>
 				</tr>
 			</thead>
 			<tbody data-cb="transferListContainer">
 				<tr data-cb="transferRow">
-					<td data-cb="nameCol">Filename</td>
+					<td data-cb="nameCol"
+						style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">
+						<span data-cb="fileIcon" style="margin-right: 5px;"></span>
+						<span data-cb="fileNameText">Filename</span>
+					</td>
 					<td data-cb="sizeCol">Size</td>
 					<td data-cb="completedCol">Completed</td>
 					<td data-cb="speedCol">Speed</td>
-					<td data-cb="progressCol">Progress</td>
+					<td data-cb="progressCol" style="width: 100px;">
+						<div
+							style="width: 100%; height: 14px; background: #fff; border: 1px solid #808080; position: relative;">
+							<div data-cb="progressBar" style="height: 100%; background: #0055ea; width: 0%;"></div>
+							<div data-cb="progressText"
+								style="position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: black; mix-blend-mode: difference; color: white;">
+								0%</div>
+						</div>
+					</td>
 					<td data-cb="sourcesCol">Sources</td>
 					<td data-cb="priorityCol">Priority</td>
 					<td data-cb="statusCol">Status</td>

@@ -1,5 +1,6 @@
 import { component, signal, bindControlledInput, bindControlledSelect, onUnmount } from 'chispa';
 import { ApiService, SearchResult } from '../../services/ApiService';
+import { getFileIcon } from '../../utils/Icons';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
@@ -10,6 +11,8 @@ export const SearchView = component(() => {
 	const searchQuery = signal('');
 	const searchType = signal('Global');
 	const downloadLink = signal('');
+	const sortColumn = signal<keyof SearchResult>('name');
+	const sortDirection = signal<'asc' | 'desc'>('asc');
 
 	const performSearch = async () => {
 		if (!searchQuery.get()) return;
@@ -80,27 +83,22 @@ export const SearchView = component(() => {
 		}
 	};
 
-	const getFileIcon = (filename: string) => {
-		const ext = filename.split('.').pop()?.toLowerCase() || '';
-		const videos = ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'mpg', 'mpeg', 'divx'];
-		const audio = ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'wma'];
-		const images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'];
-		const archives = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2'];
-		const documents = ['pdf', 'doc', 'docx', 'txt', 'epub', 'rtf', 'odt'];
-		const isos = ['iso', 'bin', 'cue', 'nrg', 'img'];
-
-		if (videos.includes(ext)) return '🎬';
-		if (audio.includes(ext)) return '🎵';
-		if (images.includes(ext)) return '🖼️';
-		if (archives.includes(ext)) return '📦';
-		if (documents.includes(ext)) return '📄';
-		if (isos.includes(ext)) return '💿';
-		if (ext === 'exe' || ext === 'msi') return '⚙️';
-
-		return '📄';
+	const sort = (col: keyof SearchResult) => {
+		if (sortColumn.get() === col) {
+			sortDirection.set(sortDirection.get() === 'asc' ? 'desc' : 'asc');
+		} else {
+			sortColumn.set(col);
+			sortDirection.set('asc');
+		}
 	};
 
 	return tpl.fragment({
+		thName: { onclick: () => sort('name') },
+		thSize: { onclick: () => sort('size') },
+		thSources: { onclick: () => sort('sources') },
+		thCompleted: { onclick: () => sort('completeSources') },
+		thType: { onclick: () => sort('type') },
+
 		searchInput: {
 			_ref: (el) => {
 				bindControlledInput(el, searchQuery);
@@ -115,8 +113,34 @@ export const SearchView = component(() => {
 		refreshBtn: { onclick: loadResults },
 		resultsList: { inner: statusLog },
 		resultsContainer: {
-			inner: () =>
-				results.get().map((res) =>
+			inner: () => {
+				let list = [...results.get()];
+				const col = sortColumn.get();
+				const dir = sortDirection.get();
+
+				if (list.length > 0) {
+					list.sort((a, b) => {
+						const va = a[col];
+						const vb = b[col];
+
+						if (!va) return 1;
+						if (!vb) return -1;
+
+						if (col === 'size' || col === 'sources' || col === 'completeSources') {
+							const na = parseFloat(va);
+							const nb = parseFloat(vb);
+							if (!isNaN(na) && !isNaN(nb)) {
+								return dir === 'asc' ? na - nb : nb - na;
+							}
+						}
+
+						if (va < vb) return dir === 'asc' ? -1 : 1;
+						if (va > vb) return dir === 'asc' ? 1 : -1;
+						return 0;
+					});
+				}
+
+				return list.map((res) =>
 					tpl.resultRow({
 						nodes: {
 							nameCol: { title: res.name },
@@ -137,7 +161,8 @@ export const SearchView = component(() => {
 							downloadMiniBtn: { onclick: () => download(res.link) },
 						},
 					})
-				),
+				);
+			},
 		},
 		downloadInput: {
 			_ref: (el) => {

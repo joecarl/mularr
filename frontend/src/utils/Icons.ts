@@ -21,3 +21,23 @@ export function getIcon(iconName: string, size?: number, color?: string) {
 	aux.innerHTML = `<i class="${className}"${style}></i>`;
 	return aux.firstChild;
 }
+
+export function getFileIcon(filename: string) {
+	const ext = filename.split('.').pop()?.toLowerCase() || '';
+	const videos = ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'mpg', 'mpeg', 'divx'];
+	const audio = ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'wma'];
+	const images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'];
+	const archives = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2'];
+	const documents = ['pdf', 'doc', 'docx', 'txt', 'epub', 'rtf', 'odt'];
+	const isos = ['iso', 'bin', 'cue', 'nrg', 'img'];
+
+	if (videos.includes(ext)) return '🎬';
+	if (audio.includes(ext)) return '🎵';
+	if (images.includes(ext)) return '🖼️';
+	if (archives.includes(ext)) return '📦';
+	if (documents.includes(ext)) return '📄';
+	if (isos.includes(ext)) return '💿';
+	if (ext === 'exe' || ext === 'msi') return '⚙️';
+
+	return '📄';
+}
