@@ -8,12 +8,33 @@
 		<table class="win-list">
 			<thead>
 				<tr>
-					<th>File Name / Status</th>
+					<th>Filename</th>
+					<th>Size</th>
+					<th>Completed</th>
+					<th>Speed</th>
+					<th>Progress</th>
+					<th>Sources</th>
+					<th>Priority</th>
+					<th>Status</th>
+					<th>Remaining</th>
+					<th>Added On</th>
 				</tr>
 			</thead>
 			<tbody data-cb="transferListContainer">
 				<tr data-cb="transferRow">
 					<td data-cb="nameCol">Filename</td>
+					<td data-cb="sizeCol">Size</td>
+					<td data-cb="completedCol">Completed</td>
+					<td data-cb="speedCol">Speed</td>
+					<td data-cb="progressCol">Progress</td>
+					<td data-cb="sourcesCol">Sources</td>
+					<td data-cb="priorityCol">Priority</td>
+					<td data-cb="statusCol">Status</td>
+					<td data-cb="remainingCol">Remaining</td>
+					<td data-cb="addedOnCol">Added On</td>
+				</tr>
+				<tr data-cb="noTransferRow">
+					<td>No active transfers.</td>
 				</tr>
 			</tbody>
 		</table>

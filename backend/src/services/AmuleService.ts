@@ -162,6 +162,11 @@ export class AmuleService {
 					progress: progress,
 					status: status,
 					hash: file.fileHashHexString,
+					completed: sizeDone,
+					speed: file.speed || 0,
+					sources: file.sourceCount,
+					priority: file.downPrio,
+					remaining: sizeFull - sizeDone,
 				};
 			});
 

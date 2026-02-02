@@ -32,6 +32,17 @@ export interface ServersResponse {
 
 export interface Transfer {
 	rawLine: string;
+	name?: string;
+	size?: number;
+	completed?: number;
+	speed?: number;
+	progress?: number;
+	sources?: number;
+	priority?: number;
+	status?: string;
+	remaining?: number;
+	hash?: string;
+	addedOn?: number; // Placeholder, might be missing from backend
 }
 
 export interface TransfersResponse {
