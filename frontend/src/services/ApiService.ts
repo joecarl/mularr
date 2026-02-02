@@ -21,13 +21,30 @@ export interface ConfigResponse {
 
 export interface Server {
 	ip: string;
-	port: string;
-	name: string;
+	port: number;
+	name?: string;
+	description?: string;
+	ping?: number;
+	users?: number;
+	maxUsers?: number;
+	files?: number;
+	priority?: number;
+	failedCount?: number;
+	isStatic?: boolean;
+	softFileLimit?: number;
+	lowID?: boolean;
+	obfuscated?: boolean;
 }
 
 export interface ServersResponse {
-	raw: string;
+	raw?: string;
 	list: Server[];
+	connectedServer?: {
+		ip: string;
+		port: number;
+		name?: string;
+		description?: string;
+	};
 }
 
 export interface Transfer {
@@ -138,6 +155,13 @@ export class ApiService {
 		return this.request<SuccessResponse>('/download', {
 			method: 'POST',
 			body: JSON.stringify({ link }),
+		});
+	}
+
+	async connectToServer(ip: string, port: number): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/connect', {
+			method: 'POST',
+			body: JSON.stringify({ ip, port }),
 		});
 	}
 }
