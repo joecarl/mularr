@@ -11,12 +11,15 @@ import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
+import { arrRoutes } from './routes/arrRoutes';
+import { indexerRoutes } from './routes/indexerRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // -- Initialize & register services in container ------------------------------
 
@@ -47,6 +50,8 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 
 app.use('/api/system', systemRoutes());
 app.use('/api', amuleRoutes());
+app.use('/api/as-qbittorrent/api/v2', arrRoutes()); // qBittorrent compatibility for Sonarr/Radarr
+app.use('/api/torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
 
 // -- Serve static files from the 'public' folder ------------------------------
 
