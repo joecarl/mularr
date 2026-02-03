@@ -1,5 +1,6 @@
-import { component, Link, pathMatches } from 'chispa';
+import { component, Link, pathMatches, signal } from 'chispa';
 import { StatsService } from '../services/StatsService';
+import { ApiService, SystemInfo } from '../services/ApiService';
 import tpl from './Sidebar.html';
 import './Sidebar.css';
 
@@ -70,9 +71,104 @@ export const Sidebar = component(() => {
 	);
 
 	const statsService = StatsService.getInstance();
+	const systemInfo = signal<SystemInfo | null>(null);
+
+	const fetchSystemInfo = async () => {
+		try {
+			const info = await ApiService.getInstance().getSystemInfo();
+			systemInfo.set(info);
+		} catch (e) {
+			console.error(e);
+		}
+	};
+
+	// Initial fetch & loop (every 5 minutes)
+	fetchSystemInfo();
+	setInterval(fetchSystemInfo, 60000 * 5);
 
 	return tpl.fragment({
 		navLinks: { inner: links },
+		systemContainer: {
+			inner: () => {
+				const info = systemInfo.get();
+				if (!info) return 'Loading...';
+
+				const result: (string | Node)[] = [];
+
+				if (info.publicIp) {
+					result.push(
+						tpl.statRow({
+							nodes: {
+								statLabel: { inner: 'Public IP:' },
+								statValue: { inner: info.publicIp },
+							},
+						})
+					);
+				}
+
+				// Location info (from IP Details or VPN fallback)
+				const details = info.ipDetails || info.vpn;
+				if (details && (details.city || details.country || details.region)) {
+					const loc = [details.city, details.region, details.country].filter(Boolean).join(', ');
+					if (loc) {
+						result.push(
+							tpl.statRow({
+								nodes: {
+									statLabel: { inner: 'Location:' },
+									statValue: { inner: loc },
+								},
+							})
+						);
+					}
+				}
+
+				// Organization / ISP
+				if (info.ipDetails && info.ipDetails.org) {
+					result.push(
+						tpl.statRow({
+							nodes: {
+								statLabel: { inner: 'ISP:' },
+								statValue: { inner: info.ipDetails.org },
+							},
+						})
+					);
+				}
+
+				if (info.vpn && info.vpn.enabled) {
+					result.push(
+						tpl.statRow({
+							nodes: {
+								statLabel: { inner: 'VPN:' },
+								statValue: { inner: (info.vpn.status || 'Active').toUpperCase() },
+								statUnit: { inner: '' },
+							},
+						})
+					);
+
+					if (info.vpn.port) {
+						result.push(
+							tpl.statRow({
+								nodes: {
+									statLabel: { inner: 'Forwarded Port:' },
+									statValue: { inner: String(info.vpn.port) },
+								},
+							})
+						);
+					}
+				} else {
+					result.push(
+						tpl.statRow({
+							nodes: {
+								statLabel: { inner: 'VPN:' },
+								statValue: { inner: 'Disabled' },
+							},
+						})
+					);
+				}
+
+				return result;
+			},
+		},
 		statsContainer: {
 			inner: () => {
 				const s = statsService.stats.get();

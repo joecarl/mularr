@@ -109,6 +109,24 @@ export interface SuccessResponse {
 	success: boolean;
 }
 
+export interface SystemInfo {
+	vpn: {
+		enabled: boolean;
+		status?: string;
+		port?: number;
+		[key: string]: any;
+	};
+	publicIp?: string;
+	ipDetails?: {
+		city?: string;
+		region?: string;
+		country?: string;
+		loc?: string;
+		org?: string;
+		timezone?: string;
+	};
+}
+
 export class ApiService {
 	private static instance: ApiService;
 	private baseUrl = '/api';
@@ -146,6 +164,10 @@ export class ApiService {
 		}
 
 		return response.text() as any;
+	}
+
+	public async getSystemInfo(): Promise<SystemInfo> {
+		return this.request<SystemInfo>('/system/info');
 	}
 
 	async getStatus(): Promise<StatsResponse> {

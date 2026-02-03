@@ -8,7 +8,9 @@ import { AmuleService } from './services/AmuleService';
 import { TelegramService } from './services/TelegramService';
 import { GluetunService } from './services/GluetunService';
 import { AmuledService } from './services/AmuledService';
+import { SystemService } from './services/SystemService';
 import { amuleRoutes } from './routes/amuleRoutes';
+import { systemRoutes } from './routes/systemRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
@@ -30,6 +32,10 @@ const gluetunService = new GluetunService();
 container.register(GluetunService, gluetunService);
 gluetunService.start();
 
+// Initialize System Service
+const systemService = new SystemService();
+container.register(SystemService, systemService);
+
 // Initialize Telegram Service (Optional)
 if (process.env.TELEGRAM_BOT_TOKEN) {
 	const topicId = process.env.TELEGRAM_TOPIC_ID ? parseInt(process.env.TELEGRAM_TOPIC_ID) : undefined;
@@ -39,6 +45,7 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 
 // -- Setup routes -------------------------------------------------------------
 
+app.use('/api/system', systemRoutes());
 app.use('/api', amuleRoutes());
 
 // -- Serve static files from the 'public' folder ------------------------------
