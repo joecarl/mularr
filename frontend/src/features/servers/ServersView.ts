@@ -14,6 +14,21 @@ export const ServersView = component(() => {
 	});
 	const logText = signal('Initializing...');
 
+	const fetchLog = async () => {
+		try {
+			const data = await apiService.getLog(100);
+			if (data && data.lines) {
+				logText.set(data.lines.join('\n'));
+			}
+		} catch (e) {
+			console.error('Error fetching log:', e);
+		}
+	};
+
+	// Poll log every 3 seconds
+	setInterval(fetchLog, 3000);
+	fetchLog();
+
 	const loadServers = async () => {
 		try {
 			const data = await apiService.getServers();
@@ -21,23 +36,23 @@ export const ServersView = component(() => {
 			if (data.list) {
 				servers.set(data.list);
 			} else {
-				logText.set('Received raw data without list format.\n' + data.raw);
+				console.warn('Received raw data without list format:', data.raw);
 			}
 		} catch (e: any) {
-			logText.set('Error loading servers: ' + e.message);
+			console.error('Error loading servers:', e.message);
 		}
 	};
 
 	loadServers();
 
 	const connectToServer = async (s: Server) => {
-		logText.set(`Connecting to ${s.name ?? s.ip}...`);
+		// logText.set(`Connecting to ${s.name ?? s.ip}...`);
 		try {
 			await apiService.connectToServer(s.ip, s.port);
-			logText.set(`Connected request sent to ${s.name ?? s.ip}. Refreshing...`);
+			// logText.set(`Connected request sent to ${s.name ?? s.ip}. Refreshing...`);
 			setTimeout(loadServers, 1000);
 		} catch (e: any) {
-			logText.set(`Error connecting: ${e.message}`);
+			console.error(`Error connecting: ${e.message}`);
 		}
 	};
 

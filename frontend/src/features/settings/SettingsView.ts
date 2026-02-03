@@ -25,8 +25,8 @@ export const SettingsView = component(() => {
 	const loadConfig = async () => {
 		try {
 			const data = await apiService.getConfig();
-			if (data && data.values) {
-				const v = data.values;
+			if (data) {
+				const v = data;
 				tcpPort.set(v.tcpPort || '');
 				udpPort.set(v.udpPort || '');
 				maxSources.set(v.maxSources || '');

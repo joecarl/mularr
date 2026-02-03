@@ -13,6 +13,7 @@ export const amuleRoutes = () => {
 	router.get('/search/results', controller.getSearchResults);
 	router.post('/download', controller.download);
 	router.post('/server/connect', controller.connect);
+	router.get('/log', controller.getLog);
 
 	return router;
 };

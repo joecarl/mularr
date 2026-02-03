@@ -33,15 +33,7 @@ export class AmuleService {
 	}
 
 	async getConfig() {
-		// Currently relying on amulecmd/local file for config as EC client support is limited for config reading?
-		if (this.amulecmdService) {
-			return this.amulecmdService.getConfig();
-		}
-		// Todo: Implement EC-based config if possible
-		return {
-			raw: 'Config requires AMULECMD_FALLBACK=true',
-			values: {},
-		};
+		throw new Error('getConfig not implemented in AmuleService');
 	}
 
 	async getServers() {

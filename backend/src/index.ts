@@ -3,9 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
-import { container } from './services/ServiceContainer';
+import { container } from './ServiceContainer';
 import { AmuleService } from './services/AmuleService';
 import { TelegramService } from './services/TelegramService';
+import { GluetunService } from './services/GluetunService';
+import { AmuledService } from './services/AmuledService';
 import { amuleRoutes } from './routes/amuleRoutes';
 
 const app = express();
@@ -19,6 +21,14 @@ app.use(express.json());
 // Initialize Amule Service
 const amuleService = new AmuleService();
 container.register(AmuleService, amuleService);
+
+const amuledService = new AmuledService();
+container.register(AmuledService, amuledService);
+
+// Initialize Gluetun Service
+const gluetunService = new GluetunService();
+container.register(GluetunService, gluetunService);
+gluetunService.start();
 
 // Initialize Telegram Service (Optional)
 if (process.env.TELEGRAM_BOT_TOKEN) {

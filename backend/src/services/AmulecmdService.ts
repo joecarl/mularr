@@ -58,42 +58,12 @@ export class AmulecmdService {
 		return { raw: output };
 	}
 
-	async getConfig() {
+	async getStatus() {
 		const output = await this.runCommand('status');
 		const clean = this.cleanOutput(output);
 
-		const config: any = {};
-
-		// Try to read local config file for more details, as amulecmd 2.3.3 is limited
-		try {
-			const home = process.env.HOME || '/home/node';
-			const confPath = path.join(home, '.aMule', 'amule.conf');
-			if (fs.existsSync(confPath)) {
-				const content = fs.readFileSync(confPath, 'utf-8');
-				const lines = content.split('\n');
-				const findVal = (key: string) =>
-					lines
-						.find((l) => l.startsWith(key + '='))
-						?.split('=')[1]
-						?.trim();
-
-				config.nick = findVal('Nick');
-				config.tcpPort = findVal('Port');
-				config.udpPort = findVal('UDPPort');
-				config.maxSources = findVal('MaxSourcesPerFile');
-				config.maxConnections = findVal('MaxConnections');
-				config.downloadCap = findVal('DownloadCapacity');
-				config.uploadCap = findVal('UploadCapacity');
-				config.incomingDir = findVal('IncomingDir');
-				config.tempDir = findVal('TempDir');
-			}
-		} catch (e) {
-			console.warn('Could not read local amule.conf:', e);
-		}
-
 		return {
 			raw: clean,
-			values: config,
 		};
 	}
 

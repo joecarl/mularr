@@ -43,11 +43,6 @@ export interface ConfigValues {
 	tempDir?: string;
 }
 
-export interface ConfigResponse {
-	raw: string;
-	values: ConfigValues;
-}
-
 export interface Server {
 	ip: string;
 	port: number;
@@ -157,8 +152,8 @@ export class ApiService {
 		return this.request<StatsResponse>('/status');
 	}
 
-	async getConfig(): Promise<ConfigResponse> {
-		return this.request<ConfigResponse>('/config');
+	async getConfig(): Promise<ConfigValues> {
+		return this.request<ConfigValues>('/config');
 	}
 
 	async getServers(): Promise<ServersResponse> {
@@ -192,5 +187,9 @@ export class ApiService {
 			method: 'POST',
 			body: JSON.stringify({ ip, port }),
 		});
+	}
+
+	async getLog(lines: number = 50): Promise<{ lines: string[] }> {
+		return this.request<{ lines: string[] }>(`/log?lines=${lines}`);
 	}
 }

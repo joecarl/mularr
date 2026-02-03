@@ -5,7 +5,7 @@ set -e
 # For simplicity we hardcode the hash for 'secret' to match defaults.
 # MD5("secret") = 5ebe2294ecd0e0f08eab7690d2a6ee69
 
-CONF_DIR="/home/node/.aMule"
+CONF_DIR="$HOME/.aMule"
 # If running as root, we might want to run amule as 'node' user?
 # But checking process: Dockerfile doesn't switch user.
 # Let's try to run everything as node user if we can, or just handle root.

@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import { AmuleService } from '../services/AmuleService';
-import { container } from '../services/ServiceContainer';
+import { AmuledService } from '../services/AmuledService';
+import { container } from '../ServiceContainer';
 
 export class AmuleController {
 	private readonly amuleService = container.get(AmuleService);
+	private readonly amuledService = container.get(AmuledService);
 
 	getStatus = async (req: Request, res: Response) => {
 		try {
@@ -16,7 +18,7 @@ export class AmuleController {
 
 	getConfig = async (req: Request, res: Response) => {
 		try {
-			const config = await this.amuleService.getConfig();
+			const config = await this.amuledService.getConfig();
 			res.json(config);
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
@@ -75,6 +77,16 @@ export class AmuleController {
 			const { ip, port } = req.body;
 			await this.amuleService.connectToServer(ip, port);
 			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	getLog = async (req: Request, res: Response) => {
+		try {
+			const lines = req.query.lines ? parseInt(req.query.lines as string) : 50;
+			const log = await this.amuledService.getLog(lines);
+			res.json({ lines: log });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}
