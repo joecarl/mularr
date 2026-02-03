@@ -204,6 +204,7 @@ export const Sidebar = component(() => {
 				}
 				// 2. Typed fields — render each stat with an appropriate formatter
 				const fields: Array<{ key: string; label: string; render?: (v: any) => any }> = [
+					{ key: 'isHighID', label: 'HighID', render: (v: boolean) => (v ? 'Yes' : 'No') },
 					{ key: 'id', label: 'ID' },
 					{ key: 'ed2kId', label: 'ED2K ID' },
 					{ key: 'kadId', label: 'KAD ID' },

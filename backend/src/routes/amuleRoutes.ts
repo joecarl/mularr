@@ -5,6 +5,7 @@ export const amuleRoutes = () => {
 	const router = Router();
 	const controller = new AmuleController();
 
+	router.get('/info', controller.getInfo);
 	router.get('/status', controller.getStatus);
 	router.get('/config', controller.getConfig);
 	router.get('/servers', controller.getServers);

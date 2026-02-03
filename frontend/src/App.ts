@@ -1,13 +1,25 @@
-import { component, Router } from 'chispa';
+import { component, Router, signal } from 'chispa';
+import { AmuleInfo, ApiService } from './services/ApiService';
 import { Sidebar } from './layout/Sidebar';
 import { ServersView } from './features/servers/ServersView';
 import { TransfersView } from './features/transfers/TransfersView';
 import { SearchView } from './features/search/SearchView';
 import { SettingsView } from './features/settings/SettingsView';
-
 import tpl from './App.html';
 
 export const App = component(() => {
+	const apiService = ApiService.getInstance();
+	const amuleInfo = signal<AmuleInfo | null>(null);
+	const loadAmuleInfo = async () => {
+		try {
+			const info = await apiService.getInfo();
+			amuleInfo.set(info);
+			console.log('aMule Info:', info);
+		} catch (e) {
+			console.error('Failed to load aMule info', e);
+		}
+	};
+	loadAmuleInfo();
 	return tpl.fragment({
 		sidebarContainer: Sidebar({}),
 		routerView: Router({
@@ -19,5 +31,15 @@ export const App = component(() => {
 				{ path: '/settings', component: SettingsView },
 			],
 		}),
+		amuleVersion: {
+			inner: () => {
+				const info = amuleInfo.get();
+				if (info) {
+					return `aMule v${info.version} ready`;
+				} else {
+					return 'Loading aMule info...';
+				}
+			},
+		},
 	});
 });

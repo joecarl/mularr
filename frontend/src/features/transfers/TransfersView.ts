@@ -7,16 +7,17 @@ import './TransfersView.css';
 export const TransfersView = component(() => {
 	const apiService = ApiService.getInstance();
 	const transferList = signal<Transfer[]>([]);
+	const sharedList = signal<Transfer[]>([]);
 	const sortColumn = signal<keyof Transfer>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
 
 	const loadTransfers = async () => {
 		try {
-			const data = await apiService.getTransfers();
-			if (data.list) {
-				transferList.set(data.list);
-			} else {
-				transferList.set([{ rawLine: data.raw }]);
+			const data: any = await apiService.getTransfers();
+			// Backward compatibility or new structure
+			if (data.downloads) {
+				transferList.set(data.downloads);
+				sharedList.set(data.shared || []);
 			}
 		} catch (e: any) {
 			transferList.set([{ rawLine: 'Error: ' + e.message }]);
@@ -100,7 +101,37 @@ export const TransfersView = component(() => {
 							priorityCol: { inner: (t.priority || 0).toString() },
 							statusCol: { inner: t.status || '' },
 							remainingCol: { inner: formatBytes(t.remaining) },
-							addedOnCol: { inner: '-' },
+						},
+					});
+				});
+			},
+		},
+
+		sharedListContainer: {
+			inner: () => {
+				const list = sharedList.get();
+				if (list.length === 0) return tpl.noSharedRow({});
+
+				const formatBytes = (bytes?: number) => {
+					if (!bytes) return '0 B';
+					const k = 1024;
+					const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+					const i = Math.floor(Math.log(bytes) / Math.log(k));
+					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+				};
+
+				return list.map((t) => {
+					return tpl.sharedRow({
+						nodes: {
+							sharedNameCol: {
+								nodes: {
+									sharedNameText: { inner: t.name || 'Unknown' },
+									sharedIcon: { inner: getFileIcon(t.name || '') },
+								},
+							},
+							sharedSizeCol: { inner: formatBytes(t.size) },
+							sharedStatusCol: { inner: 'Shared' },
+							sharedSourcesCol: { inner: String(t.sources || 0) },
 						},
 					});
 				});

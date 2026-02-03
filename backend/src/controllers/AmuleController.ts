@@ -7,6 +7,15 @@ export class AmuleController {
 	private readonly amuleService = container.get(AmuleService);
 	private readonly amuledService = container.get(AmuledService);
 
+	getInfo = async (req: Request, res: Response) => {
+		try {
+			const version = await this.amuleService.getVersion();
+			res.json({ version });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getStatus = async (req: Request, res: Response) => {
 		try {
 			const stats = await this.amuleService.getStats();

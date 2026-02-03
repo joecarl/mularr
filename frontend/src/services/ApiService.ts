@@ -28,7 +28,12 @@ export interface StatsResponse {
 	ed2kFiles?: number;
 	kadFiles?: number;
 	kadNodes?: number;
+	isHighID?: boolean;
 	[key: string]: any;
+}
+
+export interface AmuleInfo {
+	version: string;
 }
 
 export interface ConfigValues {
@@ -168,6 +173,10 @@ export class ApiService {
 
 	public async getSystemInfo(): Promise<SystemInfo> {
 		return this.request<SystemInfo>('/system/info');
+	}
+
+	async getInfo(): Promise<AmuleInfo> {
+		return this.request<AmuleInfo>('/info');
 	}
 
 	async getStatus(): Promise<StatsResponse> {

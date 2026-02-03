@@ -1,5 +1,9 @@
 import { AmuleClient, SearchType } from 'amule-ec-client';
 import { AmulecmdService } from './AmulecmdService';
+import { exec } from 'child_process';
+import util from 'util';
+
+const execPromise = util.promisify(exec);
 
 export class AmuleService {
 	private readonly host = process.env.AMULE_HOST || 'localhost';
@@ -15,11 +19,41 @@ export class AmuleService {
 		}
 	}
 
+	async getVersion() {
+		// Get Version (cached or executed)
+		let version = 'Unknown';
+		let output = '';
+		try {
+			const { stdout } = await execPromise('amuled --version');
+			output = stdout;
+		} catch (e: any) {
+			//console.warn('Failed to get amuled version:', e);
+			// If the process exits non-zero, exec still populates stdout on the Error object
+			output = e.stdout || '';
+		}
+
+		// Output format: "aMule 2.3.3 ..."
+		const match = output.match(/amuled? (\d+\.\d+\.\d+)/i);
+		if (match) {
+			version = match[1];
+		} else {
+			version = output.split('\n')[0];
+		}
+
+		return version;
+	}
+
 	async getStats() {
 		try {
 			const stats = await this.client.getStats();
+
+			// Calculate HighID
+			// LowID is < 16777216
+			const isHighID = (stats.ed2kId || stats.id || 0) >= 16777216;
+
 			return {
 				...stats,
+				isHighID,
 				raw: `Download: ${stats.downloadSpeed} bytes/s\nUpload: ${stats.uploadSpeed} bytes/s`,
 			};
 		} catch (error) {
@@ -106,9 +140,45 @@ export class AmuleService {
 				};
 			});
 
+			// Get Shared Files (Completed Downloads)
+			let sharedList: any[] = [];
+			try {
+				// Using any cast in case types are incomplete in amule-ec-client
+				const sharedFiles = await this.client.getSharedFiles();
+				if (Array.isArray(sharedFiles)) {
+					// Create a Set of hashes currently in queue to avoid duplicates
+					const queueHashes = new Set(transfers.map((t) => t.hash));
+
+					sharedList = sharedFiles
+						.filter((file) => !queueHashes.has(file.fileHashHexString)) // Deduplicate
+						.map((file) => {
+							const sizeFull = file.sizeFull || 0;
+							const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
+
+							return {
+								rawLine: `> ${file.fileName} [${mbSize} MB] Completed 100%`,
+								name: file.fileName,
+								size: sizeFull,
+								progress: 1,
+								status: 'Shared',
+								hash: file.fileHashHexString,
+								completed: sizeFull,
+								speed: 0,
+								sources: 0, // Shared files usually have request counts or known sources, ec-client maps it
+								priority: 0,
+								remaining: 0,
+								addedOn: 0,
+							};
+						});
+				}
+			} catch (e) {
+				console.warn('Failed to get shared files (completed downloads):', e);
+			}
+
 			return {
 				raw: `Downloads (${queue.length})`,
-				list: transfers,
+				downloads: transfers,
+				shared: sharedList,
 			};
 		} catch (error) {
 			console.error('EC Client Transfers Error:', error);
