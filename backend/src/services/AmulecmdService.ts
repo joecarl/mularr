@@ -91,6 +91,11 @@ export class AmulecmdService {
 		};
 	}
 
+	async removeDownload(hash: string) {
+		await this.runCommand(`cancel ${hash}`);
+		return { success: true };
+	}
+
 	async getTransfers() {
 		const output = await this.runCommand('show dl');
 		const clean = this.cleanOutput(output);
@@ -103,7 +108,8 @@ export class AmulecmdService {
 
 		return {
 			raw: clean,
-			list: transfers,
+			downloads: transfers,
+			shared: [],
 		};
 	}
 

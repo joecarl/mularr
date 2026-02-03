@@ -185,7 +185,7 @@ export class AmuleService {
 			if (this.amulecmdService) {
 				return this.amulecmdService.getTransfers();
 			}
-			return { raw: 'Error getting transfers', list: [] };
+			return { raw: 'Error getting transfers', downloads: [], shared: [] };
 		}
 	}
 
@@ -195,7 +195,6 @@ export class AmuleService {
 	async startSearch(query: string, type: string = 'Global') {
 		console.log(`[AmuleService] Starting Search for: ${query}`);
 		this.isSearching = true;
-		this.lastSearchResults = [];
 
 		try {
 			// Convert string type to enum if possible, default to Global
@@ -212,6 +211,22 @@ export class AmuleService {
 			this.isSearching = false;
 			throw e;
 		}
+	}
+
+	async searchSynchronous(query: string, timeoutMs: number = 10000, resultsThreshold: number = 100) {
+		await this.startSearch(query, 'Global');
+
+		const start = Date.now();
+		let results = { list: [] as any[] };
+
+		while (Date.now() - start < timeoutMs) {
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+			results = await this.getSearchResults();
+			// If we have a decent amount of results, return early
+			if (results.list.length >= resultsThreshold) break;
+		}
+
+		return results;
 	}
 
 	async getSearchResults() {
@@ -273,5 +288,21 @@ export class AmuleService {
 		}
 
 		throw new Error('Could not add download. Fallback disabled.');
+	}
+
+	async removeDownload(hash: string) {
+		console.log('Removing download:', hash);
+		try {
+			await this.client.stopDownload(Buffer.from(hash, 'hex'));
+			return { success: true };
+		} catch (e) {
+			console.warn('EC Client removeDownload failed, falling back to amulecmd:', e);
+		}
+
+		if (this.amulecmdService) {
+			return this.amulecmdService.removeDownload(hash);
+		}
+
+		throw new Error('Could not remove download. Fallback disabled.');
 	}
 }
