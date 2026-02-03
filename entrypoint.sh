@@ -5,20 +5,7 @@ set -e
 # For simplicity we hardcode the hash for 'secret' to match defaults.
 # MD5("secret") = 5ebe2294ecd0e0f08eab7690d2a6ee69
 
-CONF_DIR="$HOME/.aMule"
-# If running as root, we might want to run amule as 'node' user?
-# But checking process: Dockerfile doesn't switch user.
-# Let's try to run everything as node user if we can, or just handle root.
-# If HOME is /root, use /root/.aMule
-
-if [ "$(id -u)" = "0" ]; then
-    # We are root. Amuled warns about root.
-    # Better to run as node user if possible, but we need to ensure permissions.
-    # We'll just run it. Amuled usually works as root with a warning.
-    CONF_DIR="/root/.aMule"
-else
-    CONF_DIR="$HOME/.aMule"
-fi
+CONF_DIR="${AMULE_CONFIG_DIR:-$HOME/.aMule}"
 
 mkdir -p "$CONF_DIR"
 
@@ -37,7 +24,7 @@ EOF
 fi
 
 echo "Starting amule daemon..."
-amuled -f
+amuled -c "$CONF_DIR" -f
 
 echo "Starting Mularr backend..."
 exec "$@"

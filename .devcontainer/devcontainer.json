@@ -1,6 +1,9 @@
 {
 	"name": "Mularr Dev Environment",
 	"image": "mcr.microsoft.com/devcontainers/typescript-node",
+	"runArgs": [
+		//"--network=container:myvpn-container"  Uncomment and set your VPN container name if needed
+	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -9,5 +12,5 @@
 			]
 		}
 	},
-	"postCreateCommand": "./install-amule.sh && cd frontend && npm install && cd ../backend && npm install"
+	"postCreateCommand": "bash ./.devcontainer/install-amule.sh && cd frontend && npm install && cd ../backend && npm install"
 }

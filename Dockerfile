@@ -31,10 +31,7 @@ WORKDIR /app
 
 # Install production dependencies for backend
 # better-sqlite3 requires some build tools during install if no prebuilt binary is available for Alpine
-RUN apk add --no-cache python3 make g++ bash
-
-COPY install-amule.sh ./
-RUN chmod +x install-amule.sh && ./install-amule.sh
+RUN apk add --no-cache python3 make g++ bash amule --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --omit=dev
@@ -54,6 +51,7 @@ RUN mkdir -p /app/data && chown node:node /app/data
 ENV PORT=8940
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/app/data/database.sqlite
+ENV AMULE_CONFIG_DIR=/app/data/amule
 
 USER node
 

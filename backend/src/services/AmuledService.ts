@@ -6,11 +6,11 @@ import fs from 'fs';
 const execPromise = util.promisify(exec);
 
 export class AmuledService {
-	private readonly homeDir = process.env.HOME || '/home/node';
+	private readonly configDir = process.env.AMULE_CONFIG_DIR || path.join(process.env.HOME || '/home/node', '.aMule');
 
 	async updateCoreConfig(port: number): Promise<boolean> {
 		try {
-			const confPath = path.join(this.homeDir, '.aMule', 'amule.conf');
+			const confPath = path.join(this.configDir, 'amule.conf');
 
 			if (!fs.existsSync(confPath)) {
 				console.error('amule.conf not found at', confPath);
@@ -73,7 +73,7 @@ export class AmuledService {
 			await new Promise((resolve) => setTimeout(resolve, 2000));
 
 			// Start new
-			const child = spawn('amuled', ['-f'], {
+			const child = spawn('amuled', ['-c', this.configDir, '-f'], {
 				detached: true,
 				stdio: 'ignore',
 			});
@@ -86,7 +86,7 @@ export class AmuledService {
 	}
 
 	async getLog(lines: number = 50): Promise<string[]> {
-		const logPath = path.join(this.homeDir, '.aMule', 'logfile');
+		const logPath = path.join(this.configDir, 'logfile');
 		try {
 			if (!fs.existsSync(logPath)) {
 				return ['Log file not found: ' + logPath];
@@ -105,7 +105,7 @@ export class AmuledService {
 		const config: any = {};
 
 		try {
-			const confPath = path.join(this.homeDir, '.aMule', 'amule.conf');
+			const confPath = path.join(this.configDir, 'amule.conf');
 			if (fs.existsSync(confPath)) {
 				const content = fs.readFileSync(confPath, 'utf-8');
 				const lines = content.split('\n');
