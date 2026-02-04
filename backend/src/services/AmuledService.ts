@@ -85,6 +85,15 @@ export class AmuledService {
 		}
 	}
 
+	async isDaemonRunning(): Promise<boolean> {
+		try {
+			await execPromise('pgrep amuled');
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	async getLog(lines: number = 50): Promise<string[]> {
 		const logPath = path.join(this.configDir, 'logfile');
 		try {

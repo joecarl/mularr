@@ -9,6 +9,7 @@ import { TelegramService } from './services/TelegramService';
 import { GluetunService } from './services/GluetunService';
 import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
+import { MularrMonitoringService } from './services/MularrMonitoringService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
 import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
@@ -33,7 +34,6 @@ container.register(AmuledService, amuledService);
 // Initialize Gluetun Service
 const gluetunService = new GluetunService();
 container.register(GluetunService, gluetunService);
-gluetunService.start();
 
 // Initialize System Service
 const systemService = new SystemService();
@@ -45,6 +45,11 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 	const tgService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID!, topicId);
 	container.register(TelegramService, tgService);
 }
+
+// Initialize and start Mularr Monitoring Service
+const monitoringService = new MularrMonitoringService();
+container.register(MularrMonitoringService, monitoringService);
+monitoringService.start();
 
 // -- Setup routes -------------------------------------------------------------
 
