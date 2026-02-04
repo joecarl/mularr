@@ -1,4 +1,4 @@
-import { AmuleClient, SearchType } from 'amule-ec-client';
+import { AmuleClient, SearchType, type AmuleCategory } from 'amule-ec-client';
 import { AmulecmdService } from './AmulecmdService';
 import { exec } from 'child_process';
 import util from 'util';
@@ -104,6 +104,7 @@ export class AmuleService {
 	async getTransfers() {
 		try {
 			const queue = await this.client.getDownloadQueue();
+			//console.log('Download Queue:', queue);
 			const transfers = queue.map((file) => {
 				// FileStatus enum mapping
 				const statusMap: Record<number, string> = {
@@ -124,6 +125,8 @@ export class AmuleService {
 				const sizeDone = file.sizeDone || 0;
 				const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
 				const progress = sizeFull > 0 ? sizeDone / sizeFull : 0;
+				const remaining = sizeFull - sizeDone;
+				const timeLeft = remaining / (file.speed || 1); // in seconds
 
 				return {
 					rawLine: `> ${file.fileName} [${mbSize} MB] ${status} ${(progress * 100).toFixed(1)}%`,
@@ -132,11 +135,13 @@ export class AmuleService {
 					progress: progress,
 					status: status,
 					hash: file.fileHashHexString,
+					link: file.fileEd2kLink,
 					completed: sizeDone,
 					speed: file.speed || 0,
 					sources: file.sourceCount,
 					priority: file.downPrio,
-					remaining: sizeFull - sizeDone,
+					remaining: remaining,
+					timeLeft: timeLeft,
 				};
 			});
 
@@ -162,12 +167,14 @@ export class AmuleService {
 								progress: 1,
 								status: 'Shared',
 								hash: file.fileHashHexString,
+								link: file.fileEd2kLink,
 								completed: sizeFull,
 								speed: 0,
 								sources: 0, // Shared files usually have request counts or known sources, ec-client maps it
 								priority: 0,
 								remaining: 0,
 								addedOn: 0,
+								timeLeft: 0,
 							};
 						});
 				}
@@ -182,9 +189,9 @@ export class AmuleService {
 			};
 		} catch (error) {
 			console.error('EC Client Transfers Error:', error);
-			if (this.amulecmdService) {
-				return this.amulecmdService.getTransfers();
-			}
+			// if (this.amulecmdService) {
+			// 	return this.amulecmdService.getTransfers();
+			// }
 			return { raw: 'Error getting transfers', downloads: [], shared: [] };
 		}
 	}
@@ -229,20 +236,32 @@ export class AmuleService {
 		return results;
 	}
 
+	// static buildEd2kLink(name: string, size: number, hash: string): string {
+	// 	return `ed2k://|file|${encodeURIComponent(name)}|${size}|${hash}|/`;
+	// }
+
 	async getSearchResults() {
 		try {
 			const results = await this.client.searchResults();
+			//console.log('Search Results:', results);
 
 			if (results && results.files) {
-				const list = results.files.map((file) => ({
-					name: file.fileName,
-					size: (file.sizeFull / (1024 * 1024)).toFixed(2), // MB string for frontend
-					sources: file.sourceCount,
-					completeSources: file.sourceCount,
-					type: '', // File type extension often in name
-					link: file.hash.toString('hex'), // Link is now the hash for downloading
-					hash: file.hash.toString('hex'),
-				}));
+				const list = results.files.map((file) => {
+					const hash = file.hash.toString('hex');
+					// Construct a proper ed2k link: ed2k://|file|NAME|SIZE|HASH|/
+					//const ed2k = AmuleService.buildEd2kLink(file.fileName, file.sizeFull, hash);
+
+					return {
+						name: file.fileName,
+						size: (file.sizeFull / (1024 * 1024)).toFixed(2), // MB string for frontend
+						sizeBytes: file.sizeFull,
+						sources: file.sourceCount,
+						completeSources: file.sourceCount,
+						type: '',
+						//link: ed2k,
+						hash: hash,
+					};
+				});
 
 				return {
 					raw: `Found ${list.length} results`,
@@ -304,5 +323,103 @@ export class AmuleService {
 		}
 
 		throw new Error('Could not remove download. Fallback disabled.');
+	}
+
+	// ------------------------------
+	// Categories CRUD
+	// ------------------------------
+
+	/**
+	 * Get all categories from aMule
+	 */
+	async getCategories(): Promise<AmuleCategory[]> {
+		try {
+			const cats = await this.client.getCategories();
+			return cats || [];
+		} catch (e) {
+			console.error('EC Client getCategories Error:', e);
+			// No reliable fallback via amulecmd - return empty list
+			return [];
+		}
+	}
+
+	/**
+	 * Create a category. If id is not provided, choose next available id.
+	 */
+	async createCategory(data: Partial<AmuleCategory>): Promise<AmuleCategory> {
+		const category: AmuleCategory = {
+			id: 0,
+			name: data.name || `New Category`,
+			path: data.path || '',
+			comment: data.comment || '',
+			color: typeof data.color === 'number' ? data.color : 0,
+			priority: typeof data.priority === 'number' ? data.priority : 0,
+		};
+
+		try {
+			await this.client.createCategory(category);
+			return category;
+		} catch (e) {
+			console.error('Create Category Error:', e);
+			throw e;
+		}
+	}
+
+	// /**
+	//  * Update a category by id using available client methods. If the client doesn't expose
+	//  * an update function, attempt a createCategory with the same id (many implementations accept that).
+	//  */
+	// async updateCategory(id: number, data: Partial<AmuleCategory>): Promise<AmuleCategory> {
+	// 	const existing = (await this.getCategories()).find((c) => c.id === id);
+	// 	if (!existing) throw new Error(`Category with id ${id} not found`);
+
+	// 	const updated: AmuleCategory = {
+	// 		...existing,
+	// 		...data,
+	// 		id,
+	// 	};
+
+	// 	try {
+	// 		if (typeof (this.client as any).updateCategory === 'function') {
+	// 			await (this.client as any).updateCategory(updated);
+	// 			return updated;
+	// 		}
+
+	// 		// Fallback: try to call createCategory with same id (server may treat as update)
+	// 		if (typeof (this.client as any).createCategory === 'function') {
+	// 			await (this.client as any).createCategory(updated);
+	// 			return updated;
+	// 		}
+
+	// 		throw new Error('EC client does not support update/delete category operations');
+	// 	} catch (e) {
+	// 		console.error('Update Category Error:', e);
+	// 		throw e;
+	// 	}
+	// }
+
+	/**
+	 * Delete a category by id.
+	 */
+	async deleteCategory(id: number): Promise<void> {
+		try {
+			await this.client.deleteCategory(id);
+		} catch (e) {
+			console.error('Delete Category Error:', e);
+			throw e;
+		}
+	}
+
+	/**
+	 * Set a file's category by its hash (hex string)
+	 */
+	async setFileCategory(hashHex: string, categoryId: number) {
+		try {
+			await this.client.setFileCategory(Buffer.from(hashHex, 'hex'), categoryId);
+			return { success: true };
+		} catch (e) {
+			console.error('Set File Category Error:', e);
+			throw e;
+		}
 	}
 }

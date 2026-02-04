@@ -1,3 +1,5 @@
+import { BaseApiService } from './BaseApiService';
+
 export interface StatsResponse {
 	raw?: string;
 	id?: number;
@@ -99,7 +101,7 @@ export interface TransfersResponse {
 export interface SearchResult {
 	name: string;
 	size: string;
-	link: string;
+	hash: string;
 	type?: string;
 	sources?: string;
 	completeSources?: string;
@@ -114,65 +116,9 @@ export interface SuccessResponse {
 	success: boolean;
 }
 
-export interface SystemInfo {
-	vpn: {
-		enabled: boolean;
-		status?: string;
-		port?: number;
-		[key: string]: any;
-	};
-	publicIp?: string;
-	ipDetails?: {
-		city?: string;
-		region?: string;
-		country?: string;
-		loc?: string;
-		org?: string;
-		timezone?: string;
-	};
-}
-
-export class ApiService {
-	private static instance: ApiService;
-	private baseUrl = '/api';
-
-	private constructor() {}
-
-	public static getInstance(): ApiService {
-		if (!ApiService.instance) {
-			ApiService.instance = new ApiService();
-		}
-		return ApiService.instance;
-	}
-
-	private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-		const response = await fetch(`${this.baseUrl}${path}`, {
-			...options,
-			headers: {
-				'Content-Type': 'application/json',
-				...options.headers,
-			},
-		});
-
-		if (!response.ok) {
-			const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-			throw new Error(error.error || `Request failed with status ${response.status}`);
-		}
-
-		if (response.status === 204) {
-			return undefined as any;
-		}
-
-		const contentType = response.headers.get('content-type');
-		if (contentType && contentType.includes('application/json')) {
-			return response.json().catch(() => undefined as any);
-		}
-
-		return response.text() as any;
-	}
-
-	public async getSystemInfo(): Promise<SystemInfo> {
-		return this.request<SystemInfo>('/system/info');
+export class AmuleApiService extends BaseApiService {
+	constructor() {
+		super('/api/amule');
 	}
 
 	async getInfo(): Promise<AmuleInfo> {

@@ -1,11 +1,13 @@
 import { component, signal, bindControlledInput, bindControlledSelect, onUnmount } from 'chispa';
-import { ApiService, SearchResult } from '../../services/ApiService';
+import { services } from '../../services/container/ServiceContainer';
+import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
 export const SearchView = component(() => {
-	const apiService = ApiService.getInstance();
+	const apiService = services.get(AmuleApiService);
+
 	const results = signal<SearchResult[]>([]);
 	const statusLog = signal('');
 	const searchQuery = signal('');
@@ -46,13 +48,13 @@ export const SearchView = component(() => {
 	// Initial load in case there are results from a previous search
 	loadResults();
 
-	const download = async (link?: string) => {
-		const targetLink = link || downloadLink.get();
+	const download = async (linkOrHash?: string) => {
+		const targetLink = linkOrHash || downloadLink.get();
 		if (!targetLink) return;
 		try {
 			await apiService.addDownload(targetLink);
 			alert('Download added successfully');
-			if (!link) downloadLink.set('');
+			if (!linkOrHash) downloadLink.set('');
 		} catch (e: any) {
 			alert('Error adding download: ' + e.message);
 		}
@@ -158,7 +160,7 @@ export const SearchView = component(() => {
 									return `${((c / s) * 100).toFixed(0)}% (${c})`;
 								},
 							},
-							downloadMiniBtn: { onclick: () => download(res.link) },
+							downloadMiniBtn: { onclick: () => download(res.hash) },
 						},
 					})
 				);

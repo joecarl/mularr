@@ -1,6 +1,6 @@
 import axios from 'axios';
+import { container } from './container/ServiceContainer';
 import { AmuledService } from './AmuledService';
-import { container } from '../ServiceContainer';
 
 export class GluetunService {
 	private readonly apiBase: string;

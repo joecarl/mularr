@@ -1,12 +1,14 @@
 import { component, computed, signal } from 'chispa';
-import { ApiService, Server } from '../../services/ApiService';
+import { services } from '../../services/container/ServiceContainer';
+import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
 import tpl from './ServersView.html';
 import './ServersView.css';
 
 export const ServersView = component(() => {
-	const apiService = ApiService.getInstance();
-	const statsService = StatsService.getInstance();
+	const apiService = services.get(AmuleApiService);
+	const statsService = services.get(StatsService);
+
 	// We'll treat the list as a signal of objects
 	const servers = signal<Server[]>([]);
 	const connectedServer = computed(() => {

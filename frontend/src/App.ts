@@ -1,5 +1,6 @@
 import { component, Router, signal } from 'chispa';
-import { AmuleInfo, ApiService } from './services/ApiService';
+import { services } from './services/container/ServiceContainer';
+import { AmuleInfo, AmuleApiService } from './services/AmuleApiService';
 import { Sidebar } from './layout/Sidebar';
 import { ServersView } from './features/servers/ServersView';
 import { TransfersView } from './features/transfers/TransfersView';
@@ -8,7 +9,7 @@ import { SettingsView } from './features/settings/SettingsView';
 import tpl from './App.html';
 
 export const App = component(() => {
-	const apiService = ApiService.getInstance();
+	const apiService = services.get(AmuleApiService);
 	const amuleInfo = signal<AmuleInfo | null>(null);
 	const loadAmuleInfo = async () => {
 		try {

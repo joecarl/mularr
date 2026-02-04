@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
-import { container } from './ServiceContainer';
+import { container } from './services/container/ServiceContainer';
 import { AmuleService } from './services/AmuleService';
 import { TelegramService } from './services/TelegramService';
 import { GluetunService } from './services/GluetunService';
@@ -11,7 +11,7 @@ import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
-import { arrRoutes } from './routes/arrRoutes';
+import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
 import { indexerRoutes } from './routes/indexerRoutes';
 
 const app = express();
@@ -49,9 +49,9 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 // -- Setup routes -------------------------------------------------------------
 
 app.use('/api/system', systemRoutes());
-app.use('/api', amuleRoutes());
-app.use('/api/as-qbittorrent/api/v2', arrRoutes()); // qBittorrent compatibility for Sonarr/Radarr
-app.use('/api/torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
+app.use('/api/amule', amuleRoutes());
+app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr
+app.use('/api/as-torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
 
 // -- Serve static files from the 'public' folder ------------------------------
 
@@ -69,6 +69,13 @@ app.get(/.*/, (req, res, next) => {
 			res.status(200).send('Mularr Backend is running (Frontend not found)');
 		}
 	});
+});
+
+// -- Log any uncaught requests to help debug ----------------------------------
+
+app.use((req, res, next) => {
+	console.log(`Unhandled request: ${req.method} ${req.originalUrl}`);
+	next();
 });
 
 // -- Start the server ---------------------------------------------------------

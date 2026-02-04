@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { container } from '../ServiceContainer';
+import { container } from '../services/container/ServiceContainer';
 import { SystemService } from '../services/SystemService';
 
 export class SystemController {

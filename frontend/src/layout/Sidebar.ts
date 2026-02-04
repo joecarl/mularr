@@ -1,6 +1,7 @@
 import { component, Link, pathMatches, signal } from 'chispa';
+import { services } from '../services/container/ServiceContainer';
+import { SystemApiService, type SystemInfo } from '../services/SystemApiService';
 import { StatsService } from '../services/StatsService';
-import { ApiService, SystemInfo } from '../services/ApiService';
 import tpl from './Sidebar.html';
 import './Sidebar.css';
 
@@ -52,6 +53,23 @@ function renderValue(val: any): string {
 }
 
 export const Sidebar = component(() => {
+	const statsService = services.get(StatsService);
+	const systemApiService = services.get(SystemApiService);
+	const systemInfo = signal<SystemInfo | null>(null);
+
+	const fetchSystemInfo = async () => {
+		try {
+			const info = await systemApiService.getSystemInfo();
+			systemInfo.set(info);
+		} catch (e) {
+			console.error(e);
+		}
+	};
+
+	// Initial fetch & loop (every 5 minutes)
+	fetchSystemInfo();
+	setInterval(fetchSystemInfo, 60000 * 5);
+
 	const linksData = [
 		//{ to: '/', inner: [getIcon('layout-dashboard'), ' Dashboard'] },
 		{ to: '/servers', inner: ['🔌', ' Servers'] },
@@ -69,22 +87,6 @@ export const Sidebar = component(() => {
 			classes: { 'nav-link': true, 'active-link': pathMatches(link.to) },
 		})
 	);
-
-	const statsService = StatsService.getInstance();
-	const systemInfo = signal<SystemInfo | null>(null);
-
-	const fetchSystemInfo = async () => {
-		try {
-			const info = await ApiService.getInstance().getSystemInfo();
-			systemInfo.set(info);
-		} catch (e) {
-			console.error(e);
-		}
-	};
-
-	// Initial fetch & loop (every 5 minutes)
-	fetchSystemInfo();
-	setInterval(fetchSystemInfo, 60000 * 5);
 
 	return tpl.fragment({
 		navLinks: { inner: links },

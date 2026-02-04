@@ -1,24 +1,17 @@
 import { signal } from 'chispa';
-import { ApiService, StatsResponse } from './ApiService';
+import { services } from './container/ServiceContainer';
+import { AmuleApiService, type StatsResponse } from './AmuleApiService';
 
 export class StatsService {
-	private static instance: StatsService;
-	private apiService = ApiService.getInstance();
+	private apiService = services.get(AmuleApiService);
 
 	// Signal publico con los stats
 	public stats = signal<StatsResponse | null>(null);
 
-	private constructor() {
+	constructor() {
 		setTimeout(() => {
 			this.startPolling();
 		}, 1000);
-	}
-
-	public static getInstance(): StatsService {
-		if (!StatsService.instance) {
-			StatsService.instance = new StatsService();
-		}
-		return StatsService.instance;
 	}
 
 	private startPolling() {

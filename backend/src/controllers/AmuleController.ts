@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
+import { container } from '../services/container/ServiceContainer';
 import { AmuleService } from '../services/AmuleService';
 import { AmuledService } from '../services/AmuledService';
-import { container } from '../ServiceContainer';
 
 export class AmuleController {
 	private readonly amuleService = container.get(AmuleService);

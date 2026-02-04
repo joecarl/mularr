@@ -1,11 +1,13 @@
 import { component, signal, onUnmount } from 'chispa';
-import { ApiService, Transfer } from '../../services/ApiService';
+import { services } from '../../services/container/ServiceContainer';
+import { AmuleApiService, Transfer } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
 export const TransfersView = component(() => {
-	const apiService = ApiService.getInstance();
+	const apiService = services.get(AmuleApiService);
+
 	const transferList = signal<Transfer[]>([]);
 	const sharedList = signal<Transfer[]>([]);
 	const sortColumn = signal<keyof Transfer>('name');

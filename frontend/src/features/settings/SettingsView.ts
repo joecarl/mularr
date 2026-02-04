@@ -1,9 +1,11 @@
 import { component, signal, bindControlledInput, bindControlledSelect, bindControlledCheckbox } from 'chispa';
-import { ApiService } from '../../services/ApiService';
+import { services } from '../../services/container/ServiceContainer';
+import { AmuleApiService } from '../../services/AmuleApiService';
 import tpl from './SettingsView.html';
 
 export const SettingsView = component(() => {
-	const apiService = ApiService.getInstance();
+	const apiService = services.get(AmuleApiService);
+
 	const theme = signal('classic');
 	const interval = signal(2000);
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { container } from '../ServiceContainer';
+import { container } from './container/ServiceContainer';
 import { GluetunService } from './GluetunService';
 
 export class SystemService {
