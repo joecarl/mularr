@@ -23,21 +23,57 @@ Shared Files
 	<div style="flex: 1"></div>
 
 	<div class="net-box">
-		<div class="net-box-header">Network</div>
+		<div class="net-box-header">🛜 Network</div>
 		<div class="stats-container" data-cb="systemContainer">
 			Loading system...
 		</div>
 	</div>
 
 	<div class="net-box">
-		<div class="net-box-header">Status</div>
+		<div class="net-box-header">🌍 Connection</div>
+		<div class="connection-box" data-cb="connectionContainer">
+			<div data-cb="connectionDetails" style="padding: 8px; display: flex; flex-direction: column; gap: 4px;">
+				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+					<span data-cb="connStatusText"
+						style="font-size: 11px; font-weight: bold; color: #215dc6;">Connected</span>
+					<span data-cb="highIdBadge"
+						style="font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: bold; text-transform: uppercase;"></span>
+				</div>
+
+				<div
+					style="background: #f0f4fb; border: 1px solid #d1e0f6; border-radius: 3px; padding: 5px; margin-bottom: 2px;">
+					<div style="font-size: 11px; font-weight: bold; color: #003c74;" data-cb="serverName"></div>
+					<div style="font-size: 10px; color: #4b6289;" data-cb="serverIpPort"></div>
+					<div style="font-size: 9px; color: #666; margin-top: 2px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+						data-cb="serverDesc"></div>
+				</div>
+
+				<div style="display: flex; flex-direction: column; gap: 2px; font-size: 9px; padding: 2px;">
+					<div style="display: flex; justify-content: space-between;">
+						<span style="color: #666;">ED2K ID:</span>
+						<span data-cb="ed2kIdVal" style="font-weight: bold; font-family: monospace;"></span>
+					</div>
+					<div style="width: 100%; border-bottom: 1px solid #d1e0f6; margin: 5px 0;"></div>
+					<div style="display: flex; flex-direction: column;">
+						<span style="color: #666;">Kad ID:</span>
+						<span data-cb="kadIdVal"
+							style="font-weight: bold; font-family: monospace; word-break: break-all;"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="net-box">
+		<div class="net-box-header">🫀 Status</div>
 		<div class="stats-container" data-cb="statsContainer">
 			Loading stats...
 			<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
-			<div data-cb="statRow" style="display:flex; justify-content:space-between; font-size:10px;">
+			<div data-cb="statRow"
+				style="display:flex; justify-content:space-between; font-size:10px; white-space: nowrap;">
 				<span data-cb="statLabel" style="opacity:0.8"></span>
 				<span>
-					<span data-cb="statValue" style="font-weight:bold; padding-left: 2px"></span>
+					<span data-cb="statValue" style="font-weight:bold; padding-left: 2px; max-width: 100px;"></span>
 					<span data-cb="statUnit" style="color:#5775a3; font-weight:normal; padding-left:2px;"></span>
 				</span>
 			</div>

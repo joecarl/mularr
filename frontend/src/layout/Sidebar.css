@@ -42,6 +42,19 @@
 		border-top-right-radius: 3px;
 	}
 
+	.connection-box {
+		background: white;
+		border-bottom: 1px solid #d1e0f6;
+	}
+
+	.connection-box [data-cb="ed2kIdVal"], 
+	.connection-box [data-cb="kadIdVal"] {
+		font-family: 'Courier New', Courier, monospace;
+		background: #f8f9fa;
+		padding: 0 2px;
+		border-radius: 2px;
+	}
+
 	.nav-links {
 		display: flex;
 		flex-direction: column;

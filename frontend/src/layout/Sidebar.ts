@@ -91,6 +91,45 @@ export const Sidebar = component(() => {
 
 	return tpl.fragment({
 		navLinks: { inner: links },
+		connectionContainer: {
+			inner: () => {
+				const s = statsService.stats.get();
+				if (!s || !s.connectedServer) {
+					return tpl.connectionDetails({
+						nodes: {
+							connStatusText: { inner: 'Disconnected' },
+							highIdBadge: { style: { display: 'none' } },
+							serverName: { inner: 'Not connected' },
+							serverIpPort: { inner: '-' },
+							serverDesc: { inner: 'Please connect to a server' },
+							ed2kIdVal: { inner: '-' },
+							kadIdVal: { inner: '-' },
+						},
+					});
+				}
+
+				const isHigh = !!s.isHighID;
+
+				return tpl.connectionDetails({
+					nodes: {
+						connStatusText: { inner: s.connectionState || 'Connected' },
+						highIdBadge: {
+							inner: isHigh ? 'High ID' : 'Low ID',
+							style: {
+								background: isHigh ? '#4caf50' : '#f44336',
+								color: 'white',
+								border: isHigh ? '1px solid #388e3c' : '1px solid #d32f2f',
+							},
+						},
+						serverName: { inner: s.connectedServer.name || 'Unknown Server' },
+						serverIpPort: { inner: `${s.connectedServer.ip}:${s.connectedServer.port}` },
+						serverDesc: { inner: s.connectedServer.description || 'No description available' },
+						ed2kIdVal: { inner: String(s.ed2kId || s.id || '-') },
+						kadIdVal: { inner: s.kadId || '-' },
+					},
+				});
+			},
+		},
 		systemContainer: {
 			inner: () => {
 				const info = systemInfo.get();
@@ -207,20 +246,6 @@ export const Sidebar = component(() => {
 				}
 				// 2. Typed fields — render each stat with an appropriate formatter
 				const fields: Array<{ key: string; label: string; render?: (v: any) => any }> = [
-					{ key: 'isHighID', label: 'HighID', render: (v: boolean) => (v ? 'Yes' : 'No') },
-					{ key: 'id', label: 'ID' },
-					{ key: 'ed2kId', label: 'ED2K ID' },
-					{ key: 'kadId', label: 'KAD ID' },
-					{
-						key: 'connectedServer',
-						label: 'Connected server',
-						render: (v: any) => {
-							if (!v) return null;
-							if (v.name) return v.name;
-							return `${v.ip}:${v.port}`;
-						},
-					},
-					{ key: 'connectionState', label: 'Connection state' },
 					{ key: 'uploadOverhead', label: 'Upload overhead', render: (v: number) => (v == null ? null : formatPercent(v)) },
 					{ key: 'downloadOverhead', label: 'Download overhead', render: (v: number) => (v == null ? null : formatPercent(v)) },
 					{ key: 'bannedCount', label: 'Banned', render: (v: number) => formatAmount(v) },
