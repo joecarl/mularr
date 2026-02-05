@@ -75,6 +75,7 @@ export const Sidebar = component(() => {
 		{ to: '/servers', inner: ['🔌', ' Servers'] },
 		{ to: '/transfers', inner: ['🔽', ' Transfers'] },
 		{ to: '/search', inner: ['🔍', ' Search'] },
+		{ to: '/categories', inner: ['🏷️', ' Categories'] },
 		{ to: '/settings', inner: ['⚙️', ' Settings'] },
 	];
 

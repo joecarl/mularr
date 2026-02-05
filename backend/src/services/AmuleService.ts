@@ -142,6 +142,7 @@ export class AmuleService {
 					priority: file.downPrio,
 					remaining: remaining,
 					timeLeft: timeLeft,
+					categoryId: file.fileCat,
 				};
 			});
 
@@ -326,7 +327,7 @@ export class AmuleService {
 	async removeDownload(hash: string) {
 		console.log('Removing download:', hash);
 		try {
-			await this.client.stopDownload(Buffer.from(hash, 'hex'));
+			await this.client.deleteDownload(Buffer.from(hash, 'hex'));
 			return { success: true };
 		} catch (e) {
 			console.warn('EC Client removeDownload failed, falling back to amulecmd:', e);
@@ -337,6 +338,39 @@ export class AmuleService {
 		}
 
 		throw new Error('Could not remove download. Fallback disabled.');
+	}
+
+	async pauseDownload(hash: string) {
+		console.log('Pausing download:', hash);
+		try {
+			await this.client.pauseDownload(Buffer.from(hash, 'hex'));
+			return { success: true };
+		} catch (e) {
+			console.error('Pause Download Error:', e);
+			throw e;
+		}
+	}
+
+	async resumeDownload(hash: string) {
+		console.log('Resuming download:', hash);
+		try {
+			await this.client.resumeDownload(Buffer.from(hash, 'hex'));
+			return { success: true };
+		} catch (e) {
+			console.error('Resume Download Error:', e);
+			throw e;
+		}
+	}
+
+	async stopDownload(hash: string) {
+		console.log('Stopping download:', hash);
+		try {
+			await this.client.stopDownload(Buffer.from(hash, 'hex'));
+			return { success: true };
+		} catch (e) {
+			console.error('Stop Download Error:', e);
+			throw e;
+		}
 	}
 
 	// ------------------------------
@@ -379,38 +413,29 @@ export class AmuleService {
 		}
 	}
 
-	// /**
-	//  * Update a category by id using available client methods. If the client doesn't expose
-	//  * an update function, attempt a createCategory with the same id (many implementations accept that).
-	//  */
-	// async updateCategory(id: number, data: Partial<AmuleCategory>): Promise<AmuleCategory> {
-	// 	const existing = (await this.getCategories()).find((c) => c.id === id);
-	// 	if (!existing) throw new Error(`Category with id ${id} not found`);
+	/**
+	 * Update a category by id using available client methods.
+	 */
+	async updateCategory(id: number, data: Partial<AmuleCategory>): Promise<AmuleCategory> {
+		const cats = await this.getCategories();
+		const existing = cats.find((c) => c.id === id);
+		if (!existing) throw new Error(`Category with id ${id} not found`);
 
-	// 	const updated: AmuleCategory = {
-	// 		...existing,
-	// 		...data,
-	// 		id,
-	// 	};
+		const updated: AmuleCategory = {
+			...existing,
+			...data,
+			id,
+		};
 
-	// 	try {
-	// 		if (typeof (this.client as any).updateCategory === 'function') {
-	// 			await (this.client as any).updateCategory(updated);
-	// 			return updated;
-	// 		}
-
-	// 		// Fallback: try to call createCategory with same id (server may treat as update)
-	// 		if (typeof (this.client as any).createCategory === 'function') {
-	// 			await (this.client as any).createCategory(updated);
-	// 			return updated;
-	// 		}
-
-	// 		throw new Error('EC client does not support update/delete category operations');
-	// 	} catch (e) {
-	// 		console.error('Update Category Error:', e);
-	// 		throw e;
-	// 	}
-	// }
+		try {
+			// In many EC implementations, creating a category with an existing ID updates it
+			await this.client.updateCategory(id, updated);
+			return updated;
+		} catch (e) {
+			console.error('Update Category Error:', e);
+			throw e;
+		}
+	}
 
 	/**
 	 * Delete a category by id.

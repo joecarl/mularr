@@ -6,6 +6,7 @@ import { ServersView } from './features/servers/ServersView';
 import { TransfersView } from './features/transfers/TransfersView';
 import { SearchView } from './features/search/SearchView';
 import { SettingsView } from './features/settings/SettingsView';
+import { CategoriesView } from './features/categories/CategoriesView';
 import tpl from './App.html';
 
 export const App = component(() => {
@@ -23,15 +24,18 @@ export const App = component(() => {
 	loadAmuleInfo();
 	return tpl.fragment({
 		sidebarContainer: Sidebar({}),
-		routerView: Router({
-			routes: [
-				{ path: '/', component: ServersView },
-				{ path: '/servers', component: ServersView },
-				{ path: '/transfers', component: TransfersView },
-				{ path: '/search', component: SearchView },
-				{ path: '/settings', component: SettingsView },
-			],
-		}),
+		routerView: {
+			inner: Router({
+				routes: [
+					{ path: '/', component: ServersView },
+					{ path: '/servers', component: ServersView },
+					{ path: '/transfers', component: TransfersView },
+					{ path: '/search', component: SearchView },
+					{ path: '/categories', component: CategoriesView },
+					{ path: '/settings', component: SettingsView },
+				],
+			}),
+		},
 		amuleVersion: {
 			inner: () => {
 				const info = amuleInfo.get();

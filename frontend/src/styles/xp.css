@@ -31,8 +31,15 @@ body {
 	cursor: pointer;
 	min-width: 75px;
 }
+.win-btn-icon {
+	min-width: auto;
+}
 .win-btn:hover {
 	box-shadow: 0 0 2px gold; /* Fake XP hover glow */
+}
+.win-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
 }
 
 /* Classic 3D borders for panels */
@@ -53,7 +60,7 @@ body {
 	width: 100%;
 	border-collapse: collapse;
 	background-color: white;
-	border: 1px solid #7f9db9; /* XP Field border */
+	/* border: 1px solid #7f9db9; XP Field border */
 }
 
 .win-list th {
@@ -166,8 +173,6 @@ body {
 /* Replaces old View Containers */
 .view-container {
 	flex: 1;
+	padding: 8px;
 	overflow: hidden;
-	padding: 2px;
-	display: flex;
-	flex-direction: column;
 }

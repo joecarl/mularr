@@ -90,7 +90,17 @@ export interface Transfer {
 	status?: string;
 	remaining?: number;
 	hash?: string;
+	categoryId?: number;
 	addedOn?: number; // Placeholder, might be missing from backend
+}
+
+export interface Category {
+	id: number;
+	name: string;
+	path: string;
+	comment: string;
+	color: number;
+	priority: number;
 }
 
 export interface TransfersResponse {
@@ -165,6 +175,24 @@ export class AmuleApiService extends BaseApiService {
 		return this.request<SuccessResponse>('/download', {
 			method: 'POST',
 			body: JSON.stringify({ link }),
+		});
+	}
+
+	async sendDownloadCommand(hash: string, command: 'pause' | 'resume' | 'stop' | 'cancel'): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/download/command', {
+			method: 'POST',
+			body: JSON.stringify({ hash, command }),
+		});
+	}
+
+	async getCategories(): Promise<Category[]> {
+		return this.request<Category[]>('/categories');
+	}
+
+	async setFileCategory(hash: string, categoryId: number): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/download/set-category', {
+			method: 'POST',
+			body: JSON.stringify({ hash, categoryId }),
 		});
 	}
 

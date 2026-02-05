@@ -1,4 +1,4 @@
-import { component, computed, signal } from 'chispa';
+import { component, computed, onUnmount, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
@@ -28,8 +28,12 @@ export const ServersView = component(() => {
 	};
 
 	// Poll log every 3 seconds
-	setInterval(fetchLog, 3000);
+	const logInterval = setInterval(fetchLog, 3000);
 	fetchLog();
+
+	onUnmount(() => {
+		clearInterval(logInterval);
+	});
 
 	const loadServers = async () => {
 		try {

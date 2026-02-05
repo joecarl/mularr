@@ -15,6 +15,8 @@ export const SearchView = component(() => {
 	const downloadLink = signal('');
 	const sortColumn = signal<keyof SearchResult>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
+	const searchProgress = signal(0);
+	let isPolling = false;
 
 	const performSearch = async () => {
 		if (!searchQuery.get()) return;
@@ -22,8 +24,22 @@ export const SearchView = component(() => {
 			await apiService.search(searchQuery.get(), searchType.get());
 			statusLog.set('Search started. Waiting for results...');
 			results.set([]);
+			searchProgress.set(0);
+			startPolling();
 		} catch (e: any) {
 			alert(e.message);
+		}
+	};
+
+	const loadSearchStatus = async () => {
+		try {
+			const status = await apiService.getSearchStatus();
+			// Progress comes as 0 to 1 from backend
+			searchProgress.set(status.progress);
+			return status.progress;
+		} catch (e: any) {
+			console.error('Error loading search status:', e);
+			return 1; // Stop polling on error
 		}
 	};
 
@@ -41,12 +57,36 @@ export const SearchView = component(() => {
 		}
 	};
 
-	// Auto-update results every 3 seconds
-	const intervalId = setInterval(loadResults, 3000);
-	onUnmount(() => clearInterval(intervalId));
+	let intervalId: any = null;
 
-	// Initial load in case there are results from a previous search
-	loadResults();
+	const startPolling = () => {
+		if (isPolling) return;
+		isPolling = true;
+
+		if (intervalId) clearInterval(intervalId);
+
+		intervalId = setInterval(async () => {
+			const progress = await loadSearchStatus();
+			await loadResults();
+
+			if (progress >= 1 || progress === 0) {
+				stopPolling();
+			}
+		}, 1000);
+	};
+
+	const stopPolling = () => {
+		if (intervalId) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+		isPolling = false;
+	};
+
+	onUnmount(() => stopPolling());
+
+	// Initial load: check if a search is already in progress
+	startPolling();
 
 	const download = async (linkOrHash?: string) => {
 		const targetLink = linkOrHash || downloadLink.get();
@@ -172,5 +212,18 @@ export const SearchView = component(() => {
 			},
 		},
 		downloadBtn: { onclick: () => download() },
+		searchProgressContainer: {
+			style: {
+				opacity: () => (searchProgress.get() === 0 ? '0.5' : ''),
+			},
+		},
+		searchProgressBar: {
+			style: {
+				width: () => `${Math.min(100, searchProgress.get() * 100)}%`,
+			},
+		},
+		searchProgressText: {
+			inner: () => `${Math.floor(Math.min(1, searchProgress.get()) * 100)}%`,
+		},
 	});
 });

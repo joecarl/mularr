@@ -1,6 +1,16 @@
 <div style="height: 100%; display: flex; flex-direction: column; gap: 10px;">
-	<div style="padding: 5px;">
+	<div class="win-panel-raised" style="padding: 5px; display: flex; gap: 10px; align-items: center;">
 		<button class="win-btn" data-cb="refreshBtn">Reload</button>
+		<div style="width: 1px; height: 20px; background: #808080;"></div>
+		<button class="win-btn" data-cb="pauseBtn" disabled>⏸️</button>
+		<button class="win-btn" data-cb="resumeBtn" disabled>▶️</button>
+		<button class="win-btn" data-cb="stopBtn" disabled>⏹️</button>
+		<button class="win-btn" data-cb="cancelBtn" disabled>❌</button>
+		<div style="width: 1px; height: 20px; background: #808080;"></div>
+		<label>Category:</label>
+		<select data-cb="catSelect" style="border: 2px inset;" disabled>
+			<option value="-1">Select...</option>
+		</select>
 	</div>
 
 	<!-- Active Downloads -->
@@ -13,6 +23,7 @@
 					<tr>
 						<th data-cb="thName" style="cursor: pointer">Filename</th>
 						<th data-cb="thSize" style="cursor: pointer">Size</th>
+						<th data-cb="thCategory" style="cursor: pointer">Category</th>
 						<th data-cb="thCompleted" style="cursor: pointer">Completed</th>
 						<th data-cb="thSpeed" style="cursor: pointer">Speed</th>
 						<th data-cb="thProgress" style="cursor: pointer">Progress</th>
@@ -24,13 +35,14 @@
 					</tr>
 				</thead>
 				<tbody data-cb="transferListContainer">
-					<tr data-cb="transferRow">
+					<tr data-cb="transferRow" style="cursor: default;">
 						<td data-cb="nameCol"
 							style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">
 							<span data-cb="fileIcon" style="margin-right: 5px;"></span>
 							<span data-cb="fileNameText">Filename</span>
 						</td>
 						<td data-cb="sizeCol">Size</td>
+						<td data-cb="categoryCol">Cat</td>
 						<td data-cb="completedCol">Completed</td>
 						<td data-cb="speedCol">Speed</td>
 						<td data-cb="progressCol" style="width: 100px;">
@@ -49,7 +61,7 @@
 						<td data-cb="addedOnCol">Added On</td>
 					</tr>
 					<tr data-cb="noTransferRow">
-						<td colspan="10">No active transfers.</td>
+						<td colspan="11">No active transfers.</td>
 					</tr>
 				</tbody>
 			</table>

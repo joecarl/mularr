@@ -1,6 +1,6 @@
-import { component, signal, onUnmount } from 'chispa';
+import { component, signal, computed, onUnmount } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { AmuleApiService, Transfer } from '../../services/AmuleApiService';
+import { AmuleApiService, Transfer, Category } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
@@ -10,19 +10,31 @@ export const TransfersView = component(() => {
 
 	const transferList = signal<Transfer[]>([]);
 	const sharedList = signal<Transfer[]>([]);
+	const categories = signal<Category[]>([]);
+	const selectedHash = signal<string | null>(null);
 	const sortColumn = signal<keyof Transfer>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
+
+	const isDisabled = computed(() => !selectedHash.get());
 
 	const loadTransfers = async () => {
 		try {
 			const data: any = await apiService.getTransfers();
-			// Backward compatibility or new structure
 			if (data.downloads) {
 				transferList.set(data.downloads);
 				sharedList.set(data.shared || []);
 			}
 		} catch (e: any) {
-			transferList.set([{ rawLine: 'Error: ' + e.message }]);
+			console.error('Error loading transfers:', e);
+		}
+	};
+
+	const loadCategories = async () => {
+		try {
+			const cats = await apiService.getCategories();
+			categories.set(cats);
+		} catch (e: any) {
+			console.error('Error loading categories:', e);
 		}
 	};
 
@@ -31,6 +43,7 @@ export const TransfersView = component(() => {
 	onUnmount(() => clearInterval(intervalId));
 
 	loadTransfers();
+	loadCategories();
 
 	const sort = (col: keyof Transfer) => {
 		if (sortColumn.get() === col) {
@@ -41,9 +54,78 @@ export const TransfersView = component(() => {
 		}
 	};
 
+	const executeCommand = async (cmd: 'pause' | 'resume' | 'stop' | 'cancel') => {
+		const hash = selectedHash.get();
+		if (!hash) return;
+		try {
+			if (cmd === 'cancel' && !confirm('Are you sure you want to cancel this download?')) {
+				return;
+			}
+			await apiService.sendDownloadCommand(hash, cmd);
+			if (cmd === 'cancel') selectedHash.set(null);
+			loadTransfers();
+		} catch (e: any) {
+			alert(e.message);
+		}
+	};
+
+	const changeCategory = async (catId: number) => {
+		const hash = selectedHash.get();
+		if (!hash || catId < 0) return;
+		try {
+			await apiService.setFileCategory(hash, catId);
+			loadTransfers();
+		} catch (e: any) {
+			alert(e.message);
+		}
+	};
+
 	return tpl.fragment({
+		refreshBtn: { onclick: loadTransfers },
+		pauseBtn: {
+			disabled: isDisabled,
+			onclick: () => executeCommand('pause'),
+		},
+		resumeBtn: {
+			disabled: isDisabled,
+			onclick: () => executeCommand('resume'),
+		},
+		stopBtn: {
+			disabled: isDisabled,
+			onclick: () => executeCommand('stop'),
+		},
+		cancelBtn: {
+			disabled: isDisabled,
+			onclick: () => executeCommand('cancel'),
+		},
+		catSelect: {
+			disabled: isDisabled,
+			inner: () => {
+				const currentSelection = selectedHash.get();
+				const currentTransfer = transferList.get().find((t) => t.hash === currentSelection);
+				const currentCatId = currentTransfer?.categoryId ?? -1;
+
+				const opts = [{ value: '-1', label: 'Select Category...' }, ...categories.get().map((c) => ({ value: String(c.id), label: c.name }))];
+
+				// If tpl.catOption doesn't exist, we'll just use raw HTML for simplicity in this specific case
+				// Or use a more standard way if tpl supports it.
+				// Since I can't easily add a template now without editing HTML again,
+				// I'll assume tpl might not have it unless I add it.
+				// Let's just use string mapping for inner if supported, or document.create
+				return opts.map((opt) => {
+					const el = document.createElement('option');
+					el.value = opt.value;
+					el.textContent = opt.label;
+					if (parseInt(opt.value) === currentCatId) el.selected = true;
+					return el;
+				});
+			},
+			onchange: (e: any) => changeCategory(parseInt(e.target.value)),
+		},
+
 		thName: { onclick: () => sort('name') },
 		thSize: { onclick: () => sort('size') },
+		thCategory: { onclick: () => sort('categoryId') },
 		thCompleted: { onclick: () => sort('completed') },
 		thSpeed: { onclick: () => sort('speed') },
 		thProgress: { onclick: () => sort('progress') },
@@ -82,7 +164,16 @@ export const TransfersView = component(() => {
 				};
 
 				return list.map((t) => {
+					const isSelected = selectedHash.get() === t.hash;
+					const category = categories.get().find((c) => c.id === t.categoryId);
+
 					return tpl.transferRow({
+						_ref: (el) => {
+							if (isSelected) (el as HTMLElement).classList.add('selected');
+							else (el as HTMLElement).classList.remove('selected');
+						},
+						// CSS class handles selection in win-list
+						onclick: () => selectedHash.set(t.hash || null),
 						nodes: {
 							nameCol: {
 								nodes: {
@@ -91,6 +182,7 @@ export const TransfersView = component(() => {
 								},
 							},
 							sizeCol: { inner: formatBytes(t.size) },
+							categoryCol: { inner: category?.name || '-' },
 							completedCol: { inner: formatBytes(t.completed) },
 							speedCol: { inner: formatBytes(t.speed) + '/s' },
 							progressCol: {
@@ -99,10 +191,11 @@ export const TransfersView = component(() => {
 									progressText: { inner: ((t.progress || 0) * 100).toFixed(1) + '%' },
 								},
 							},
-							sourcesCol: { inner: (t.sources || 0).toString() },
-							priorityCol: { inner: (t.priority || 0).toString() },
+							sourcesCol: { inner: String(t.sources || 0) },
+							priorityCol: { inner: String(t.priority || 0) },
 							statusCol: { inner: t.status || '' },
 							remainingCol: { inner: formatBytes(t.remaining) },
+							addedOnCol: { inner: t.addedOn ? new Date(t.addedOn * 1000).toLocaleString() : '-' },
 						},
 					});
 				});
@@ -139,6 +232,5 @@ export const TransfersView = component(() => {
 				});
 			},
 		},
-		refreshBtn: { onclick: loadTransfers },
 	});
 });
