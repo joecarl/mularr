@@ -76,11 +76,37 @@ export class QbittorrentController {
 	// qBittorrent API: GET /api/v2/torrents/info
 	getTorrents = async (req: Request, res: Response) => {
 		console.log('[QbittorrentController] Torrents info requested');
+		const { category } = req.query;
 		try {
 			const transfers = await this.amuleService.getTransfers();
+			const categories = await this.amuleService.getCategories();
+
+			const getCatById = (id: number) => {
+				const cat = categories.find((c) => c.id === id);
+				return cat;
+			};
+
+			const requestedCtg = categories.find((c) => c.name === category);
+			if (category && !requestedCtg) {
+				res.json([]);
+				return;
+			}
+			const downloads = transfers.downloads.filter((t) => {
+				if (requestedCtg) {
+					return t.categoryId === requestedCtg.id;
+				}
+				return true;
+			});
+
+			const shared = transfers.shared.filter((t) => {
+				if (requestedCtg) {
+					return t.categoryId === requestedCtg.id;
+				}
+				return true;
+			});
 
 			const qbitTorrents = [
-				...(transfers.downloads || []).map((t) => ({
+				...downloads.map((t) => ({
 					hash: t.hash || 'unknown',
 					name: t.name || 'Unknown',
 					size: t.size || 0,
@@ -91,12 +117,12 @@ export class QbittorrentController {
 					num_seeds: t.sources || 0,
 					num_leechers: 0,
 					state: this.mapStatusToQbitState(t.status || 'Downloading'),
-					save_path: '/incoming',
+					save_path: getCatById(t.categoryId)?.path || '/incoming',
 					added_on: Math.floor(Date.now() / 1000),
 					eta: t.timeLeft || 0,
-					category: 'mularr',
+					category: getCatById(t.categoryId)?.name || '',
 				})),
-				...(transfers.shared || []).map((t) => ({
+				...shared.map((t) => ({
 					hash: t.hash || 'unknown',
 					name: t.name || 'Unknown',
 					size: t.size || 0,
@@ -107,11 +133,12 @@ export class QbittorrentController {
 					num_seeds: 0,
 					num_leechers: 0,
 					state: 'uploading',
-					save_path: '/incoming',
+					save_path: getCatById(t.categoryId)?.path || '/incoming',
 					added_on: Math.floor(Date.now() / 1000),
-					category: 'mularr',
+					category: getCatById(t.categoryId)?.name || '',
 				})),
 			];
+			//console.log(qbitTorrents);
 
 			res.json(qbitTorrents);
 		} catch (e: any) {
@@ -125,24 +152,50 @@ export class QbittorrentController {
 		console.log('[QbittorrentController] Add torrent requested');
 		try {
 			// qBittorrent transmits URLs in a field called 'urls'
-			const { urls } = req.body;
+			const { urls, category, paused } = req.body;
 			if (!urls) {
 				return res.status(400).send('No URLs provided');
 			}
 
 			const urlList = typeof urls === 'string' ? urls.split('\n') : urls;
 
-			for (const url of urlList) {
-				const trimmedUrl = url.trim();
-				const decodedUrl = extractHashFromMagnet(trimmedUrl);
-				if (decodedUrl) {
-					console.log(`[QbittorrentController] Extracted HASH from magnet: ${decodedUrl}`);
-					await this.amuleService.addDownload(decodedUrl);
-				} else if (trimmedUrl) {
-					console.log(`[QbittorrentController] Adding download from Sonarr/Radarr: ${trimmedUrl}`);
-					await this.amuleService.addDownload(trimmedUrl);
+			const categories = await this.amuleService.getCategories();
+			let categoryId: number | undefined = undefined;
+			if (category) {
+				const cat = categories.find((c) => c.name === category);
+				if (cat) {
+					categoryId = cat.id;
+				} else {
+					const newCat = await this.amuleService.createCategory({
+						name: category,
+					});
+					categoryId = newCat.id;
 				}
 			}
+
+			for (const url of urlList) {
+				const trimmedUrl: string = url.trim();
+				let hash = extractHashFromMagnet(trimmedUrl);
+				if (hash) {
+					console.log(`[QbittorrentController] Extracted HASH from magnet: ${hash}`);
+				} else {
+					hash = trimmedUrl;
+				}
+
+				console.log(`[QbittorrentController] Adding download from Sonarr/Radarr`);
+				await this.amuleService.addDownload(hash);
+
+				if (categoryId) {
+					console.log(`[QbittorrentController] Setting category ID ${categoryId} for hash ${hash}`);
+					await this.amuleService.setFileCategory(hash, categoryId || 0);
+				}
+
+				if (paused) {
+					console.log(`[QbittorrentController] Pausing download for hash ${hash}`);
+					await this.amuleService.pauseDownload(hash);
+				}
+			}
+
 			res.send('Ok.');
 		} catch (e: any) {
 			console.error('QbittorrentController addTorrent Error:', e);

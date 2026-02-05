@@ -406,7 +406,13 @@ export class AmuleService {
 
 		try {
 			await this.client.createCategory(category);
-			return category;
+			const ctgs = await this.getCategories();
+			// Get ctg with highest ID - should be the one we just created
+			const created = ctgs.reduce((prev, current) => (prev.id > current.id ? prev : current));
+			if (created.name !== category.name) {
+				throw new Error('Failed to verify created category');
+			}
+			return created;
 		} catch (e) {
 			console.error('Create Category Error:', e);
 			throw e;
