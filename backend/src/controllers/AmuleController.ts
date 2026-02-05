@@ -71,6 +71,15 @@ export class AmuleController {
 		}
 	};
 
+	getSearchStatus = async (req: Request, res: Response) => {
+		try {
+			const status = await this.amuleService.getSearchStatus();
+			res.json(status);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	download = async (req: Request, res: Response) => {
 		try {
 			const { link } = req.body;

@@ -278,6 +278,20 @@ export class AmuleService {
 		}
 	}
 
+	async getSearchStatus() {
+		try {
+			const progress = await this.client.searchStatus();
+			return {
+				raw: `Search Status: ${progress}`,
+				progress: progress,
+			};
+		} catch (e: any) {
+			console.error('Get Search Status Error:', e);
+
+			return { raw: 'Error fetching search status', progress: 0 };
+		}
+	}
+
 	async addDownload(link: string) {
 		console.log('Adding download:', link);
 

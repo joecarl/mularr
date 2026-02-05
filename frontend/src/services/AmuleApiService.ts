@@ -112,6 +112,11 @@ export interface SearchResultsResponse {
 	list: SearchResult[];
 }
 
+export interface SearchStatusResponse {
+	raw: string;
+	progress: number;
+}
+
 export interface SuccessResponse {
 	success: boolean;
 }
@@ -150,6 +155,10 @@ export class AmuleApiService extends BaseApiService {
 
 	async getSearchResults(): Promise<SearchResultsResponse> {
 		return this.request<SearchResultsResponse>('/search/results');
+	}
+
+	async getSearchStatus(): Promise<SearchStatusResponse> {
+		return this.request<SearchStatusResponse>('/search/status');
 	}
 
 	async addDownload(link: string): Promise<SuccessResponse> {
