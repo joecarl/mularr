@@ -211,8 +211,15 @@ export class AmuleService {
 					if (sharedFile) {
 						// Mark as completed in DB
 						try {
-							db.prepare('UPDATE downloads SET is_completed = 1 WHERE hash = ?').run(dbRecord.hash);
+							// Also update name and size from shared file info just in case they were never set
+							db.prepare('UPDATE downloads SET is_completed = 1, name = ?, size = ? WHERE hash = ?').run(
+								sharedFile.fileName,
+								sharedFile.sizeFull,
+								dbRecord.hash
+							);
 							dbRecord.is_completed = 1;
+							dbRecord.name = sharedFile.fileName ?? '';
+							dbRecord.size = sharedFile.sizeFull || 0;
 							console.log('Marked file as completed in DB:', dbRecord.hash, dbRecord.name);
 						} catch (e) {
 							console.error('DB update completion error:', e);
@@ -318,6 +325,16 @@ export class AmuleService {
 			// 	return this.amulecmdService.getTransfers();
 			// }
 			return { raw: 'Error getting transfers', downloads: [] };
+		}
+	}
+
+	async clearCompletedTransfers() {
+		console.log('[AmuleService] Clearing completed transfers from DB and client queue');
+		try {
+			db.exec('DELETE FROM downloads WHERE is_completed = 1');
+		} catch (e) {
+			console.error('DB Clear Completed Transfers Error:', e);
+			throw e;
 		}
 	}
 

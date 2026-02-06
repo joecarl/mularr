@@ -122,6 +122,12 @@ export const TransfersView = component(() => {
 			},
 			onchange: (e: any) => changeCategory(parseInt(e.target.value)),
 		},
+		clearCompletedBtn: {
+			onclick: async () => {
+				await apiService.clearCompletedTransfers();
+				loadTransfers();
+			},
+		},
 
 		thName: { onclick: () => sort('name') },
 		thSize: { onclick: () => sort('size') },

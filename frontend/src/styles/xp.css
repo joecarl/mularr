@@ -25,16 +25,25 @@ body {
 /* Generic Windows Controls */
 .win-btn {
 	background-color: var(--win-face);
-	border: 1px solid #003c74; /* XP style button border usually implies a gradient but flat is ok for now */
+	border: 1px solid #808080; /* XP style button border usually implies a gradient but flat is ok for now */
 	border-radius: 3px;
 	padding: 2px 8px;
 	cursor: pointer;
 	min-width: 75px;
+	box-shadow:
+		inset 2px 2px 2px -1px #fff,
+		inset -2px -2px 2px -2px #0008;
 }
 .win-btn-icon {
 	min-width: auto;
 }
 .win-btn:hover {
+	box-shadow:
+		inset 2px 2px 2px -1px #fff,
+		inset -2px -2px 2px -2px #0008,
+		0 0 2px gold; /* Fake XP hover glow */
+}
+.win-btn:active {
 	box-shadow: 0 0 2px gold; /* Fake XP hover glow */
 }
 .win-btn:disabled {

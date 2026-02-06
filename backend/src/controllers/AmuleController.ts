@@ -52,6 +52,15 @@ export class AmuleController {
 		}
 	};
 
+	clearCompletedTransfers = async (req: Request, res: Response) => {
+		try {
+			await this.amuleService.clearCompletedTransfers();
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getSharedFiles = async (req: Request, res: Response) => {
 		try {
 			const shared = await this.amuleService.getSharedFiles();

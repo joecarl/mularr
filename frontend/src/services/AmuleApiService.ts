@@ -167,6 +167,12 @@ export class AmuleApiService extends BaseApiService {
 		return this.request<TransfersResponse>('/transfers');
 	}
 
+	async clearCompletedTransfers(): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/transfers/clear-completed', {
+			method: 'POST',
+		});
+	}
+
 	async getSharedFiles(): Promise<SharedResponse> {
 		return this.request<SharedResponse>('/shared');
 	}

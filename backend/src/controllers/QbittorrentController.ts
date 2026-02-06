@@ -81,26 +81,17 @@ export class QbittorrentController {
 			const transfers = await this.amuleService.getTransfers();
 			const categories = await this.amuleService.getCategories();
 
-			const getCatById = (id: number) => {
-				const cat = categories.find((c) => c.id === id);
+			const getCatByName = (name: string) => {
+				if (!name) return categories.find((c) => c.id === 0); // Default category
+				const cat = categories.find((c) => c.name === name);
 				return cat;
 			};
 
-			const requestedCtg = categories.find((c) => c.name === category);
-			if (category && !requestedCtg) {
-				res.json([]);
-				return;
-			}
-			const downloads = transfers.downloads.filter((t) => {
-				if (requestedCtg) {
-					return t.categoryId === requestedCtg.id;
-				}
-				return true;
-			});
+			const requestedCtgName = category as string | undefined;
 
-			const shared = transfers.shared.filter((t) => {
-				if (requestedCtg) {
-					return t.categoryId === requestedCtg.id;
+			const downloads = transfers.downloads.filter((t) => {
+				if (requestedCtgName) {
+					return t.categoryName === requestedCtgName;
 				}
 				return true;
 			});
@@ -117,25 +108,10 @@ export class QbittorrentController {
 					num_seeds: t.sources || 0,
 					num_leechers: 0,
 					state: this.mapStatusToQbitState(t.status || 'Downloading'),
-					save_path: getCatById(t.categoryId)?.path || '/incoming',
+					save_path: getCatByName(t.categoryName ?? '')?.path || '/incoming',
 					added_on: Math.floor(Date.now() / 1000),
 					eta: t.timeLeft || 0,
-					category: getCatById(t.categoryId)?.name || '',
-				})),
-				...shared.map((t) => ({
-					hash: t.hash || 'unknown',
-					name: t.name || 'Unknown',
-					size: t.size || 0,
-					progress: 1,
-					dlspeed: 0,
-					upspeed: 0,
-					priority: 0,
-					num_seeds: 0,
-					num_leechers: 0,
-					state: 'uploading',
-					save_path: getCatById(t.categoryId)?.path || '/incoming',
-					added_on: Math.floor(Date.now() / 1000),
-					category: getCatById(t.categoryId)?.name || '',
+					category: t.categoryName,
 				})),
 			];
 			//console.log(qbitTorrents);
