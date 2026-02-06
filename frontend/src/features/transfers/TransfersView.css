@@ -43,7 +43,7 @@
 	line-height: 12px;
 	color: black;
 
-	--text-border-color: rgba(255, 255, 255, 0.73);
+	--text-border-color: rgba(255, 255, 255, 0.4);
 	text-shadow:
 		-1px 0 0 var(--text-border-color),
 		0 1px 0 var(--text-border-color),

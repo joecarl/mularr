@@ -67,7 +67,7 @@ export const ServersView = component(() => {
 		logText.get();
 		if (logContainer) {
 			// Keep scroll at bottom
-			console.log('Updating log scroll position', logContainer);
+			//console.log('Updating log scroll position', logContainer);
 			logContainer.scrollTop = logContainer.scrollHeight;
 		}
 	});
