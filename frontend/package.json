@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite --host 0.0.0.0",
-		"build": "tsc && vite build",
+		"build": "npm run postinstall && tsc && vite build",
 		"preview": "vite preview",
 		"postinstall": "chispa-cli --compile-html"
 	},

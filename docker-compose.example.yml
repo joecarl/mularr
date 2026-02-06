@@ -2,16 +2,45 @@ services:
   mularr:
     image: mularr
     container_name: mularr
-    ports:
-      - "8940:8940"
-    volumes:
-      - mularr-data:/app/data
-    environment:
-      - DATABASE_PATH=/app/data/database.sqlite
-      # Add other environment variables as needed    
-      # - TELEGRAM_BOT_TOKEN=
-      # - TELEGRAM_CHAT_ID=
     restart: unless-stopped
 
-volumes:
-  mularr-data:
+    # Use the network of the Gluetun container if needed
+    # If using Gluetun, make sure to set GLUETUN_ENABLED=true so the public vpn forwarded port is automatically updated in amule config.
+    network_mode: service:my-gluetun-container
+
+    # Or for standalone use, you can expose the ports directly and connect to amule running on the host or another container
+    # You cannot use both network_mode and ports at the same time, so make sure to choose the right configuration based on your setup. If using network_mode with Gluetun, the mularr api port must be exposed in the Gluetun container.
+    ports:
+      - '8940:8940'
+
+    volumes:
+      - ./data:/app/data
+      # Mount additional volumes as needed
+      - /my-storage:/my-storage
+
+    environment:
+      # All environment variables are optional, the values specidied here are the which defaults will be used if not provided. Set these if you want to customize the behavior or integrate with other services.
+
+      # Path to the SQLite database file. You can change this if you want to store the database in a different location or use an external database (just make sure the path is writable by the container and update the path accordingly).
+      - DATABASE_PATH=/app/data/database.sqlite
+
+      # Port for the mularr web/api
+      - PORT=8940
+
+      # Telegram bot integration settings if you want to receive notifications about system events, transfer completions, etc. (optional)
+      - TELEGRAM_BOT_TOKEN=
+      - TELEGRAM_CHAT_ID=
+      - TELEGRAM_TOPIC_ID=
+
+      # Customize the amule connection settings if needed, otherwise defaults will be used (amule running on localhost with default port and no password)
+      - AMULE_HOST=localhost
+      - AMULE_PORT=4712
+      - AMULE_PASSWORD=secret
+
+      # Gluetun integration will update the amule ports automatically if GLUETUN_ENABLED is true (if using Gluetun)
+      - GLUETUN_ENABLED=false
+      - GLUETUN_API=http://gluetun:8000
+
+      # Customize the incoming and temp directory directory if needed
+      - AMULE_INCOMING_DIR=/my-storage/downloads/mularr
+      - AMULE_TEMP_DIR=/my-storage/downloads/mularr/.incomplete
