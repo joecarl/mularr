@@ -1,13 +1,52 @@
 .transfers-view {
-    padding: 1rem;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+	padding: 1rem;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 
 .transfer-list textarea {
-    width: 100%;
-    height: 400px;
-    font-family: monospace;
-    white-space: pre;
+	width: 100%;
+	height: 400px;
+	font-family: monospace;
+	white-space: pre;
+}
+
+.transfer-progress-bar-container {
+	width: 100%;
+	height: 15px;
+	background: #fff;
+	border: 1px solid #534f4f;
+	position: relative;
+}
+
+.transfer-progress-bar {
+	--edge-color: blue;
+	--center-color: rgb(134 175 249);
+	background: linear-gradient(0deg, var(--edge-color), var(--center-color) 40%, var(--center-color) 60%, var(--edge-color));
+	height: 100%;
+}
+
+.transfer-progress-bar-complete {
+	--edge-color: green;
+	--center-color: rgb(85, 255, 85);
+}
+
+.transfer-progress-bar-text {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	font-size: 10px;
+	line-height: 12px;
+	color: black;
+
+	--text-border-color: rgba(255, 255, 255, 0.73);
+	text-shadow:
+		-1px 0 0 var(--text-border-color),
+		0 1px 0 var(--text-border-color),
+		0 -1px 0 var(--text-border-color),
+		1px 0 0 var(--text-border-color);
 }

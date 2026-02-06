@@ -49,14 +49,9 @@
 						<td data-cb="completedCol" style="text-align: right;">Completed</td>
 						<td data-cb="speedCol" style="text-align: right;">Speed</td>
 						<td data-cb="progressCol" style="width: 100px;">
-							<div
-								style="width: 100%; height: 15px; background: #fff; border: 1px solid #808080; position: relative;">
-								<div data-cb="progressBar"
-									style="height: 100%; background: linear-gradient(0deg, green, rgb(85, 255, 85), green); width: 0%;">
-								</div>
-								<div data-cb="progressText"
-									style="position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: black; text-shadow: 0 0 2px white;">
-									0%</div>
+							<div class="transfer-progress-bar-container">
+								<div data-cb="progressBar" class="transfer-progress-bar" style="width: 0%;"></div>
+								<div data-cb="progressText" class="transfer-progress-bar-text">0%</div>
 							</div>
 						</td>
 						<td data-cb="sourcesCol">Sources</td>

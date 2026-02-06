@@ -91,6 +91,7 @@ export interface Transfer extends AmuleFile {
 	categoryId?: number;
 	categoryName?: string;
 	addedOn?: number; // Placeholder, might be missing from backend
+	isCompleted?: boolean;
 }
 
 export interface Category {

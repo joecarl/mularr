@@ -30,6 +30,7 @@ interface Download {
 	size?: number;
 	completed?: number;
 	speed?: number;
+	isCompleted?: boolean;
 	progress?: number;
 	sources?: number;
 	priority?: number;
@@ -248,6 +249,7 @@ export class AmuleService {
 						addedOn: dbRecord.added_at,
 						timeLeft: 0,
 						categoryName: dbRecord.category_name,
+						isCompleted: true,
 					} as Download;
 				}
 
@@ -269,6 +271,7 @@ export class AmuleService {
 						addedOn: dbRecord.added_at,
 						timeLeft: Infinity,
 						categoryName: dbRecord.category_name,
+						isCompleted: false,
 					} as Download;
 				}
 
@@ -312,6 +315,7 @@ export class AmuleService {
 					categoryId: file.fileCat,
 					categoryName: dbRecord ? dbRecord.category_name : null,
 					addedOn: dbRecord ? dbRecord.added_at : null,
+					isCompleted: false,
 				} as Download;
 			});
 

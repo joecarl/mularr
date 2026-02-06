@@ -40,7 +40,10 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
 				progressCol: {
 					nodes: {
-						progressBar: { style: { width: () => `${(t.get().progress || 0) * 100}%` } },
+						progressBar: {
+							style: { width: () => `${(t.get().progress || 0) * 100}%` },
+							classes: { 'transfer-progress-bar-complete': () => !!t.get().isCompleted },
+						},
 						progressText: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
 					},
 				},
