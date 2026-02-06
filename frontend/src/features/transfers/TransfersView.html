@@ -14,7 +14,7 @@
 	</div>
 
 	<!-- Active Downloads -->
-	<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+	<div style="flex: 2; display: flex; flex-direction: column; min-height: 0;">
 		<div class="win-header-small">Active Downloads</div>
 		<div
 			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
@@ -22,10 +22,10 @@
 				<thead>
 					<tr>
 						<th data-cb="thName" style="cursor: pointer">Filename</th>
-						<th data-cb="thSize" style="cursor: pointer">Size</th>
 						<th data-cb="thCategory" style="cursor: pointer">Category</th>
-						<th data-cb="thCompleted" style="cursor: pointer">Completed</th>
-						<th data-cb="thSpeed" style="cursor: pointer">Speed</th>
+						<th data-cb="thSize" style="cursor: pointer; text-align: right;">Size</th>
+						<th data-cb="thCompleted" style="cursor: pointer; text-align: right;">Completed</th>
+						<th data-cb="thSpeed" style="cursor: pointer; text-align: right;">Speed</th>
 						<th data-cb="thProgress" style="cursor: pointer">Progress</th>
 						<th data-cb="thSources" style="cursor: pointer">Sources</th>
 						<th data-cb="thPriority" style="cursor: pointer">Priority</th>
@@ -41,10 +41,10 @@
 							<span data-cb="fileIcon" style="margin-right: 5px;"></span>
 							<span data-cb="fileNameText">Filename</span>
 						</td>
-						<td data-cb="sizeCol">Size</td>
 						<td data-cb="categoryCol">Cat</td>
-						<td data-cb="completedCol">Completed</td>
-						<td data-cb="speedCol">Speed</td>
+						<td data-cb="sizeCol" style="text-align: right;">Size</td>
+						<td data-cb="completedCol" style="text-align: right;">Completed</td>
+						<td data-cb="speedCol" style="text-align: right;">Speed</td>
 						<td data-cb="progressCol" style="width: 100px;">
 							<div
 								style="width: 100%; height: 14px; background: #fff; border: 1px solid #808080; position: relative;">
@@ -68,9 +68,9 @@
 		</div>
 	</div>
 
-	<!-- Shared / Completed -->
+	<!-- Uploading  -->
 	<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-		<div class="win-header-small">Shared / Completed</div>
+		<div class="win-header-small">Uploading</div>
 		<div
 			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
 			<table class="win-list">

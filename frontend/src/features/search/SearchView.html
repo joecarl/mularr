@@ -22,11 +22,11 @@
 			<thead>
 				<tr>
 					<th data-cb="thName" style="cursor: pointer">Name</th>
-					<th data-cb="thSize" style="cursor: pointer">Size</th>
-					<th data-cb="thSources" style="cursor: pointer">Availability</th>
-					<th data-cb="thCompleted" style="cursor: pointer">Complete</th>
+					<th data-cb="thSize" style="cursor: pointer; text-align: right;">Size</th>
+					<th data-cb="thSources" style="cursor: pointer; text-align: right;">Availability</th>
+					<th data-cb="thCompleted" style="cursor: pointer; text-align: right;">Complete</th>
 					<th data-cb="thType" style="cursor: pointer">Type</th>
-					<th>Actions</th>
+					<th style="width: 100px;">Actions</th>
 				</tr>
 			</thead>
 			<tbody data-cb="resultsContainer">
@@ -36,9 +36,9 @@
 						<span data-cb="fileIcon" style="margin-right: 5px; font-size: 14px;"></span>
 						<span data-cb="fileNameText"></span>
 					</td>
-					<td data-cb="sizeCol"></td>
-					<td data-cb="sourcesCol"></td>
-					<td data-cb="completeCol"></td>
+					<td data-cb="sizeCol" style="text-align: right;"></td>
+					<td data-cb="sourcesCol" style="text-align: right;"></td>
+					<td data-cb="completeCol" style="text-align: right;"></td>
 					<td data-cb="typeCol"></td>
 					<td>
 						<button class="win-btn" data-cb="downloadMiniBtn">Get</button>

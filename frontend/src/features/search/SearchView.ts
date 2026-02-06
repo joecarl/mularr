@@ -145,6 +145,9 @@ export const SearchView = component(() => {
 			_ref: (el) => {
 				bindControlledInput(el, searchQuery);
 			},
+			onkeydown: (e: KeyboardEvent) => {
+				if (e.key === 'Enter') performSearch();
+			},
 		},
 		typeSelect: {
 			_ref: (el) => {

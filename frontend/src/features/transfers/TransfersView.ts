@@ -165,7 +165,7 @@ export const TransfersView = component(() => {
 
 				return list.map((t) => {
 					const isSelected = selectedHash.get() === t.hash;
-					const category = categories.get().find((c) => c.id === t.categoryId);
+					//const category = categories.get().find((c) => c.id === t.categoryId);
 
 					return tpl.transferRow({
 						_ref: (el) => {
@@ -182,9 +182,9 @@ export const TransfersView = component(() => {
 								},
 							},
 							sizeCol: { inner: formatBytes(t.size) },
-							categoryCol: { inner: category?.name || '-' },
+							categoryCol: { inner: t.categoryName || '-' },
 							completedCol: { inner: formatBytes(t.completed) },
-							speedCol: { inner: formatBytes(t.speed) + '/s' },
+							speedCol: { inner: (t.speed ?? 0) > 0 ? formatBytes(t.speed) + '/s' : '' },
 							progressCol: {
 								nodes: {
 									progressBar: { style: { width: `${(t.progress || 0) * 100}%` } },
@@ -195,7 +195,7 @@ export const TransfersView = component(() => {
 							priorityCol: { inner: String(t.priority || 0) },
 							statusCol: { inner: t.status || '' },
 							remainingCol: { inner: formatBytes(t.remaining) },
-							addedOnCol: { inner: t.addedOn ? new Date(t.addedOn * 1000).toLocaleString() : '-' },
+							addedOnCol: { inner: t.addedOn ? new Date(t.addedOn).toLocaleString() : '-' },
 						},
 					});
 				});

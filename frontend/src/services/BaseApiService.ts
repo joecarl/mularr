@@ -6,7 +6,11 @@ export abstract class BaseApiService {
 	}
 
 	protected async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-		const response = await fetch(`${this.baseUrl}${path}`, {
+		// Add timestamp to avoid caching issues
+		const url = new URL(`${this.baseUrl}${path}`, window.location.origin);
+		url.searchParams.append('_', Date.now().toString());
+
+		const response = await fetch(url.toString(), {
 			...options,
 			headers: {
 				'Content-Type': 'application/json',

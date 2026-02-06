@@ -13,6 +13,8 @@ export const SettingsView = component(() => {
 	const udpPort = signal('');
 	const maxSources = signal('');
 	const maxConnections = signal('');
+	const maxDownload = signal('');
+	const maxUpload = signal('');
 	const downloadCap = signal('');
 	const uploadCap = signal('');
 	const incomingDir = signal('');
@@ -33,6 +35,8 @@ export const SettingsView = component(() => {
 				udpPort.set(v.udpPort || '');
 				maxSources.set(v.maxSources || '');
 				maxConnections.set(v.maxConnections || '');
+				maxDownload.set(v.maxDownload || '');
+				maxUpload.set(v.maxUpload || '');
 				downloadCap.set(v.downloadCap || '');
 				uploadCap.set(v.uploadCap || '');
 				incomingDir.set(v.incomingDir || '');
@@ -76,14 +80,14 @@ export const SettingsView = component(() => {
 				bindControlledInput(el, maxConnections);
 			},
 		},
-		downloadCap: {
+		maxDownload: {
 			_ref: (el) => {
-				bindControlledInput(el, downloadCap);
+				bindControlledInput(el, maxDownload);
 			},
 		},
-		uploadCap: {
+		maxUpload: {
 			_ref: (el) => {
-				bindControlledInput(el, uploadCap);
+				bindControlledInput(el, maxUpload);
 			},
 		},
 		incomingDir: {

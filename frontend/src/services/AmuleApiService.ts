@@ -46,6 +46,8 @@ export interface ConfigValues {
 	maxConnections?: string;
 	downloadCap?: string;
 	uploadCap?: string;
+	maxUpload?: string;
+	maxDownload?: string;
 	incomingDir?: string;
 	tempDir?: string;
 }
@@ -78,10 +80,7 @@ export interface ServersResponse {
 	};
 }
 
-export interface Transfer {
-	rawLine: string;
-	name?: string;
-	size?: number;
+export interface Transfer extends AmuleFile {
 	completed?: number;
 	speed?: number;
 	progress?: number;
@@ -89,8 +88,8 @@ export interface Transfer {
 	priority?: number;
 	status?: string;
 	remaining?: number;
-	hash?: string;
 	categoryId?: number;
+	categoryName?: string;
 	addedOn?: number; // Placeholder, might be missing from backend
 }
 
@@ -106,6 +105,18 @@ export interface Category {
 export interface TransfersResponse {
 	raw: string;
 	list: Transfer[];
+}
+
+export interface AmuleFile {
+	rawLine: string;
+	name?: string;
+	size?: number;
+	hash?: string;
+}
+
+export interface SharedResponse {
+	raw: string;
+	list: AmuleFile[];
 }
 
 export interface SearchResult {
@@ -154,6 +165,10 @@ export class AmuleApiService extends BaseApiService {
 
 	async getTransfers(): Promise<TransfersResponse> {
 		return this.request<TransfersResponse>('/transfers');
+	}
+
+	async getSharedFiles(): Promise<SharedResponse> {
+		return this.request<SharedResponse>('/shared');
 	}
 
 	async search(query: string, type: string): Promise<SuccessResponse> {
