@@ -133,6 +133,8 @@ export class AmuledService {
 				config.uploadCap = findVal('UploadCapacity');
 				config.incomingDir = findVal('IncomingDir');
 				config.tempDir = findVal('TempDir');
+				config.maxUpload = findVal('MaxUpload');
+				config.maxDownload = findVal('MaxDownload');
 			}
 		} catch (e) {
 			console.warn('Could not read local amule.conf:', e);

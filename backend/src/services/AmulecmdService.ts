@@ -93,7 +93,6 @@ export class AmulecmdService {
 
 	async removeDownload(hash: string) {
 		await this.runCommand(`cancel ${hash}`);
-		return { success: true };
 	}
 
 	async getTransfers() {

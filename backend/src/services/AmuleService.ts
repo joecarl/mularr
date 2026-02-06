@@ -1,9 +1,74 @@
-import { AmuleClient, SearchType, type AmuleCategory } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, SearchType, type AmuleCategory } from 'amule-ec-client';
 import { AmulecmdService } from './AmulecmdService';
 import { exec } from 'child_process';
 import util from 'util';
+import db from '../db';
+import { hash } from 'crypto';
+import path from 'path';
 
 const execPromise = util.promisify(exec);
+
+interface FileRefData {
+	isEd2kLink: boolean;
+	hash: string;
+	name?: string;
+	size?: number;
+}
+
+interface DownloadDbRecord {
+	hash: string;
+	name: string;
+	size: number;
+	category_name: string | null;
+	added_at: string;
+	is_completed: number;
+}
+
+interface Download {
+	rawLine: string;
+	name?: string;
+	size?: number;
+	completed?: number;
+	speed?: number;
+	progress?: number;
+	sources?: number;
+	priority?: number;
+	status?: string;
+	remaining?: number;
+	hash?: string;
+	link?: string;
+	timeLeft?: number;
+	categoryId?: number;
+	categoryName?: string | null;
+	addedOn?: string | null;
+}
+
+function getDataFromFileRef(hashOrLink: string): FileRefData | null {
+	const ed2kMatch = hashOrLink.match(/^ed2k:\/\/\|file\|([^|]+)\|(\d+)\|([a-fA-F0-9]{32})\|/);
+	if (ed2kMatch) {
+		return {
+			name: decodeURIComponent(ed2kMatch[1]),
+			size: parseInt(ed2kMatch[2], 10),
+			hash: ed2kMatch[3].toLowerCase(),
+			isEd2kLink: true,
+		};
+	} else if (/^[a-fA-F0-9]{32}$/.test(hashOrLink)) {
+		return {
+			name: 'Unknown',
+			size: 0,
+			hash: hashOrLink.toLowerCase(),
+			isEd2kLink: false,
+		};
+	} else {
+		console.warn('Input does not appear to be a valid hash or ed2k link:', hashOrLink);
+	}
+	return null;
+}
+
+function findByHash<T extends AmuleFile>(downloads: T[], hash: string): T | null {
+	const lowerHash = hash.toLowerCase();
+	return downloads.find((d) => (d.fileHashHexString || '').toLowerCase() === lowerHash) || null;
+}
 
 export class AmuleService {
 	private readonly host = process.env.AMULE_HOST || 'localhost';
@@ -13,6 +78,7 @@ export class AmuleService {
 	private readonly amulecmdService: AmulecmdService | null = null;
 
 	constructor() {
+		//this.client.connection.setDebug(true);
 		// Enable fallback logic for amulecmd unless disabled
 		if (process.env.AMULECMD_FALLBACK !== 'false') {
 			this.amulecmdService = new AmulecmdService();
@@ -94,18 +160,111 @@ export class AmuleService {
 	async connectToServer(ip: string, port: number) {
 		try {
 			await this.client.connectToServer(ip, port);
-			return { success: true };
 		} catch (error) {
 			console.error('EC Client Connect Error:', error);
 			throw error;
 		}
 	}
 
-	async getTransfers() {
+	async getSharedFiles() {
+		try {
+			const files = await this.client.getSharedFiles();
+			if (files.length === 0) {
+				console.log('!!!!!!!! NO Shared Files from EC Client');
+			}
+			const list = files.map((file) => ({
+				name: file.fileName,
+				hash: file.fileHashHexString,
+				size: file.sizeFull,
+				path: file.filePath,
+			}));
+			return { raw: `Shared Files (${files.length})`, list: list };
+		} catch (error) {
+			console.error('EC Client Shared Files Error:', error);
+		}
+		return { raw: 'Error getting shared files', list: [] };
+	}
+
+	async getTransfers(): Promise<{ raw: string; downloads: Download[] }> {
 		try {
 			const queue = await this.client.getDownloadQueue();
+			//console.log('Download Queue from EC Client:', queue);
+			let dbRecords = db.prepare<[], DownloadDbRecord>('SELECT * FROM downloads').all();
+
+			let sharedFiles: AmuleFile[] | null = null;
+			const getSharedFiles = async () => {
+				if (sharedFiles === null) {
+					sharedFiles = await this.client.getSharedFiles();
+				}
+				return sharedFiles;
+			};
+
 			//console.log('Download Queue:', queue);
-			const transfers = queue.map((file) => {
+			const transfers = dbRecords.map(async (dbRecord) => {
+				const queueFile = findByHash(queue, dbRecord.hash);
+				//console.log('Matching queue file for hash', dbRecord.hash, ':', queueFile);
+				if (!queueFile && !dbRecord.is_completed) {
+					const sharedFiles = await getSharedFiles();
+					//console.log('Checking shared files for completion of hash:', dbRecord.hash, sharedFiles);
+					const sharedFile = findByHash(sharedFiles, dbRecord.hash);
+					//console.log('Shared file found:', sharedFile);
+					if (sharedFile) {
+						// Mark as completed in DB
+						try {
+							db.prepare('UPDATE downloads SET is_completed = 1 WHERE hash = ?').run(dbRecord.hash);
+							dbRecord.is_completed = 1;
+							console.log('Marked file as completed in DB:', dbRecord.hash, dbRecord.name);
+						} catch (e) {
+							console.error('DB update completion error:', e);
+						}
+					}
+				}
+
+				if (dbRecord.is_completed) {
+					const sizeFull = dbRecord.size || 0;
+					const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
+					//console.log('File marked as completed in DB:', dbRecord.hash, dbRecord);
+
+					return {
+						rawLine: `> ${dbRecord.name} [${mbSize} MB] Completed 100%`,
+						name: dbRecord.name,
+						size: sizeFull,
+						progress: 1,
+						status: 'Completed',
+						hash: dbRecord.hash,
+						link: '',
+						completed: sizeFull,
+						speed: 0,
+						sources: 0,
+						priority: 0,
+						remaining: 0,
+						addedOn: dbRecord.added_at,
+						timeLeft: 0,
+						categoryName: dbRecord.category_name,
+					} as Download;
+				}
+
+				if (!queueFile) {
+					console.warn('File not in queue or shared, skipping:', dbRecord.hash);
+					return {
+						rawLine: `> ${dbRecord.name} [${(dbRecord.size / (1024 * 1024)).toFixed(2)} MB] Not in queue`,
+						name: dbRecord.name,
+						size: dbRecord.size || 0,
+						progress: 0,
+						status: 'Not in queue',
+						hash: dbRecord.hash,
+						link: '',
+						completed: 0,
+						speed: 0,
+						sources: 0,
+						priority: 0,
+						remaining: dbRecord.size || 0,
+						addedOn: dbRecord.added_at,
+						timeLeft: Infinity,
+						categoryName: dbRecord.category_name,
+					} as Download;
+				}
+
 				// FileStatus enum mapping
 				const statusMap: Record<number, string> = {
 					0: 'Downloading',
@@ -120,6 +279,7 @@ export class AmuleService {
 					9: 'Completed',
 					10: 'Allocating',
 				};
+				const file = queueFile;
 				const status = statusMap[file.fileStatus] || `Status: ${file.fileStatus}`;
 				const sizeFull = file.sizeFull || 0;
 				const sizeDone = file.sizeDone || 0;
@@ -143,66 +303,28 @@ export class AmuleService {
 					remaining: remaining,
 					timeLeft: timeLeft,
 					categoryId: file.fileCat,
-				};
+					categoryName: dbRecord ? dbRecord.category_name : null,
+					addedOn: dbRecord ? dbRecord.added_at : null,
+				} as Download;
 			});
-
-			// Get Shared Files (Completed Downloads)
-			let sharedList: any[] = [];
-			try {
-				// Using any cast in case types are incomplete in amule-ec-client
-				const sharedFiles = await this.client.getSharedFiles();
-				if (Array.isArray(sharedFiles)) {
-					// Create a Set of hashes currently in queue to avoid duplicates
-					const queueHashes = new Set(transfers.map((t) => t.hash));
-
-					sharedList = sharedFiles
-						.filter((file) => !queueHashes.has(file.fileHashHexString)) // Deduplicate
-						.map((file) => {
-							const sizeFull = file.sizeFull || 0;
-							const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
-
-							return {
-								rawLine: `> ${file.fileName} [${mbSize} MB] Completed 100%`,
-								name: file.fileName,
-								size: sizeFull,
-								progress: 1,
-								status: 'Shared',
-								hash: file.fileHashHexString,
-								link: file.fileEd2kLink,
-								completed: sizeFull,
-								speed: 0,
-								sources: 0, // Shared files usually have request counts or known sources, ec-client maps it
-								priority: 0,
-								remaining: 0,
-								addedOn: 0,
-								timeLeft: 0,
-							};
-						});
-				}
-			} catch (e) {
-				console.warn('Failed to get shared files (completed downloads):', e);
-			}
 
 			return {
 				raw: `Downloads (${queue.length})`,
-				downloads: transfers,
-				shared: sharedList,
+				downloads: await Promise.all(transfers),
 			};
 		} catch (error) {
 			console.error('EC Client Transfers Error:', error);
 			// if (this.amulecmdService) {
 			// 	return this.amulecmdService.getTransfers();
 			// }
-			return { raw: 'Error getting transfers', downloads: [], shared: [] };
+			return { raw: 'Error getting transfers', downloads: [] };
 		}
 	}
 
 	private lastSearchResults: any[] = [];
-	private isSearching = false;
 
 	async startSearch(query: string, type: string = 'Global') {
 		console.log(`[AmuleService] Starting Search for: ${query}`);
-		this.isSearching = true;
 
 		try {
 			// Convert string type to enum if possible, default to Global
@@ -216,7 +338,6 @@ export class AmuleService {
 			return 'Search Started';
 		} catch (e) {
 			console.error('Start Search Error:', e);
-			this.isSearching = false;
 			throw e;
 		}
 	}
@@ -296,55 +417,81 @@ export class AmuleService {
 	async addDownload(link: string) {
 		console.log('Adding download:', link);
 
-		// If it looks like a hash (32 hex chars), use EC client
-		if (/^[a-fA-F0-9]{32}$/.test(link)) {
-			try {
+		// Parse metadata for DB
+		let hash: string | undefined;
+
+		const fileRefData = getDataFromFileRef(link);
+		if (fileRefData) {
+			hash = fileRefData.hash;
+		} else {
+			console.warn('Failed to parse link for metadata:', link);
+		}
+
+		try {
+			if (!fileRefData) {
+				throw new Error('File ref error, skipping direct add and going to fallback');
+			} else if (!fileRefData.isEd2kLink) {
 				await this.client.downloadSearchResult(Buffer.from(link, 'hex'));
-				return `Added download for hash ${link}`;
-			} catch (e) {
-				console.error('EC Add Download Error:', e);
-				throw e;
-			}
-		}
-
-		// Try to use EC client for ED2K links if supported
-		if (link.startsWith('ed2k://')) {
-			try {
+				console.log(`Added download for hash ${link}`);
+			} else if (fileRefData.isEd2kLink) {
 				await this.client.downloadEd2kLink(link);
-				return `Added download for ed2k link`;
-			} catch (e) {
-				console.warn('EC Client failed to add ed2k link, falling back to amulecmd:', e);
+				console.log(`Added download for ed2k link`);
+			}
+		} catch (e) {
+			console.warn('EC Client failed to add download, falling back to amulecmd:', e);
+
+			if (this.amulecmdService) {
+				this.amulecmdService.addDownload(link);
 			}
 		}
 
-		if (this.amulecmdService) {
-			return this.amulecmdService.addDownload(link);
+		if (hash) {
+			const added = await this.client.getDownloadQueue();
+			const fileInQueue = added.find((f) => (f.fileHashHexString || '').toLowerCase() === hash!.toLowerCase());
+			const name = fileInQueue ? fileInQueue.fileName : 'Unknown';
+			const size = fileInQueue ? fileInQueue.sizeFull || 0 : 0;
+			try {
+				const existing = db.prepare('SELECT hash FROM downloads WHERE hash = ?').get(hash);
+				if (!existing) {
+					db.prepare('INSERT INTO downloads (hash, name, size, category_name, added_at, is_completed) VALUES (?, ?, ?, ?, ?, 0)').run(
+						hash,
+						name,
+						size,
+						null,
+						new Date().toISOString()
+					);
+				}
+			} catch (dbe) {
+				console.error('DB Insert Error:', dbe);
+			}
 		}
-
-		throw new Error('Could not add download. Fallback disabled.');
 	}
 
 	async removeDownload(hash: string) {
 		console.log('Removing download:', hash);
+
 		try {
 			await this.client.deleteDownload(Buffer.from(hash, 'hex'));
-			return { success: true };
+			// Remove from DB if successfully deleted from client
 		} catch (e) {
 			console.warn('EC Client removeDownload failed, falling back to amulecmd:', e);
+
+			if (this.amulecmdService) {
+				await this.amulecmdService.removeDownload(hash);
+			}
 		}
 
-		if (this.amulecmdService) {
-			return this.amulecmdService.removeDownload(hash);
+		try {
+			db.prepare('DELETE FROM downloads WHERE hash = ?').run(hash.toLowerCase());
+		} catch (e) {
+			console.error('Failed to remove download from DB:', e);
 		}
-
-		throw new Error('Could not remove download. Fallback disabled.');
 	}
 
 	async pauseDownload(hash: string) {
 		console.log('Pausing download:', hash);
 		try {
 			await this.client.pauseDownload(Buffer.from(hash, 'hex'));
-			return { success: true };
 		} catch (e) {
 			console.error('Pause Download Error:', e);
 			throw e;
@@ -355,7 +502,6 @@ export class AmuleService {
 		console.log('Resuming download:', hash);
 		try {
 			await this.client.resumeDownload(Buffer.from(hash, 'hex'));
-			return { success: true };
 		} catch (e) {
 			console.error('Resume Download Error:', e);
 			throw e;
@@ -366,7 +512,6 @@ export class AmuleService {
 		console.log('Stopping download:', hash);
 		try {
 			await this.client.stopDownload(Buffer.from(hash, 'hex'));
-			return { success: true };
 		} catch (e) {
 			console.error('Stop Download Error:', e);
 			throw e;
@@ -436,6 +581,16 @@ export class AmuleService {
 		try {
 			// In many EC implementations, creating a category with an existing ID updates it
 			await this.client.updateCategory(id, updated);
+
+			// Update DB if name changed and category is not "All" (id 0)
+			if (id !== 0 && data.name && data.name !== existing.name) {
+				try {
+					db.prepare('UPDATE downloads SET category_name = ? WHERE category_name = ?').run(data.name, existing.name);
+				} catch (e) {
+					console.error('Failed to update category name in DB:', e);
+				}
+			}
+
 			return updated;
 		} catch (e) {
 			console.error('Update Category Error:', e);
@@ -461,7 +616,20 @@ export class AmuleService {
 	async setFileCategory(hashHex: string, categoryId: number) {
 		try {
 			await this.client.setFileCategory(Buffer.from(hashHex, 'hex'), categoryId);
-			return { success: true };
+
+			// Update DB
+			try {
+				const cats = await this.getCategories();
+				const cat = cats.find((c) => c.id === categoryId);
+				const catName = categoryId === 0 ? '' : cat ? cat.name : null;
+				// If categoryId is 0 (All) or not found, it might mean "General" or unassigned.
+				// Assuming if cat found, we use name.
+				if (catName !== null && catName !== undefined) {
+					db.prepare('UPDATE downloads SET category_name = ? WHERE hash = ?').run(catName, hashHex.toLowerCase());
+				}
+			} catch (e) {
+				console.error('DB update category error', e);
+			}
 		} catch (e) {
 			console.error('Set File Category Error:', e);
 			throw e;

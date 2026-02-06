@@ -52,6 +52,15 @@ export class AmuleController {
 		}
 	};
 
+	getSharedFiles = async (req: Request, res: Response) => {
+		try {
+			const shared = await this.amuleService.getSharedFiles();
+			res.json(shared);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	search = async (req: Request, res: Response) => {
 		try {
 			const { query, type } = req.body;

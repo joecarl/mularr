@@ -10,6 +10,7 @@ export const amuleRoutes = () => {
 	router.get('/config', controller.getConfig);
 	router.get('/servers', controller.getServers);
 	router.get('/transfers', controller.getTransfers);
+	router.get('/shared', controller.getSharedFiles);
 	router.post('/search', controller.search);
 	router.get('/search/results', controller.getSearchResults);
 	router.get('/search/status', controller.getSearchStatus);
