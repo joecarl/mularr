@@ -15,6 +15,7 @@ export const qbittorrentRoutes = () => {
 
 	// Torrents
 	router.get('/torrents/info', controller.getTorrents);
+	router.get('/torrents/files', controller.getFiles);
 	router.get('/torrents/categories', controller.getCategories);
 	router.get('/torrents/properties', controller.getProperties);
 	router.post('/torrents/createCategory', controller.createCategory);

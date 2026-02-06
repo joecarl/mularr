@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
 import { AmuleService } from '../services/AmuleService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
+import { AmuleCategory } from 'amule-ec-client';
+
+const getCatByName = (ctgs: AmuleCategory[], name: string) => {
+	const cat = ctgs.find((c) => c.name === name);
+	if (!cat) return ctgs.find((c) => c.id === 0); // Default category
+	return cat;
+};
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
@@ -44,21 +51,42 @@ export class QbittorrentController {
 
 	getProperties = async (req: Request, res: Response) => {
 		console.log('[QbittorrentController] Torrent properties requested');
+		// https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-torrent-generic-properties
+
 		const { hash } = req.query;
 		if (!hash || typeof hash !== 'string') {
 			return res.status(400).send('No hash provided');
 		}
 
+		const categories = await this.amuleService.getCategories();
 		const transfers = await this.amuleService.getTransfers();
-		for (const t of transfers.downloads) {
-			if (t.name && t.hash) {
-				if (t.rawLine === undefined && hashToBtih(t.hash) === hash) {
-					return res.json(t);
-				}
-			}
-		}
+		const tr = transfers.downloads.find((t) => t.hash === hash);
 
-		return res.status(404).send('Torrent not found');
+		if (tr) {
+			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || '/incoming';
+			const properties = {
+				addition_date: 0,
+				comment: '',
+				completion_date: tr.status === 'Completed' || tr.status === 'Shared' ? Math.floor(Date.now() / 1000) : 0,
+				created_by: '',
+				dl_speed: tr.speed || 0,
+				eta: tr.timeLeft || 0,
+				isPrivate: false,
+				peers: tr.sources || 0,
+				save_path: savePath,
+				seeding_time: 0,
+				seeds: tr.sources || 0,
+				seeds_total: tr.sources || 0,
+				total_downloaded: tr.completed || 0,
+				total_size: tr.size || 0,
+				up_limit: -1,
+				up_speed: 0,
+				up_speed_avg: 0,
+			};
+			return res.json(properties);
+		} else {
+			return res.status(404).send('Torrent not found');
+		}
 	};
 
 	createCategory = async (req: Request, res: Response) => {
@@ -81,12 +109,6 @@ export class QbittorrentController {
 			const transfers = await this.amuleService.getTransfers();
 			const categories = await this.amuleService.getCategories();
 
-			const getCatByName = (name: string) => {
-				if (!name) return categories.find((c) => c.id === 0); // Default category
-				const cat = categories.find((c) => c.name === name);
-				return cat;
-			};
-
 			const requestedCtgName = category as string | undefined;
 
 			const downloads = transfers.downloads.filter((t) => {
@@ -96,8 +118,10 @@ export class QbittorrentController {
 				return true;
 			});
 
-			const qbitTorrents = [
-				...downloads.map((t) => ({
+			const qbitTorrents = downloads.map((t) => {
+				const savePath = getCatByName(categories, t.categoryName ?? '')?.path || '/incoming';
+				const contentPath = t.name ? savePath + '/' + t.name : undefined;
+				return {
 					hash: t.hash || 'unknown',
 					name: t.name || 'Unknown',
 					size: t.size || 0,
@@ -108,17 +132,50 @@ export class QbittorrentController {
 					num_seeds: t.sources || 0,
 					num_leechers: 0,
 					state: this.mapStatusToQbitState(t.status || 'Downloading'),
-					save_path: getCatByName(t.categoryName ?? '')?.path || '/incoming',
+					save_path: savePath,
+					content_path: contentPath,
 					added_on: Math.floor(Date.now() / 1000),
 					eta: t.timeLeft || 0,
 					category: t.categoryName,
-				})),
-			];
-			//console.log(qbitTorrents);
+				};
+			});
 
 			res.json(qbitTorrents);
 		} catch (e: any) {
 			console.error('QbittorrentController getTorrents Error:', e);
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	getFiles = async (req: Request, res: Response) => {
+		console.log('[QbittorrentController] Torrent files requested');
+		const { hash } = req.query;
+		if (!hash || typeof hash !== 'string') {
+			return res.status(400).send('No hash provided');
+		}
+
+		try {
+			const transfers = await this.amuleService.getTransfers();
+			const tr = transfers.downloads.find((t) => t.hash === hash);
+			if (!tr) {
+				return res.status(404).send('Torrent not found');
+			}
+
+			const files = [
+				{
+					index: 0,
+					is_seed: tr.status === 'Completed' || tr.status === 'Shared',
+					name: tr.name || 'Unknown',
+					priority: tr.priority || 1,
+					progress: tr.progress || 0,
+					size: tr.size || 0,
+					availability: 1.0,
+				},
+			];
+
+			res.json(files);
+		} catch (e: any) {
+			console.error('QbittorrentController getFiles Error:', e);
 			res.status(500).json({ error: e.message });
 		}
 	};
