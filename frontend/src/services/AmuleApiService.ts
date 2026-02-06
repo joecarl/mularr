@@ -221,4 +221,10 @@ export class AmuleApiService extends BaseApiService {
 	async getLog(lines: number = 50): Promise<{ lines: string[] }> {
 		return this.request<{ lines: string[] }>(`/log?lines=${lines}`);
 	}
+
+	async restartDaemon(): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/daemon/restart', {
+			method: 'POST',
+		});
+	}
 }

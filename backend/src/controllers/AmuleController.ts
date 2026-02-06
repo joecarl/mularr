@@ -180,4 +180,13 @@ export class AmuleController {
 			res.status(500).json({ error: e.message });
 		}
 	};
+
+	restartDaemon = async (req: Request, res: Response) => {
+		try {
+			await this.amuledService.restartDaemon();
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
 }

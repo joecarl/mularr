@@ -23,6 +23,7 @@ export const amuleRoutes = () => {
 	router.post('/download/set-category', controller.setFileCategory);
 	router.post('/server/connect', controller.connect);
 	router.get('/log', controller.getLog);
+	router.post('/daemon/restart', controller.restartDaemon);
 
 	return router;
 };

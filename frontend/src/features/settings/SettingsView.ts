@@ -19,6 +19,7 @@ export const SettingsView = component(() => {
 	const uploadCap = signal('');
 	const incomingDir = signal('');
 	const tempDir = signal('');
+	const restartingDaemon = signal(false);
 
 	// Mock or config values for checkboxes
 	const netEd2k = signal(true);
@@ -118,6 +119,22 @@ export const SettingsView = component(() => {
 		startMinimized: {
 			_ref: (el) => {
 				bindControlledCheckbox(el, startMinimized);
+			},
+		},
+		restartDaemonBtn: {
+			disabled: restartingDaemon,
+			onclick: async () => {
+				//if (!confirm('¿Deseas reiniciar el daemon ahora?')) return;
+				restartingDaemon.set(true);
+				try {
+					await apiService.restartDaemon();
+					//alert('Reinicio solicitado. El daemon se reiniciará en breve.');
+				} catch (e) {
+					console.error('Failed to restart daemon', e);
+					//alert('Error al reiniciar el daemon: ' + (e as Error).message);
+				} finally {
+					restartingDaemon.set(false);
+				}
 			},
 		},
 	});
