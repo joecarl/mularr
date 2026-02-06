@@ -1,9 +1,59 @@
-import { component, signal, computed, onUnmount } from 'chispa';
+import { component, signal, computed, onUnmount, componentList, Signal, WritableSignal, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
+import { formatBytes } from '../../utils/formats';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
+
+const fbytes = (bytes?: number) => {
+	const b = formatBytes(bytes || 0);
+	return `${b.text} ${b.unit}`;
+};
+
+interface TransferListProps {
+	selectedHash: WritableSignal<string | null>;
+}
+
+const TransfersRows = componentList<Transfer, TransferListProps>(
+	(t, i, l, props) => {
+		const selectedHash = props!.selectedHash;
+		const isSelected = computed(() => selectedHash.get() === t.get().hash);
+		const addedOn = computed(() => {
+			const dt = t.get().addedOn;
+			return dt ? new Date(dt).toLocaleString() : '-';
+		});
+
+		return tpl.transferRow({
+			classes: { selected: isSelected },
+			onclick: () => selectedHash.set(t.get().hash || null),
+			nodes: {
+				nameCol: {
+					nodes: {
+						fileNameText: { inner: () => t.get().name || 'Unknown' },
+						fileIcon: { inner: () => getFileIcon(t.get().name || '') },
+					},
+				},
+				sizeCol: { inner: () => fbytes(t.get().size) },
+				categoryCol: { inner: () => t.get().categoryName || '-' },
+				completedCol: { inner: () => fbytes(t.get().completed) },
+				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
+				progressCol: {
+					nodes: {
+						progressBar: { style: { width: () => `${(t.get().progress || 0) * 100}%` } },
+						progressText: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
+					},
+				},
+				sourcesCol: { inner: () => String(t.get().sources || 0) },
+				priorityCol: { inner: () => String(t.get().priority || 0) },
+				statusCol: { inner: () => t.get().status || '' },
+				remainingCol: { inner: () => fbytes(t.get().remaining) },
+				addedOnCol: { inner: addedOn },
+			},
+		});
+	},
+	(t) => t.hash
+);
 
 export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -80,6 +130,41 @@ export const TransfersView = component(() => {
 		}
 	};
 
+	const computedTransferList = computed(() => {
+		let list = [...transferList.get()];
+		const col = sortColumn.get();
+		const dir = sortDirection.get();
+
+		if (list.length > 0 && !(list.length === 1 && !list[0].name && list[0].rawLine)) {
+			list.sort((a, b) => {
+				const va = a[col];
+				const vb = b[col];
+				if (va === vb) return 0;
+				if (va === undefined) return 1;
+				if (vb === undefined) return -1;
+				if (va < vb) return dir === 'asc' ? -1 : 1;
+				else return dir === 'asc' ? 1 : -1;
+			});
+		}
+
+		return list;
+	});
+
+	const computedTransferListLength = computed(() => computedTransferList.get().length);
+
+	const ctgOptions = computed(() => {
+		const opts = [{ value: '-1', label: 'Select Category...' }, ...categories.get().map((c) => ({ value: String(c.id), label: c.name }))];
+		return opts;
+	});
+
+	const selectedCategoryId = signal('-1');
+	effect(() => {
+		const currentSelection = selectedHash.get();
+		const currentTransfer = transferList.get().find((t) => t.hash === currentSelection);
+		const currentCatId = currentTransfer?.categoryId ?? -1;
+		selectedCategoryId.set(String(currentCatId));
+	});
+
 	return tpl.fragment({
 		refreshBtn: { onclick: loadTransfers },
 		pauseBtn: {
@@ -100,25 +185,8 @@ export const TransfersView = component(() => {
 		},
 		catSelect: {
 			disabled: isDisabled,
-			inner: () => {
-				const currentSelection = selectedHash.get();
-				const currentTransfer = transferList.get().find((t) => t.hash === currentSelection);
-				const currentCatId = currentTransfer?.categoryId ?? -1;
-
-				const opts = [{ value: '-1', label: 'Select Category...' }, ...categories.get().map((c) => ({ value: String(c.id), label: c.name }))];
-
-				// If tpl.catOption doesn't exist, we'll just use raw HTML for simplicity in this specific case
-				// Or use a more standard way if tpl supports it.
-				// Since I can't easily add a template now without editing HTML again,
-				// I'll assume tpl might not have it unless I add it.
-				// Let's just use string mapping for inner if supported, or document.create
-				return opts.map((opt) => {
-					const el = document.createElement('option');
-					el.value = opt.value;
-					el.textContent = opt.label;
-					if (parseInt(opt.value) === currentCatId) el.selected = true;
-					return el;
-				});
+			_ref: (el) => {
+				bindControlledSelect(el, selectedCategoryId, ctgOptions);
 			},
 			onchange: (e: any) => changeCategory(parseInt(e.target.value)),
 		},
@@ -142,84 +210,13 @@ export const TransfersView = component(() => {
 		thAddedOn: { onclick: () => sort('addedOn') },
 
 		transferListContainer: {
-			inner: () => {
-				let list = [...transferList.get()];
-				const col = sortColumn.get();
-				const dir = sortDirection.get();
-
-				if (list.length > 0 && !(list.length === 1 && !list[0].name && list[0].rawLine)) {
-					list.sort((a, b) => {
-						const va = a[col];
-						const vb = b[col];
-						if (va === vb) return 0;
-						if (va === undefined) return 1;
-						if (vb === undefined) return -1;
-						if (va < vb) return dir === 'asc' ? -1 : 1;
-						else return dir === 'asc' ? 1 : -1;
-					});
-				}
-
-				if (list.length === 0) return tpl.noTransferRow({});
-
-				const formatBytes = (bytes?: number) => {
-					if (!bytes) return '0 B';
-					const k = 1024;
-					const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-					const i = Math.floor(Math.log(bytes) / Math.log(k));
-					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-				};
-
-				return list.map((t) => {
-					const isSelected = selectedHash.get() === t.hash;
-					//const category = categories.get().find((c) => c.id === t.categoryId);
-
-					return tpl.transferRow({
-						_ref: (el) => {
-							if (isSelected) (el as HTMLElement).classList.add('selected');
-							else (el as HTMLElement).classList.remove('selected');
-						},
-						// CSS class handles selection in win-list
-						onclick: () => selectedHash.set(t.hash || null),
-						nodes: {
-							nameCol: {
-								nodes: {
-									fileNameText: { inner: t.name || 'Unknown' },
-									fileIcon: { inner: getFileIcon(t.name || '') },
-								},
-							},
-							sizeCol: { inner: formatBytes(t.size) },
-							categoryCol: { inner: t.categoryName || '-' },
-							completedCol: { inner: formatBytes(t.completed) },
-							speedCol: { inner: (t.speed ?? 0) > 0 ? formatBytes(t.speed) + '/s' : '' },
-							progressCol: {
-								nodes: {
-									progressBar: { style: { width: `${(t.progress || 0) * 100}%` } },
-									progressText: { inner: ((t.progress || 0) * 100).toFixed(1) + '%' },
-								},
-							},
-							sourcesCol: { inner: String(t.sources || 0) },
-							priorityCol: { inner: String(t.priority || 0) },
-							statusCol: { inner: t.status || '' },
-							remainingCol: { inner: formatBytes(t.remaining) },
-							addedOnCol: { inner: t.addedOn ? new Date(t.addedOn).toLocaleString() : '-' },
-						},
-					});
-				});
-			},
+			inner: () => (computedTransferListLength.get() === 0 ? tpl.noTransferRow({}) : TransfersRows(computedTransferList, { selectedHash })),
 		},
 
 		sharedListContainer: {
 			inner: () => {
 				const list = sharedList.get();
 				if (list.length === 0) return tpl.noSharedRow({});
-
-				const formatBytes = (bytes?: number) => {
-					if (!bytes) return '0 B';
-					const k = 1024;
-					const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-					const i = Math.floor(Math.log(bytes) / Math.log(k));
-					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-				};
 
 				return list.map((t) => {
 					return tpl.sharedRow({
@@ -230,7 +227,7 @@ export const TransfersView = component(() => {
 									sharedIcon: { inner: getFileIcon(t.name || '') },
 								},
 							},
-							sharedSizeCol: { inner: formatBytes(t.size) },
+							sharedSizeCol: { inner: fbytes(t.size) },
 							sharedStatusCol: { inner: 'Shared' },
 							sharedSourcesCol: { inner: String(t.sources || 0) },
 						},

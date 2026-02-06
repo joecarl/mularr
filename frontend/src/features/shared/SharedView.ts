@@ -2,8 +2,14 @@ import { component, signal, computed, onUnmount } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
+import { formatBytes } from '../../utils/formats';
 import tpl from './SharedView.html';
 import './SharedView.css';
+
+const fbytes = (bytes?: number) => {
+	const b = formatBytes(bytes || 0);
+	return `${b.text} ${b.unit}`;
+};
 
 export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -69,14 +75,6 @@ export const SharedView = component(() => {
 				const list = sharedList.get();
 				if (list.length === 0) return tpl.noSharedRow({});
 
-				const formatBytes = (bytes?: number) => {
-					if (!bytes) return '0 B';
-					const k = 1024;
-					const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-					const i = Math.floor(Math.log(bytes) / Math.log(k));
-					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-				};
-
 				return list.map((t) => {
 					return tpl.sharedRow({
 						nodes: {
@@ -86,7 +84,7 @@ export const SharedView = component(() => {
 									sharedIcon: { inner: getFileIcon(t.name || '') },
 								},
 							},
-							sharedSizeCol: { inner: formatBytes(t.size) },
+							sharedSizeCol: { inner: fbytes(t.size) },
 							sharedStatusCol: { inner: 'Shared' },
 							sharedSourcesCol: { inner: String(t.sources || 0) },
 						},

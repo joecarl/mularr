@@ -1,77 +1,123 @@
 # Mularr
 
-amule + web ui + *arr apis integration
+**Mularr** integra amule con una interfaz web y compatibilidad con APIs tipo \*arr (Sonarr/Radarr) y qBittorrent para facilitar la gestión de descargas.
 
-## 🚀 Características y Requisitos Detallados
+---
 
-### 1. Gestión de descargas
+## 🚀 Características principales
 
+- Gestión de descargas vía aMule.
+- Compatibilidad con qBittorrent API para Sonarr/Radarr (`/api/as-qbittorrent/api/v2`).
+- Torznab indexer para integración con Sonarr/Radarr (`/api/as-torznab-indexer`).
+- Interfaz frontend construida con **Vite**, **TypeScript** y [**Chispa**](https://github.com/joecarl/chispa) (el mejor framework UI jamás inventado; ver [documentación](https://github.com/joecarl/chispa/blob/main/DOCUMENTATION.md) y [ejemplos](https://github.com/joecarl/chispa/tree/main/test/example)).
+- Persistencia local con **SQLite** (`better-sqlite3`).
 
-## 🛠️ Arquitectura y Tecnologías
+---
 
-### Frontend
+## 🛠️ Tecnologías
 
--   **Vite + TypeScript**.
--   [**Chispa**](https://github.com/joecarl/chispa): Framework UI propio (ver [documentación](https://github.com/joecarl/chispa/blob/main/DOCUMENTATION.md) y [ejemplos](https://github.com/joecarl/chispa/tree/main/test/example)).
--   **CSS**: Estilos con ficheros `.css` (no se usa SASS en el proyecto). Después de instalar dependencias, se ejecuta `chispa-cli --compile-html` (está configurado en `postinstall`) para compilar los templates HTML a `dist`.
+- Frontend: **Vite + TypeScript + Chispa**
+- Backend: **Node.js + Express + TypeScript**
+- DB: **SQLite** (via `better-sqlite3`)
+- Comunicación HTTP: **Axios**
+
+---
+
+## 📂 Estructura del repositorio
+
+- `backend/` – servidor, API y lógica de negocio.
+- `frontend/` – aplicación web (Vite + Chispa).
+
+> ⚠️ No ejecutar `npm install` en la raíz: instalar dependencias por separado en `backend` y `frontend`.
+
+---
+
+## ⚙️ Variables de entorno importantes
+
+| Variable             | Descripción                                               | Valor por defecto / Notas                               |
+| -------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| `PORT`               | Puerto en el que escucha el backend                       | `8940`                                                  |
+| `DATABASE_PATH`      | Ruta al fichero SQLite                                    | `./database.sqlite` (por defecto)                       |
+| `AMULE_CONFIG_DIR`   | Directorio para la configuración de aMule                 | Opcional                                                |
+| `TELEGRAM_BOT_TOKEN` | Token del bot de Telegram (opcional)                      | Si está presente se habilita el envío de notificaciones |
+| `TELEGRAM_CHAT_ID`   | ID del chat donde enviar mensajes                         | Requerido si `TELEGRAM_BOT_TOKEN` está definido         |
+| `TELEGRAM_TOPIC_ID`  | (Opcional) thread/topic en Telegram para agrupar mensajes | Número entero                                           |
+| `GLUETUN_API`        | URL de la API de Gluetun                                  | `http://localhost:8000/v1`                              |
+| `GLUETUN_ENABLED`    | Flag para habilitar comprobaciones de Gluetun             | `false` (usar `true` para habilitar)                    |
+
+---
+
+## 🏁 Ejecutar en desarrollo
 
 ### Backend
 
--   **Node.js + Express + TypeScript**.
--   **SQLite (better-sqlite3)**: Persistencia de datos local.
--   **Axios**: Comunicación con APIs externas.
+1. Abrir terminal y ejecutar:
 
-## 📂 Estructura del Proyecto
+```bash
+cd backend
+npm install
+npm run dev   # ejecuta server en modo watch (tsx)
+```
 
-Este es un monorepo:
+El servidor arranca en `http://localhost:8940` (o el puerto que configures en `PORT`).
 
--   `backend/`: Lógica de servidor y API.
--   `frontend/`: Interfaz de usuario construida con Chispa.
+> Nota: la base de datos SQLite se crea automáticamente en la ruta indicada por `DATABASE_PATH`.
 
-> **⚠️ IMPORTANTE**: No ejecutar `npm install` en la raíz. Hacerlo siempre dentro de `/backend` o `/frontend`.
+### Frontend
 
-## 🌐 API (endpoints principales)
+1. Abrir terminal y ejecutar:
 
-La aplicación expone los siguientes endpoints principales bajo `/api`:
+```bash
+cd frontend
+npm install
+npm run dev   # Vite, accesible desde 0.0.0.0 para uso en contenedores
+```
 
--   `/api/tal` — gestión de tal
+El frontend en desarrollo corre en el puerto que Vite determine (por defecto 5173) y consume la API del backend configurando las URL según sea necesario.
 
+> Requisito: el `postinstall` del frontend ejecuta `chispa-cli --compile-html`. Asegúrate de tener `chispa-cli` disponible si trabajas con `npm install`.
 
+---
 
-## ⚙️ Configuración y Ejecución
+## 📦 Construcción y despliegue (producción)
 
-### 1. Backend
+La imagen Docker incluida construye el `frontend` y copia `dist` a `backend/public` para que el backend sirva la SPA:
 
-1. `cd backend`
-2. `npm install`
-3. Configurar `.env` (basado en `.env.example`) con variables como:
-    - `???`
-
-4. En desarrollo: `npm run dev` (usa `tsx watch`).
-5. Para producción: `npm run build` y luego `node dist/index.js` (o usar la imagen Docker incluida).
-
-### 2. Frontend
-
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev`
-
-## 📝 Notas de Desarrollo
-
--   ???
-
-## Docker implementation for Mularr
-
-### How to build
-
-From the root of the project:
+Desde la raíz del proyecto:
 
 ```bash
 docker build -t mularr .
 ```
 
-### Configuration
+La imagen expone el puerto `8940` por defecto. La carpeta `/app/data` se utiliza para almacenar la base de datos y configuraciones persistentes.
 
-The application expects several environment variables:
+---
 
--   `PORT`: Port to listen on (default 8940)
+## 🌐 Endpoints relevantes
+
+- `GET /api/system` – endpoints del sistema (ver `backend/src/controllers/SystemController.ts`).
+- `GET/POST /api/amule/*` – interacción con aMule (info, búsqueda, descargas, servidores, categorías, etc.).
+- `GET/POST /api/as-qbittorrent/api/v2/*` – compatibilidad qBittorrent (autenticación, torrents, categorías).
+- `GET /api/as-torznab-indexer` – Torznab indexer endpoint para Sonarr/Radarr.
+
+Consulta las rutas en `backend/src/routes` para ver la lista completa.
+
+---
+
+## 💡 Notas de desarrollo
+
+- La tabla de `downloads` se crea automáticamente al arrancar el backend (ver `backend/src/db.ts`).
+- Para compilar TypeScript: `cd backend && npm run build`.
+- En Alpine (imagen Docker) es necesario tener herramientas de compilación para `better-sqlite3`; el `Dockerfile` ya contempla los paquetes necesarios.
+
+---
+
+## 🧪 Tests y calidad
+
+Actualmente no hay tests automáticos incluidos. Se aceptan PRs que añadan pruebas y CI.
+
+---
+
+## 🤝 Contribuir
+
+Abrir issues o pull requests; seguir las buenas prácticas de commit y mantener la compatibilidad con las rutas y variables documentadas.

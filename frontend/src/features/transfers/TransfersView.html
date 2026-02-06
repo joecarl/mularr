@@ -27,12 +27,13 @@
 						<th data-cb="thCategory" style="cursor: pointer">Category</th>
 						<th data-cb="thSize" style="cursor: pointer; text-align: right;">Size</th>
 						<th data-cb="thCompleted" style="cursor: pointer; text-align: right;">Completed</th>
-						<th data-cb="thSpeed" style="cursor: pointer; text-align: right;">Speed</th>
-						<th data-cb="thProgress" style="cursor: pointer">Progress</th>
+						<th data-cb="thSpeed" style="cursor: pointer; text-align: right; width: 6%; min-width: 80px;">
+							Speed</th>
+						<th data-cb="thProgress" style="cursor: pointer; width: 10%; min-width: 80px;">Progress</th>
 						<th data-cb="thSources" style="cursor: pointer">Sources</th>
 						<th data-cb="thPriority" style="cursor: pointer">Priority</th>
 						<th data-cb="thStatus" style="cursor: pointer">Status</th>
-						<th data-cb="thRemaining" style="cursor: pointer">Remaining</th>
+						<th data-cb="thRemaining" style="cursor: pointer; width: 7%; min-width: 90px;">Remaining</th>
 						<th data-cb="thAddedOn" style="cursor: pointer">Added On</th>
 					</tr>
 				</thead>
@@ -49,10 +50,12 @@
 						<td data-cb="speedCol" style="text-align: right;">Speed</td>
 						<td data-cb="progressCol" style="width: 100px;">
 							<div
-								style="width: 100%; height: 14px; background: #fff; border: 1px solid #808080; position: relative;">
-								<div data-cb="progressBar" style="height: 100%; background: #0055ea; width: 0%;"></div>
+								style="width: 100%; height: 15px; background: #fff; border: 1px solid #808080; position: relative;">
+								<div data-cb="progressBar"
+									style="height: 100%; background: linear-gradient(0deg, green, rgb(85, 255, 85), green); width: 0%;">
+								</div>
 								<div data-cb="progressText"
-									style="position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: black; mix-blend-mode: difference; color: white;">
+									style="position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: black; text-shadow: 0 0 2px white;">
 									0%</div>
 							</div>
 						</td>

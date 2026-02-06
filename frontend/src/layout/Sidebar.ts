@@ -1,4 +1,5 @@
 import { component, Link, pathMatches, signal } from 'chispa';
+import { formatAmount, formatBytes, formatPercent, formatSpeed } from '../utils/formats';
 import { services } from '../services/container/ServiceContainer';
 import { SystemApiService, type SystemInfo } from '../services/SystemApiService';
 import { StatsService } from '../services/StatsService';
@@ -8,41 +9,6 @@ import './Sidebar.css';
 // NOTE: ¡No crear nodos DOM manualmente en este archivo!
 // Usa plantillas con `data-cb` en `Sidebar.html` y constrúyelas desde aquí con `tpl.<dataCbName>(...)`.
 // Evita `document.createElement` y la manipulación manual del DOM; revisa `CHISPA_GUIDE.md` y `CHISPA_BEST_PRACTICES.md`.
-function formatSpeed(bytes: number) {
-	const k = 1024;
-	const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
-	if (bytes == null || bytes === 0) return { text: '0', unit: sizes[0] };
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	const num = parseFloat((bytes / Math.pow(k, i)).toFixed(1));
-	return { text: String(num), unit: sizes[i] };
-}
-
-function formatBytes(bytes: number) {
-	const k = 1024;
-	const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-	if (bytes == null || bytes === 0) return { text: '0', unit: sizes[0] };
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	const num = parseFloat((bytes / Math.pow(k, i)).toFixed(1));
-	return { text: String(num), unit: sizes[i] };
-}
-
-function formatAmount(val: number) {
-	if (val == null) return { text: '0', unit: '' };
-	if (val >= 1_000_000_000) {
-		return { text: (val / 1_000_000_000).toFixed(1), unit: 'B' };
-	} else if (val >= 1_000_000) {
-		return { text: (val / 1_000_000).toFixed(1), unit: 'M' };
-	} else if (val >= 1_000) {
-		return { text: (val / 1_000).toFixed(1), unit: 'K' };
-	} else {
-		return { text: String(val), unit: '' };
-	}
-}
-
-function formatPercent(p: number) {
-	if (p == null) return { text: '0', unit: '%' };
-	return { text: Number(p).toFixed(1), unit: '%' };
-}
 
 function renderValue(val: any): string {
 	if (typeof val === 'boolean') return val ? 'Yes' : 'No';

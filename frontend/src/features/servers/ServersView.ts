@@ -1,4 +1,4 @@
-import { component, computed, onUnmount, signal } from 'chispa';
+import { component, computed, effect, onUnmount, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
@@ -62,6 +62,16 @@ export const ServersView = component(() => {
 		}
 	};
 
+	let logContainer: HTMLElement | null = null;
+	effect(() => {
+		logText.get();
+		if (logContainer) {
+			// Keep scroll at bottom
+			console.log('Updating log scroll position', logContainer);
+			logContainer.scrollTop = logContainer.scrollHeight;
+		}
+	});
+
 	return tpl.fragment({
 		serverListContainer: {
 			inner: () => {
@@ -95,7 +105,12 @@ export const ServersView = component(() => {
 				});
 			},
 		},
-		logContainer: { inner: logText },
+		logContainer: {
+			inner: logText,
+			_ref: (el) => {
+				logContainer = el;
+			},
+		},
 		refreshBtn: { onclick: loadServers },
 	});
 });
