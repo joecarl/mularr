@@ -1,6 +1,6 @@
 import { component, signal, computed, onUnmount, componentList, Signal, WritableSignal, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { AmuleApiService, Transfer, Category } from '../../services/AmuleApiService';
+import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import { formatBytes } from '../../utils/formats';
 import tpl from './TransfersView.html';
@@ -62,23 +62,38 @@ export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 
 	const transferList = signal<Transfer[]>([]);
-	const sharedList = signal<Transfer[]>([]);
+	const uploadQueue = signal<AmuleUpDownClient[]>([]);
 	const categories = signal<Category[]>([]);
 	const selectedHash = signal<string | null>(null);
 	const sortColumn = signal<keyof Transfer>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
+	let loadPromise: Promise<any> | null = null;
 
 	const isDisabled = computed(() => !selectedHash.get());
 
 	const loadTransfers = async () => {
 		try {
-			const data: any = await apiService.getTransfers();
-			if (data.downloads) {
-				transferList.set(data.downloads);
-				sharedList.set(data.shared || []);
+			const data = await apiService.getTransfers();
+			if (data.list) {
+				transferList.set(data.list);
 			}
 		} catch (e: any) {
 			console.error('Error loading transfers:', e);
+		}
+	};
+
+	const loadUploadQueue = async () => {
+		try {
+			const data = await apiService.getUploadQueue();
+			if (data.list) {
+				uploadQueue.set(data.list);
+			}
+			// We can choose to display upload queue in the same list or a separate one. For now, let's just log it.
+			console.log('Upload Queue:', data);
+		} catch (e: any) {
+			console.error('Error loading upload queue:', e);
+			// Optionally, we could set an error state here to display in the UI.
+			// For example: uploadQueueError.set('Failed to load upload queue');
 		}
 	};
 
@@ -92,11 +107,15 @@ export const TransfersView = component(() => {
 	};
 
 	// Auto-update transfers every 2 seconds
-	const intervalId = setInterval(loadTransfers, 2000);
+	const intervalId = setInterval(() => {
+		loadTransfers();
+		loadUploadQueue();
+	}, 2000);
 	onUnmount(() => clearInterval(intervalId));
 
 	loadTransfers();
 	loadCategories();
+	loadUploadQueue();
 
 	const sort = (col: keyof Transfer) => {
 		if (sortColumn.get() === col) {
@@ -218,7 +237,7 @@ export const TransfersView = component(() => {
 
 		sharedListContainer: {
 			inner: () => {
-				const list = sharedList.get();
+				const list = uploadQueue.get();
 				if (list.length === 0) return tpl.noSharedRow({});
 
 				return list.map((t) => {
@@ -226,13 +245,16 @@ export const TransfersView = component(() => {
 						nodes: {
 							sharedNameCol: {
 								nodes: {
-									sharedNameText: { inner: t.name || 'Unknown' },
-									sharedIcon: { inner: getFileIcon(t.name || '') },
+									sharedNameText: { inner: t.clientName || 'Unknown' },
+									sharedIcon: { inner: '' },
 								},
 							},
-							sharedSizeCol: { inner: fbytes(t.size) },
-							sharedStatusCol: { inner: 'Shared' },
-							sharedSourcesCol: { inner: String(t.sources || 0) },
+							sharedFileNameCol: { inner: t.remoteFilename || 'Unknown' },
+							sharedVersionCol: { inner: t.softVerStr || 'Unknown' },
+							sharedSpeedCol: { inner: t.speedUp ? fbytes(t.speedUp) + '/s' : '0 B/s' },
+							sharedIpCol: { inner: t.userIP || '-' },
+							sharedScoreCol: { inner: String(t.score || 0) },
+							sharedTransferredCol: { inner: fbytes(t.xferUp || 0) },
 						},
 					});
 				});

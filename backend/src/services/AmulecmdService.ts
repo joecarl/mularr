@@ -107,8 +107,7 @@ export class AmulecmdService {
 
 		return {
 			raw: clean,
-			downloads: transfers,
-			shared: [],
+			list: transfers,
 		};
 	}
 

@@ -98,6 +98,15 @@ export class AmuleController {
 		}
 	};
 
+	getUploadQueue = async (req: Request, res: Response) => {
+		try {
+			const queue = await this.amuleService.getUploadQueue();
+			res.json(queue);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	download = async (req: Request, res: Response) => {
 		try {
 			const { link } = req.body;

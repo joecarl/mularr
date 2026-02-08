@@ -16,7 +16,7 @@
 	</div>
 
 	<!-- Active Downloads -->
-	<div style="flex: 2; display: flex; flex-direction: column; min-height: 0;">
+	<div style="flex: 3; display: flex; flex-direction: column; min-height: 0;">
 		<div class="win-header-small">Active Downloads</div>
 		<div
 			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
@@ -70,16 +70,19 @@
 
 	<!-- Uploading  -->
 	<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-		<div class="win-header-small">Uploading</div>
+		<div class="win-header-small">Upload Queue</div>
 		<div
 			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
 			<table class="win-list">
 				<thead>
 					<tr>
-						<th>Filename</th>
-						<th>Size</th>
-						<th>Status</th>
-						<th>Requests</th>
+						<th>Client Name</th>
+						<th>File Name</th>
+						<th>Version</th>
+						<th style="text-align: right; width: 10%; min-width: 100px;">Speed</th>
+						<th>IP</th>
+						<th>Score</th>
+						<th>Transferred</th>
 					</tr>
 				</thead>
 				<tbody data-cb="sharedListContainer">
@@ -88,12 +91,15 @@
 							<span data-cb="sharedIcon" style="margin-right: 5px;"></span>
 							<span data-cb="sharedNameText"></span>
 						</td>
-						<td data-cb="sharedSizeCol"></td>
-						<td data-cb="sharedStatusCol"></td>
-						<td data-cb="sharedSourcesCol"></td>
+						<td data-cb="sharedFileNameCol"></td>
+						<td data-cb="sharedVersionCol"></td>
+						<td data-cb="sharedSpeedCol" style="text-align: right;"></td>
+						<td data-cb="sharedIpCol"></td>
+						<td data-cb="sharedScoreCol"></td>
+						<td data-cb="sharedTransferredCol"></td>
 					</tr>
 					<tr data-cb="noSharedRow">
-						<td colspan="4">No shared files.</td>
+						<td colspan="7">No uploads.</td>
 					</tr>
 				</tbody>
 			</table>

@@ -186,7 +186,7 @@ export class AmuleService {
 		return { raw: 'Error getting shared files', list: [] };
 	}
 
-	async getTransfers(): Promise<{ raw: string; downloads: Download[] }> {
+	async getTransfers(): Promise<{ raw: string; list: Download[] }> {
 		try {
 			const queue = await this.client.getDownloadQueue();
 			//console.log('Download Queue from EC Client:', queue);
@@ -321,14 +321,14 @@ export class AmuleService {
 
 			return {
 				raw: `Downloads (${queue.length})`,
-				downloads: await Promise.all(transfers),
+				list: await Promise.all(transfers),
 			};
 		} catch (error) {
 			console.error('EC Client Transfers Error:', error);
 			// if (this.amulecmdService) {
 			// 	return this.amulecmdService.getTransfers();
 			// }
-			return { raw: 'Error getting transfers', downloads: [] };
+			return { raw: 'Error getting transfers', list: [] };
 		}
 	}
 
@@ -432,6 +432,23 @@ export class AmuleService {
 			console.error('Get Search Status Error:', e);
 
 			return { raw: 'Error fetching search status', progress: 0 };
+		}
+	}
+
+	async getUploadQueue() {
+		try {
+			const uploads = await this.client.getClientQueue();
+			return {
+				raw: `Uploads (${uploads.length})`,
+				list: uploads,
+			};
+		} catch (e: any) {
+			console.error('Get Upload Queue Error:', e);
+			return { raw: 'Error fetching upload queue', list: [] };
+			// No fallback for uploads since amulecmd doesn't provide this info
+			// if (this.amulecmdService) {
+			// 	return this.amulecmdService.getUploadQueue();
+			// }
 		}
 	}
 

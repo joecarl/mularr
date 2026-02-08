@@ -60,7 +60,7 @@ export class QbittorrentController {
 
 		const categories = await this.amuleService.getCategories();
 		const transfers = await this.amuleService.getTransfers();
-		const tr = transfers.downloads.find((t) => t.hash === hash);
+		const tr = transfers.list.find((t) => t.hash === hash);
 
 		if (tr) {
 			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || '/incoming';
@@ -111,7 +111,7 @@ export class QbittorrentController {
 
 			const requestedCtgName = category as string | undefined;
 
-			const downloads = transfers.downloads.filter((t) => {
+			const downloads = transfers.list.filter((t) => {
 				if (requestedCtgName) {
 					return t.categoryName === requestedCtgName;
 				}
@@ -156,7 +156,7 @@ export class QbittorrentController {
 
 		try {
 			const transfers = await this.amuleService.getTransfers();
-			const tr = transfers.downloads.find((t) => t.hash === hash);
+			const tr = transfers.list.find((t) => t.hash === hash);
 			if (!tr) {
 				return res.status(404).send('Torrent not found');
 			}

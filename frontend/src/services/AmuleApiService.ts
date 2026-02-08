@@ -94,6 +94,52 @@ export interface Transfer extends AmuleFile {
 	isCompleted?: boolean;
 }
 
+export interface AmuleUpDownClient {
+	userHashHexString?: string;
+	userID?: number;
+	clientName?: string;
+	speedUp?: number;
+	speedDown?: number;
+	xferUp?: number;
+	xferDown?: number;
+	xferUpSession?: number;
+	xferDownSession?: number;
+	friendSlot?: boolean;
+	clientSoftware?: number;
+	softVerStr?: string;
+	clientUploadState?: number;
+	clientDownloadState?: number;
+	getSourceFrom?: number;
+	userIP?: string;
+	userPort?: number;
+	serverIP?: string;
+	serverPort?: number;
+	serverName?: string;
+	kadPort?: number;
+	score?: number;
+	waitingPosition?: number;
+	remoteQueueRank?: number;
+	oldRemoteQueueRank?: number;
+	identState?: number;
+	obfuscationStatus?: number;
+	hasExtendedProtocol?: boolean;
+	nextRequestedPart?: number;
+	lastDownloadingPart?: number;
+	uploadFileID?: number;
+	requestFileID?: number;
+	remoteFilename?: string;
+	disableViewShared?: boolean;
+	version?: number;
+	modVersion?: string;
+	osInfo?: string;
+	availableParts?: number;
+}
+
+export interface UploadQueueResponse {
+	raw?: string;
+	list: AmuleUpDownClient[];
+}
+
 export interface Category {
 	id: number;
 	name: string;
@@ -113,6 +159,22 @@ export interface AmuleFile {
 	name?: string;
 	size?: number;
 	hash?: string;
+
+	// path?: string;
+	// fileEd2kLink?: string;
+	// upPrio: number;
+	// getRequests: number;
+	// getAllRequests: number;
+	// getAccepts: number;
+	// getAllAccepts: number;
+	// getXferred: number;
+	// getAllXferred: number;
+	// getCompleteSourcesLow: number;
+	// getCompleteSourcesHigh: number;
+	// getCompleteSources: number;
+	// getOnQueue: number;
+	// getComment?: string;
+	// getRating?: number;
 }
 
 export interface SharedResponse {
@@ -191,6 +253,10 @@ export class AmuleApiService extends BaseApiService {
 
 	async getSearchStatus(): Promise<SearchStatusResponse> {
 		return this.request<SearchStatusResponse>('/search/status');
+	}
+
+	async getUploadQueue(): Promise<UploadQueueResponse> {
+		return this.request<UploadQueueResponse>('/upload-queue');
 	}
 
 	async addDownload(link: string): Promise<SuccessResponse> {

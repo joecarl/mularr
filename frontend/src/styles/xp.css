@@ -64,6 +64,13 @@ body {
 	background: var(--win-face);
 }
 
+.win-header-small {
+	/* background: linear-gradient(to bottom, #316ac5 0%, #214a7c 100%); */
+	/* color: white; */
+	padding: 2px 2px;
+	font-weight: bold;
+}
+
 /* Tables / Lists */
 .win-list {
 	width: 100%;
