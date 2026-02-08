@@ -4,6 +4,7 @@ import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
 import tpl from './ServersView.html';
 import './ServersView.css';
+import { formatAmount } from '../../utils/formats';
 
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -82,6 +83,9 @@ export const ServersView = component(() => {
 				return list.map((s) => {
 					const isConnected = connected && s.ip === connected.ip && s.port === connected.port;
 					const rowStyle = isConnected ? { color: 'blue', fontWeight: 'bold' } : {};
+					const users = formatAmount(s.users ?? 0);
+					const maxUsers = formatAmount(s.maxUsers ?? 0);
+					const files = formatAmount(s.files ?? 0);
 
 					return tpl.serverRow({
 						style: rowStyle,
@@ -91,9 +95,9 @@ export const ServersView = component(() => {
 							ipCol: { inner: `${s.ip}:${s.port}` },
 							descCol: { inner: s.description ?? '' },
 							pingCol: { inner: s.ping ?? '' },
-							usersCol: { inner: s.users ?? '' },
-							maxUsersCol: { inner: s.maxUsers ?? '' },
-							filesCol: { inner: s.files ?? '' },
+							usersCol: { inner: users.text + ' ' + users.unit },
+							maxUsersCol: { inner: maxUsers.text + ' ' + maxUsers.unit },
+							filesCol: { inner: files.text + ' ' + files.unit },
 							prefCol: { inner: s.priority ?? '' },
 							failedCol: { inner: s.failedCount ?? '' },
 							staticCol: { inner: s.isStatic ? 'Yes' : 'No' },

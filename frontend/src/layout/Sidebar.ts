@@ -17,6 +17,24 @@ function renderValue(val: any): string {
 	}
 	return String(val);
 }
+const formatLimit = (v: number) => (v === 0 ? { text: 'Unlimited' } : formatSpeed(v));
+
+const statsFields: { key: string; label: string; render?: (v: any) => any }[] = [
+	{ key: 'downloadOverhead', label: 'Download overhead', render: formatSpeed },
+	{ key: 'uploadOverhead', label: 'Upload overhead', render: formatSpeed },
+	{ key: 'bannedCount', label: 'Banned', render: formatAmount },
+	{ key: 'totalSentBytes', label: 'Total sent', render: formatBytes },
+	{ key: 'totalReceivedBytes', label: 'Total received', render: formatBytes },
+	{ key: 'sharedFileCount', label: 'Shared files', render: formatAmount },
+	{ key: 'uploadSpeedLimit', label: 'Upload limit', render: formatLimit },
+	{ key: 'downloadSpeedLimit', label: 'Download limit', render: formatLimit },
+	{ key: 'totalSourceCount', label: 'Sources', render: formatAmount },
+	{ key: 'ed2kUsers', label: 'ED2K users', render: formatAmount },
+	{ key: 'kadUsers', label: 'KAD users', render: formatAmount },
+	{ key: 'ed2kFiles', label: 'ED2K files', render: formatAmount },
+	{ key: 'kadFiles', label: 'KAD files', render: formatAmount },
+	{ key: 'kadNodes', label: 'KAD nodes', render: formatAmount },
+];
 
 export const Sidebar = component(() => {
 	const statsService = services.get(StatsService);
@@ -211,30 +229,9 @@ export const Sidebar = component(() => {
 
 					result.push(tpl.statsSep({}));
 				}
-				// 2. Typed fields — render each stat with an appropriate formatter
-				const fields: Array<{ key: string; label: string; render?: (v: any) => any }> = [
-					{ key: 'uploadOverhead', label: 'Upload overhead', render: (v: number) => (v == null ? null : formatPercent(v)) },
-					{ key: 'downloadOverhead', label: 'Download overhead', render: (v: number) => (v == null ? null : formatPercent(v)) },
-					{ key: 'bannedCount', label: 'Banned', render: (v: number) => formatAmount(v) },
-					{ key: 'loggerMessage', label: 'Log', render: (v: string[]) => (Array.isArray(v) ? v.slice(-3).join('\n') : String(v)) },
-					{ key: 'totalSentBytes', label: 'Total sent', render: (v: number) => formatBytes(v) },
-					{ key: 'totalReceivedBytes', label: 'Total received', render: (v: number) => formatBytes(v) },
-					{ key: 'sharedFileCount', label: 'Shared files', render: (v: number) => formatAmount(v) },
-					{ key: 'uploadSpeedLimit', label: 'Upload limit', render: (v: number) => (v === 0 ? { text: 'Unlimited' } : formatSpeed(v)) },
-					{
-						key: 'downloadSpeedLimit',
-						label: 'Download limit',
-						render: (v: number) => (v === 0 ? { text: 'Unlimited' } : formatSpeed(v)),
-					},
-					{ key: 'totalSourceCount', label: 'Sources', render: (v: number) => formatAmount(v) },
-					{ key: 'ed2kUsers', label: 'ED2K users', render: (v: number) => formatAmount(v) },
-					{ key: 'kadUsers', label: 'KAD users', render: (v: number) => formatAmount(v) },
-					{ key: 'ed2kFiles', label: 'ED2K files', render: (v: number) => formatAmount(v) },
-					{ key: 'kadFiles', label: 'KAD files', render: (v: number) => formatAmount(v) },
-					{ key: 'kadNodes', label: 'KAD nodes', render: (v: number) => formatAmount(v) },
-				];
 
-				for (const f of fields) {
+				// 2. Typed fields — render each stat with an appropriate formatter
+				for (const f of statsFields) {
 					const val = (s as any)[f.key];
 					if (val === undefined || val === null || val === '') continue;
 
