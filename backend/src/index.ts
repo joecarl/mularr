@@ -10,10 +10,12 @@ import { GluetunService } from './services/GluetunService';
 import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
+import { ValidatorsService } from './services/ValidatorsService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
 import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
 import { indexerRoutes } from './routes/indexerRoutes';
+import { validatorsRoutes } from './routes/validatorsRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
@@ -39,6 +41,10 @@ container.register(GluetunService, gluetunService);
 const systemService = new SystemService();
 container.register(SystemService, systemService);
 
+// Initialize Validators Service
+const validatorsService = new ValidatorsService();
+container.register(ValidatorsService, validatorsService);
+
 // Initialize Telegram Service (Optional)
 if (process.env.TELEGRAM_BOT_TOKEN) {
 	const topicId = process.env.TELEGRAM_TOPIC_ID ? parseInt(process.env.TELEGRAM_TOPIC_ID) : undefined;
@@ -55,6 +61,7 @@ monitoringService.start();
 
 app.use('/api/system', systemRoutes());
 app.use('/api/amule', amuleRoutes());
+app.use('/api/validators', validatorsRoutes());
 app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr
 app.use('/api/as-torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
 

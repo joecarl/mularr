@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
 import { AmuleService } from '../services/AmuleService';
+import { ValidatorsService } from '../services/ValidatorsService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
 import { AmuleCategory } from 'amule-ec-client';
 
@@ -15,6 +16,7 @@ const getCatByName = (ctgs: AmuleCategory[], name: string) => {
  */
 export class QbittorrentController {
 	private readonly amuleService = container.get(AmuleService);
+	private readonly validatorsService = container.get(ValidatorsService);
 
 	// qBittorrent API: POST /api/v2/auth/login
 	login = async (req: Request, res: Response) => {
@@ -67,7 +69,7 @@ export class QbittorrentController {
 			const properties = {
 				addition_date: 0,
 				comment: '',
-				completion_date: tr.status === 'Completed' || tr.status === 'Shared' ? Math.floor(Date.now() / 1000) : 0,
+				completion_date: tr.statusId === 9 ? Math.floor(Date.now() / 1000) : 0,
 				created_by: '',
 				dl_speed: tr.speed || 0,
 				eta: tr.timeLeft || 0,
@@ -121,6 +123,22 @@ export class QbittorrentController {
 			const qbitTorrents = downloads.map((t) => {
 				const savePath = getCatByName(categories, t.categoryName ?? '')?.path || '/incoming';
 				const contentPath = t.name ? savePath + '/' + t.name : undefined;
+
+				let state = this.mapStatusIdToQbitState(t.statusId);
+
+				// -- Validator Check --
+				// If fully downloaded, check if valid.
+				// If not valid, report state = 'checkingUP'.
+				if (t.hash && contentPath && t.statusId && t.statusId >= 9) {
+					// Trigger validation (non-blocking) - fire and forget
+					this.validatorsService.processFile(t.hash, contentPath).catch((err) => console.error(err));
+
+					const isValid = this.validatorsService.getValidationStatus(t.hash);
+					if (!isValid) {
+						state = 'checkingUP';
+					}
+				}
+
 				return {
 					hash: t.hash || 'unknown',
 					name: t.name || 'Unknown',
@@ -131,7 +149,7 @@ export class QbittorrentController {
 					priority: t.priority || 0,
 					num_seeds: t.sources || 0,
 					num_leechers: 0,
-					state: this.mapStatusToQbitState(t.status || 'Downloading'),
+					state: state,
 					save_path: savePath,
 					content_path: contentPath,
 					added_on: Math.floor(Date.now() / 1000),
@@ -164,7 +182,7 @@ export class QbittorrentController {
 			const files = [
 				{
 					index: 0,
-					is_seed: tr.status === 'Completed' || tr.status === 'Shared',
+					is_seed: tr.statusId === 9,
 					name: tr.name || 'Unknown',
 					priority: tr.priority || 1,
 					progress: tr.progress || 0,
@@ -265,20 +283,24 @@ export class QbittorrentController {
 		});
 	};
 
-	private mapStatusToQbitState(status: string): string {
-		switch (status.toLowerCase()) {
-			case 'downloading':
+	private mapStatusIdToQbitState(statusId?: number): string {
+		switch (statusId) {
+			case 0: // Downloading
 				return 'downloading';
-			case 'paused':
+			case 7: // Paused
 				return 'pausedDL';
-			case 'completed':
-			case 'shared':
+			case 9: // Completed
 				return 'uploading';
-			case 'hashing':
-			case 'waiting for hash':
+			case 3: // Hashing
+			case 2: // Waiting for Hash
 				return 'checkingDL';
-			case 'error':
+			case 4: // Error
+			case 5: // Insufficient Space
 				return 'error';
+			case 8: // Completing
+				return 'moving';
+			case 10: // Allocating
+				return 'checkingDL';
 			default:
 				return 'downloading';
 		}

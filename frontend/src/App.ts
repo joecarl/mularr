@@ -9,6 +9,7 @@ import { SearchView } from './features/search/SearchView';
 import { SharedView } from './features/shared/SharedView';
 import { SettingsView } from './features/settings/SettingsView';
 import { CategoriesView } from './features/categories/CategoriesView';
+import { ValidatorsView } from './features/validators/ValidatorsView';
 import { StatsService } from './services/StatsService';
 import { formatSpeed } from './utils/formats';
 import tpl from './App.html';
@@ -38,6 +39,7 @@ export const App = component(() => {
 					{ path: '/transfers', component: TransfersView },
 					{ path: '/search', component: SearchView },
 					{ path: '/shared', component: SharedView },
+					{ path: '/validators', component: ValidatorsView },
 					{ path: '/categories', component: CategoriesView },
 					{ path: '/settings', component: SettingsView },
 				],

@@ -1,0 +1,90 @@
+<div class="validators-view">
+	<div class="win-panel-raised"
+		style="padding: 5px; display: flex; justify-content: space-between; align-items: center;">
+		<span style="font-weight: bold; margin-left: 5px;">Validators</span>
+		<div style="display: flex; gap: 5px;">
+			<button class="win-btn" data-cb="btnRefresh">Refresh</button>
+			<button class="win-btn" data-cb="btnAdd">Add Validator</button>
+		</div>
+	</div>
+
+	<div
+		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
+		<table class="win-list">
+			<thead>
+				<tr>
+					<th style="width: 40px; text-align: center;">ID</th>
+					<th style="width: 150px;">Name</th>
+					<th>URL</th>
+					<th style="width: 100px;">Type</th>
+					<th style="width: 60px; text-align: center;">Enabled</th>
+					<th style="width: 100px; text-align: center;">Actions</th>
+				</tr>
+			</thead>
+			<tbody data-cb="listBody">
+				<!-- Template row handled by code -->
+				<tr data-cb="validatorRow">
+					<td data-cb="idCol" style="text-align: center;"></td>
+					<td data-cb="nameCol"></td>
+					<td data-cb="urlCol"></td>
+					<td data-cb="typeCol"></td>
+					<td data-cb="enabledCol" style="text-align: center;"></td>
+					<td style="text-align: center;">
+						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
+							data-cb="btnToggle">Toggle</button>
+						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px; color: #c00;"
+							data-cb="btnDelete">Del</button>
+					</td>
+				</tr>
+
+				<tr data-cb="noItemsRow" style="background: white;">
+					<td colspan="6" style="text-align: center; padding: 10px; font-style: italic;">
+						No validators configured.
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal-overlay" data-cb="dlgAdd" style="display: none;">
+		<div class="xp-window" style="width: 400px;">
+			<div class="xp-window-header">
+				<div class="xp-window-title">Add Validator</div>
+				<div class="xp-window-controls">
+					<button class="xp-close-btn" data-cb="btnCloseDlg">×</button>
+				</div>
+			</div>
+			<div class="xp-window-content" style="padding: 10px;">
+				<form data-cb="formAdd">
+					<div class="form-group" style="margin-bottom: 10px;">
+						<label style="display: block; margin-bottom: 3px;">Name:</label>
+						<input type="text" name="name" required style="width: 100%; border: 2px inset; padding: 2px;" />
+					</div>
+					<div class="form-group" style="margin-bottom: 10px;">
+						<label style="display: block; margin-bottom: 3px;">URL:</label>
+						<input type="url" name="url" required placeholder="http://..."
+							style="width: 100%; border: 2px inset; padding: 2px;" />
+					</div>
+					<div class="form-group" style="margin-bottom: 10px;">
+						<label style="display: block; margin-bottom: 3px;">Type:</label>
+						<select name="type" style="width: 100%; border: 2px inset; padding: 2px;">
+							<option value="generic">Generic (Webhook)</option>
+							<option value="nsfw">NSFW Detector</option>
+						</select>
+					</div>
+					<div class="form-group" style="margin-bottom: 15px;">
+						<label>
+							<input type="checkbox" name="enabled" checked /> Enabled
+						</label>
+					</div>
+
+					<div style="display: flex; justify-content: flex-end; gap: 8px;">
+						<button type="submit" class="win-btn">Save</button>
+						<button type="button" class="win-btn" data-cb="btnCancelDlg">Cancel</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

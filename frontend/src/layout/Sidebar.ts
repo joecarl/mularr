@@ -61,6 +61,7 @@ export const Sidebar = component(() => {
 		{ to: '/search', inner: ['🔍', ' Search'] },
 		{ to: '/shared', inner: ['🌏', ' Shared'] },
 		{ to: '/categories', inner: ['🏷️', ' Categories'] },
+		{ to: '/validators', inner: ['🛡️', ' Validators'] },
 		{ to: '/settings', inner: ['⚙️', ' Settings'] },
 	];
 
