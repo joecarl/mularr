@@ -22,6 +22,7 @@ export const SearchView = component(() => {
 	const sortColumn = signal<keyof SearchResult>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
 	const searchProgress = signal(0);
+	const addingDownload = signal(false);
 	let isPolling = false;
 
 	const performSearch = async () => {
@@ -98,11 +99,15 @@ export const SearchView = component(() => {
 		const targetLink = linkOrHash || downloadLink.get();
 		if (!targetLink) return;
 		try {
+			addingDownload.set(true);
 			await apiService.addDownload(targetLink);
-			alert('Download added successfully');
+			console.log('Download added successfully');
+			loadResults();
 			if (!linkOrHash) downloadLink.set('');
 		} catch (e: any) {
 			alert('Error adding download: ' + e.message);
+		} finally {
+			addingDownload.set(false);
 		}
 	};
 
@@ -168,6 +173,10 @@ export const SearchView = component(() => {
 
 				return list.map((res) =>
 					tpl.resultRow({
+						classes: {
+							'status-downloaded': res.downloadStatus === 1,
+							'status-queued': res.downloadStatus === 2,
+						},
 						nodes: {
 							nameCol: { title: res.name },
 							fileIcon: { inner: getFileIcon(res.name) },
@@ -184,7 +193,7 @@ export const SearchView = component(() => {
 									return `${((c / s) * 100).toFixed(0)}% (${c})`;
 								},
 							},
-							downloadMiniBtn: { onclick: () => download(res.hash) },
+							downloadMiniBtn: { onclick: () => download(res.hash), disabled: addingDownload },
 						},
 					})
 				);

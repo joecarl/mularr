@@ -191,6 +191,7 @@ export interface SearchResult {
 	hash: string;
 	type?: string;
 	sources?: string;
+	downloadStatus?: number;
 	completeSources?: string;
 }
 
