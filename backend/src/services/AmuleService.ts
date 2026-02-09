@@ -174,6 +174,7 @@ export class AmuleService {
 				console.log('!!!!!!!! NO Shared Files from EC Client');
 			}
 			const list = files.map((file) => ({
+				...file,
 				name: file.fileName,
 				hash: file.fileHashHexString,
 				size: file.sizeFull,
@@ -396,10 +397,10 @@ export class AmuleService {
 
 					return {
 						name: file.fileName,
-						size: (file.sizeFull / (1024 * 1024)).toFixed(2), // MB string for frontend
-						sizeBytes: file.sizeFull,
+						size: file.sizeFull,
 						sources: file.sourceCount,
-						completeSources: file.sourceCount,
+						completeSources: file.completeSourceCount,
+						downloadStatus: file.downloadStatus,
 						type: '',
 						//link: ed2k,
 						hash: hash,

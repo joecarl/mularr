@@ -4,6 +4,12 @@ import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import tpl from './SearchView.html';
 import './SearchView.css';
+import { formatBytes } from '../../utils/formats';
+
+const fbytes = (bytes?: number) => {
+	const b = formatBytes(bytes || 0);
+	return `${b.text} ${b.unit}`;
+};
 
 export const SearchView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -100,31 +106,6 @@ export const SearchView = component(() => {
 		}
 	};
 
-	const formatSize = (sizeStr: string) => {
-		if (sizeStr === 'Unknown') return sizeStr;
-
-		// Try to extract number and unit
-		const match = sizeStr.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]*)$/);
-		if (!match) return sizeStr;
-
-		let val = parseFloat(match[1]);
-		let unit = match[2].toUpperCase() || 'MB'; // Default to MB if no unit (amulecmd default)
-
-		// Convert everything to MB first for easier handling if needed
-		let sizeInMB = val;
-		if (unit === 'KB') sizeInMB = val / 1024;
-		else if (unit === 'GB') sizeInMB = val * 1024;
-		else if (unit === 'B') sizeInMB = val / (1024 * 1024);
-
-		if (sizeInMB < 1) {
-			return `${(sizeInMB * 1024).toFixed(2)} KB`;
-		} else if (sizeInMB >= 1024) {
-			return `${(sizeInMB / 1024).toFixed(2)} GB`;
-		} else {
-			return `${sizeInMB.toFixed(2)} MB`;
-		}
-	};
-
 	const sort = (col: keyof SearchResult) => {
 		if (sortColumn.get() === col) {
 			sortDirection.set(sortDirection.get() === 'asc' ? 'desc' : 'asc');
@@ -172,8 +153,8 @@ export const SearchView = component(() => {
 						if (!vb) return -1;
 
 						if (col === 'size' || col === 'sources' || col === 'completeSources') {
-							const na = parseFloat(va);
-							const nb = parseFloat(vb);
+							const na = va as number;
+							const nb = vb as number;
 							if (!isNaN(na) && !isNaN(nb)) {
 								return dir === 'asc' ? na - nb : nb - na;
 							}
@@ -192,7 +173,7 @@ export const SearchView = component(() => {
 							fileIcon: { inner: getFileIcon(res.name) },
 							fileNameText: { inner: res.name },
 							typeCol: { inner: res.type || '' },
-							sizeCol: { inner: formatSize(res.size) },
+							sizeCol: { inner: fbytes(res.size) },
 							sourcesCol: { inner: res.sources || '0' },
 							completeCol: {
 								inner: () => {

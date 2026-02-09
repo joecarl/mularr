@@ -1,8 +1,9 @@
-import { component, signal, computed, onUnmount, componentList, Signal, WritableSignal, bindControlledSelect, effect } from 'chispa';
+import { component, signal, computed, componentList, WritableSignal, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
 import { formatBytes } from '../../utils/formats';
+import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
@@ -67,55 +68,35 @@ export const TransfersView = component(() => {
 	const selectedHash = signal<string | null>(null);
 	const sortColumn = signal<keyof Transfer>('name');
 	const sortDirection = signal<'asc' | 'desc'>('asc');
-	let loadPromise: Promise<any> | null = null;
 
 	const isDisabled = computed(() => !selectedHash.get());
 
-	const loadTransfers = async () => {
-		try {
+	const loadTransfers = smartPoll(
+		transferList,
+		async () => {
 			const data = await apiService.getTransfers();
-			if (data.list) {
-				transferList.set(data.list);
-			}
-		} catch (e: any) {
-			console.error('Error loading transfers:', e);
-		}
-	};
+			return data.list || [];
+		},
+		2000
+	);
 
-	const loadUploadQueue = async () => {
-		try {
+	const loadUploadQueue = smartPoll(
+		uploadQueue,
+		async () => {
 			const data = await apiService.getUploadQueue();
-			if (data.list) {
-				uploadQueue.set(data.list);
-			}
-			// We can choose to display upload queue in the same list or a separate one. For now, let's just log it.
-			console.log('Upload Queue:', data);
-		} catch (e: any) {
-			console.error('Error loading upload queue:', e);
-			// Optionally, we could set an error state here to display in the UI.
-			// For example: uploadQueueError.set('Failed to load upload queue');
-		}
-	};
+			return data.list || [];
+		},
+		2000
+	);
 
-	const loadCategories = async () => {
-		try {
+	const loadCategories = smartPoll(
+		categories,
+		async () => {
 			const cats = await apiService.getCategories();
-			categories.set(cats);
-		} catch (e: any) {
-			console.error('Error loading categories:', e);
-		}
-	};
-
-	// Auto-update transfers every 2 seconds
-	const intervalId = setInterval(() => {
-		loadTransfers();
-		loadUploadQueue();
-	}, 2000);
-	onUnmount(() => clearInterval(intervalId));
-
-	loadTransfers();
-	loadCategories();
-	loadUploadQueue();
+			return cats;
+		},
+		10000
+	);
 
 	const sort = (col: keyof Transfer) => {
 		if (sortColumn.get() === col) {
@@ -249,12 +230,12 @@ export const TransfersView = component(() => {
 									sharedIcon: { inner: '' },
 								},
 							},
-							sharedFileNameCol: { inner: t.remoteFilename || 'Unknown' },
+							sharedFileNameCol: { inner: t.uploadFilename || t.remoteFilename || 'Unknown' },
 							sharedVersionCol: { inner: t.softVerStr || 'Unknown' },
-							sharedSpeedCol: { inner: t.speedUp ? fbytes(t.speedUp) + '/s' : '0 B/s' },
+							sharedSpeedCol: { inner: t.upSpeed ? fbytes(t.upSpeed) + '/s' : '0 B/s' },
 							sharedIpCol: { inner: t.userIP || '-' },
 							sharedScoreCol: { inner: String(t.score || 0) },
-							sharedTransferredCol: { inner: fbytes(t.xferUp || 0) },
+							sharedTransferredCol: { inner: fbytes(t.uploadedTotal || 0) },
 						},
 					});
 				});

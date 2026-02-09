@@ -1,10 +1,11 @@
-import { component, computed, effect, onUnmount, signal } from 'chispa';
+import { component, computed, effect, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
+import { formatAmount } from '../../utils/formats';
+import { smartPoll } from '../../utils/scheduling';
 import tpl from './ServersView.html';
 import './ServersView.css';
-import { formatAmount } from '../../utils/formats';
 
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -17,40 +18,28 @@ export const ServersView = component(() => {
 	});
 	const logText = signal('Initializing...');
 
-	const fetchLog = async () => {
-		try {
-			const data = await apiService.getLog(100);
-			if (data && data.lines) {
-				logText.set(data.lines.join('\n'));
+	const fetchLog = smartPoll(
+		logText,
+		async () => {
+			try {
+				const data = await apiService.getLog(100);
+				return data && data.lines ? data.lines.join('\n') : 'No log data';
+			} catch (e) {
+				console.error('Error fetching log:', e);
+				return 'Error fetching log';
 			}
-		} catch (e) {
-			console.error('Error fetching log:', e);
-		}
-	};
+		},
+		3000
+	);
 
-	// Poll log every 3 seconds
-	const logInterval = setInterval(fetchLog, 3000);
-	fetchLog();
-
-	onUnmount(() => {
-		clearInterval(logInterval);
-	});
-
-	const loadServers = async () => {
-		try {
+	const loadServers = smartPoll(
+		servers,
+		async () => {
 			const data = await apiService.getServers();
-			// data.list should be array of { name, ip, port, ... }
-			if (data.list) {
-				servers.set(data.list);
-			} else {
-				console.warn('Received raw data without list format:', data.raw);
-			}
-		} catch (e: any) {
-			console.error('Error loading servers:', e.message);
-		}
-	};
-
-	loadServers();
+			return data.list || [];
+		},
+		10000
+	);
 
 	const connectToServer = async (s: Server) => {
 		// logText.set(`Connecting to ${s.name ?? s.ip}...`);

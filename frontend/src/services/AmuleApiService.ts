@@ -95,44 +95,47 @@ export interface Transfer extends AmuleFile {
 }
 
 export interface AmuleUpDownClient {
+	clientName?: string;
 	userHashHexString?: string;
 	userID?: number;
-	clientName?: string;
-	speedUp?: number;
-	speedDown?: number;
-	xferUp?: number;
-	xferDown?: number;
-	xferUpSession?: number;
-	xferDownSession?: number;
-	friendSlot?: boolean;
-	clientSoftware?: number;
+	score?: number;
+	software?: string;
 	softVerStr?: string;
-	clientUploadState?: number;
-	clientDownloadState?: number;
-	getSourceFrom?: number;
 	userIP?: string;
 	userPort?: number;
+	sourceFrom?: number;
 	serverIP?: string;
 	serverPort?: number;
 	serverName?: string;
-	kadPort?: number;
-	score?: number;
+	upSpeed?: number;
+	downSpeed?: number;
+	uploadSession?: number;
+	transferredDown?: number;
+	uploadedTotal?: number;
+	downloadedTotal?: number;
+	uploadState?: number;
+	downloadState?: number;
+	identState?: number;
+	extProtocol?: number;
 	waitingPosition?: number;
 	remoteQueueRank?: number;
 	oldRemoteQueueRank?: number;
-	identState?: number;
 	obfuscationStatus?: number;
-	hasExtendedProtocol?: boolean;
-	nextRequestedPart?: number;
-	lastDownloadingPart?: number;
-	uploadFileID?: number;
-	requestFileID?: number;
+	kadPort?: number;
+	friendSlot?: number;
+	uploadFileId?: bigint | number;
+	uploadFilename?: string;
+	requestFileId?: bigint | number;
 	remoteFilename?: string;
-	disableViewShared?: boolean;
+	disableViewShared: boolean;
 	version?: number;
 	modVersion?: string;
 	osInfo?: string;
 	availableParts?: number;
+	partStatus?: string;
+	nextRequestedPart?: number;
+	lastDownloadingPart?: number;
+	uploadPartStatus?: string;
 }
 
 export interface UploadQueueResponse {
@@ -160,21 +163,21 @@ export interface AmuleFile {
 	size?: number;
 	hash?: string;
 
-	// path?: string;
-	// fileEd2kLink?: string;
-	// upPrio: number;
-	// getRequests: number;
-	// getAllRequests: number;
-	// getAccepts: number;
-	// getAllAccepts: number;
-	// getXferred: number;
-	// getAllXferred: number;
-	// getCompleteSourcesLow: number;
-	// getCompleteSourcesHigh: number;
-	// getCompleteSources: number;
-	// getOnQueue: number;
-	// getComment?: string;
-	// getRating?: number;
+	path?: string;
+	fileEd2kLink?: string;
+	upPrio: number;
+	getRequests: number;
+	getAllRequests: number;
+	getAccepts: number;
+	getAllAccepts: number;
+	getXferred: number;
+	getAllXferred: number;
+	getCompleteSourcesLow: number;
+	getCompleteSourcesHigh: number;
+	getCompleteSources: number;
+	getOnQueue: number;
+	getComment?: string;
+	getRating?: number;
 }
 
 export interface SharedResponse {
@@ -184,7 +187,7 @@ export interface SharedResponse {
 
 export interface SearchResult {
 	name: string;
-	size: string;
+	size: number;
 	hash: string;
 	type?: string;
 	sources?: string;
