@@ -8,6 +8,8 @@ export class StatsService {
 	// Signal publico con los stats
 	public stats = signal<StatsResponse | null>(null);
 
+	private prevRequestFinished = true;
+
 	constructor() {
 		setTimeout(() => {
 			this.startPolling();
@@ -22,12 +24,18 @@ export class StatsService {
 	}
 
 	private async poll() {
+		if (!this.prevRequestFinished) {
+			return;
+		}
+		this.prevRequestFinished = false;
 		try {
 			const data = await this.apiService.getStatus();
 			this.stats.set(data);
 		} catch (e) {
 			console.error('Failed to fetch stats', e);
 			// Podríamos setear un estado de error si fuera necesario
+		} finally {
+			this.prevRequestFinished = true;
 		}
 	}
 }
