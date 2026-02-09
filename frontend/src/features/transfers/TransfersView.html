@@ -7,13 +7,17 @@
 		<button class="win-btn win-btn-icon" data-cb="stopBtn" disabled>⏹️</button>
 		<button class="win-btn win-btn-icon" data-cb="cancelBtn" disabled
 			title="Cancel and remove file from disk">❌</button>
+		<button class="win-btn win-btn-icon" data-cb="clearSelectedBtn"
+			title="Clear Selected completed transfer from list (Removes from DB, keeps file on disk)"
+			disabled>❎</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
 		<label>Category:</label>
 		<select data-cb="catSelect" style="border: 2px inset;" disabled>
 			<option value="-1">Select...</option>
 		</select>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<button class="win-btn win-btn-icon" data-cb="clearCompletedBtn" title="Clear Completed Transfers">❎️</button>
+		<button class="win-btn win-btn-icon" data-cb="clearCompletedBtn"
+			title="Clear ALL Completed transfers from list (Removes from DB, keeps file on disk)">🧹</button>
 	</div>
 
 	<!-- Active Downloads -->

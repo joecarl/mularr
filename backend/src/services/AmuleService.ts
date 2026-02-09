@@ -35,6 +35,8 @@ interface Download {
 	sources?: number;
 	priority?: number;
 	status?: string;
+	statusId?: number;
+	stopped?: boolean;
 	remaining?: number;
 	hash?: string;
 	link?: string;
@@ -240,6 +242,8 @@ export class AmuleService {
 						size: sizeFull,
 						progress: 1,
 						status: 'Completed',
+						statusId: 9, // Completed
+						stopped: false,
 						hash: dbRecord.hash,
 						link: '',
 						completed: sizeFull,
@@ -262,6 +266,8 @@ export class AmuleService {
 						size: dbRecord.size || 0,
 						progress: 0,
 						status: 'Not in queue',
+						statusId: -1,
+						stopped: false,
 						hash: dbRecord.hash,
 						link: '',
 						completed: 0,
@@ -276,22 +282,7 @@ export class AmuleService {
 					} as Download;
 				}
 
-				// FileStatus enum mapping
-				const statusMap: Record<number, string> = {
-					0: 'Downloading',
-					1: 'Empty',
-					2: 'Waiting for Hash',
-					3: 'Hashing',
-					4: 'Error',
-					5: 'Insufficient Space',
-					6: 'Unknown',
-					7: 'Paused',
-					8: 'Completing',
-					9: 'Completed',
-					10: 'Allocating',
-				};
 				const file = queueFile;
-				const status = statusMap[file.fileStatus] || `Status: ${file.fileStatus}`;
 				const sizeFull = file.sizeFull || 0;
 				const sizeDone = file.sizeDone || 0;
 				const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
@@ -300,11 +291,13 @@ export class AmuleService {
 				const timeLeft = remaining / (file.speed || 1); // in seconds
 
 				return {
-					rawLine: `> ${file.fileName} [${mbSize} MB] ${status} ${(progress * 100).toFixed(1)}%`,
+					rawLine: `> ${file.fileName} [${mbSize} MB] Status: ${file.fileStatus} ${(progress * 100).toFixed(1)}%`,
 					name: file.fileName,
 					size: sizeFull,
 					progress: progress,
-					status: status,
+					status: String(file.fileStatus),
+					statusId: file.fileStatus,
+					stopped: file.stopped || false,
 					hash: file.fileHashHexString,
 					link: file.fileEd2kLink,
 					completed: sizeDone,
@@ -333,10 +326,16 @@ export class AmuleService {
 		}
 	}
 
-	async clearCompletedTransfers() {
-		console.log('[AmuleService] Clearing completed transfers from DB and client queue');
+	async clearCompletedTransfers(hashes?: string[]) {
+		console.log('[AmuleService] Clearing completed transfers from DB and client queue', hashes ? `for hashes: ${hashes.join(', ')}` : 'for all');
 		try {
-			db.exec('DELETE FROM downloads WHERE is_completed = 1');
+			if (hashes && hashes.length > 0) {
+				const placeholders = hashes.map(() => '?').join(',');
+				const stmt = db.prepare(`DELETE FROM downloads WHERE is_completed = 1 AND hash IN (${placeholders})`);
+				stmt.run(...hashes);
+			} else {
+				db.exec('DELETE FROM downloads WHERE is_completed = 1');
+			}
 		} catch (e) {
 			console.error('DB Clear Completed Transfers Error:', e);
 			throw e;

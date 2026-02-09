@@ -1,6 +1,7 @@
 import { component, signal, computed, componentList, WritableSignal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
+import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
 import { formatBytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
@@ -37,6 +38,7 @@ const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<strin
 
 export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const dialogService = services.get(DialogService);
 
 	const sharedList = signal<AmuleFile[]>([]);
 	const selectedHash = signal<string | null>(null);
@@ -67,14 +69,14 @@ export const SharedView = component(() => {
 		const hash = selectedHash.get();
 		if (!hash) return;
 		try {
-			if (cmd === 'cancel' && !confirm('Are you sure you want to cancel this download?')) {
+			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel this download?', 'Cancel Download'))) {
 				return;
 			}
 			await apiService.sendDownloadCommand(hash, cmd);
 			if (cmd === 'cancel') selectedHash.set(null);
 			loadShared();
 		} catch (e: any) {
-			alert(e.message);
+			await dialogService.alert(e.message, 'Error');
 		}
 	};
 

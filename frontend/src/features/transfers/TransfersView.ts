@@ -1,11 +1,26 @@
 import { component, signal, computed, componentList, WritableSignal, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
+import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
 import { formatBytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
+
+const statusMap: Record<number, string> = {
+	0: 'Downloading',
+	1: 'Empty',
+	2: 'Waiting for Hash',
+	3: 'Hashing',
+	4: 'Error',
+	5: 'Insufficient Space',
+	6: 'Unknown',
+	7: 'Paused',
+	8: 'Completing',
+	9: 'Completed',
+	10: 'Allocating',
+};
 
 const fbytes = (bytes?: number) => {
 	const b = formatBytes(bytes || 0);
@@ -50,7 +65,14 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 				},
 				sourcesCol: { inner: () => String(t.get().sources || 0) },
 				priorityCol: { inner: () => String(t.get().priority || 0) },
-				statusCol: { inner: () => t.get().status || '' },
+				statusCol: {
+					inner: () => {
+						const tfer = t.get();
+						if (tfer.stopped) return 'Stopped';
+						if (tfer.isCompleted) return 'Completed';
+						return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
+					},
+				},
 				remainingCol: { inner: () => fbytes(t.get().remaining) },
 				addedOnCol: { inner: addedOn },
 			},
@@ -61,6 +83,7 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 
 export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const dialogService = services.get(DialogService);
 
 	const transferList = signal<Transfer[]>([]);
 	const uploadQueue = signal<AmuleUpDownClient[]>([]);
@@ -70,6 +93,35 @@ export const TransfersView = component(() => {
 	const sortDirection = signal<'asc' | 'desc'>('asc');
 
 	const isDisabled = computed(() => !selectedHash.get());
+
+	const selectedTransfer = computed(() => {
+		const hash = selectedHash.get();
+		if (!hash) return null;
+		return transferList.get().find((t) => t.hash === hash) || null;
+	});
+
+	const canPause = computed(() => {
+		const t = selectedTransfer.get();
+		if (!t || t.isCompleted) return false;
+		return !t.stopped && t.statusId === 0; // 0 is Downloading
+	});
+
+	const canResume = computed(() => {
+		const t = selectedTransfer.get();
+		if (!t || t.isCompleted) return false;
+		return t.stopped || t.statusId === 7; // 7 is Paused
+	});
+
+	const canStop = computed(() => {
+		const t = selectedTransfer.get();
+		if (!t || t.isCompleted) return false;
+		return !t.stopped;
+	});
+
+	const isSelectedCompleted = computed(() => {
+		const t = selectedTransfer.get();
+		return !!t?.isCompleted;
+	});
 
 	const loadTransfers = smartPoll(
 		transferList,
@@ -111,14 +163,14 @@ export const TransfersView = component(() => {
 		const hash = selectedHash.get();
 		if (!hash) return;
 		try {
-			if (cmd === 'cancel' && !confirm('Are you sure you want to cancel this download?')) {
+			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel this download?', 'Cancel Download'))) {
 				return;
 			}
 			await apiService.sendDownloadCommand(hash, cmd);
 			if (cmd === 'cancel') selectedHash.set(null);
 			loadTransfers();
 		} catch (e: any) {
-			alert(e.message);
+			await dialogService.alert(e.message, 'Error');
 		}
 	};
 
@@ -129,7 +181,7 @@ export const TransfersView = component(() => {
 			await apiService.setFileCategory(hash, catId);
 			loadTransfers();
 		} catch (e: any) {
-			alert(e.message);
+			await dialogService.alert(e.message, 'Error');
 		}
 	};
 
@@ -171,15 +223,15 @@ export const TransfersView = component(() => {
 	return tpl.fragment({
 		refreshBtn: { onclick: loadTransfers },
 		pauseBtn: {
-			disabled: isDisabled,
+			disabled: computed(() => !canPause.get()),
 			onclick: () => executeCommand('pause'),
 		},
 		resumeBtn: {
-			disabled: isDisabled,
+			disabled: computed(() => !canResume.get()),
 			onclick: () => executeCommand('resume'),
 		},
 		stopBtn: {
-			disabled: isDisabled,
+			disabled: computed(() => !canStop.get()),
 			onclick: () => executeCommand('stop'),
 		},
 		cancelBtn: {
@@ -193,10 +245,24 @@ export const TransfersView = component(() => {
 			},
 			onchange: (e: any) => changeCategory(parseInt(e.target.value)),
 		},
+		clearSelectedBtn: {
+			disabled: computed(() => !isSelectedCompleted.get()),
+			onclick: async () => {
+				const hash = selectedHash.get();
+				if (!hash) return;
+				if (await dialogService.confirm('Clear this completed file from the list? (The file will remain on disk)', 'Clear Selection')) {
+					await apiService.clearCompletedTransfers([hash]);
+					selectedHash.set(null);
+					loadTransfers();
+				}
+			},
+		},
 		clearCompletedBtn: {
 			onclick: async () => {
-				await apiService.clearCompletedTransfers();
-				loadTransfers();
+				if (await dialogService.confirm('Clear all completed transfers from the list? (Files will remain on disk)', 'Clear All Completed')) {
+					await apiService.clearCompletedTransfers();
+					loadTransfers();
+				}
 			},
 		},
 

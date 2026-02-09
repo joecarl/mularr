@@ -2,6 +2,7 @@ import { component, Router, signal } from 'chispa';
 import { services } from './services/container/ServiceContainer';
 import { AmuleInfo, AmuleApiService } from './services/AmuleApiService';
 import { Sidebar } from './layout/Sidebar';
+import { DialogHost } from './components/DialogHost';
 import { ServersView } from './features/servers/ServersView';
 import { TransfersView } from './features/transfers/TransfersView';
 import { SearchView } from './features/search/SearchView';
@@ -27,6 +28,7 @@ export const App = component(() => {
 	};
 	loadAmuleInfo();
 	return tpl.fragment({
+		dialogHost: DialogHost({}),
 		sidebarContainer: Sidebar({}),
 		routerView: {
 			inner: Router({

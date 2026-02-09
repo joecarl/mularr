@@ -1,10 +1,12 @@
 import { component, signal, bindControlledInput } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { CategoriesApiService, Category } from '../../services/CategoriesApiService';
+import { DialogService } from '../../services/DialogService';
 import tpl from './CategoriesView.html';
 
 export const CategoriesView = component(() => {
 	const apiService = services.get(CategoriesApiService);
+	const dialogService = services.get(DialogService);
 	const categories = signal<Category[]>([]);
 	const isModalOpen = signal(false);
 	const editingCategoryId = signal<number | null>(null);
@@ -62,17 +64,17 @@ export const CategoriesView = component(() => {
 			closeModal();
 			loadCategories();
 		} catch (err) {
-			alert('Error saving category');
+			await dialogService.alert('Error saving category', 'Error');
 		}
 	};
 
 	const handleDelete = async (id: number) => {
-		if (confirm('Are you sure you want to delete this category?')) {
+		if (await dialogService.confirm('Are you sure you want to delete this category?', 'Delete Category')) {
 			try {
 				await apiService.delete(id);
 				loadCategories();
 			} catch (err) {
-				alert('Error deleting category');
+				await dialogService.alert('Error deleting category', 'Error');
 			}
 		}
 	};

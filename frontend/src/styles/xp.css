@@ -24,31 +24,35 @@ body {
 
 /* Generic Windows Controls */
 .win-btn {
-	background-color: var(--win-face);
-	border: 1px solid #808080; /* XP style button border usually implies a gradient but flat is ok for now */
+	background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+	border: 1px solid #003c74;
 	border-radius: 3px;
-	padding: 2px 8px;
+	padding: 3px 12px;
+	font-size: 11px;
+	font-family: Tahoma, 'MS Sans Serif', sans-serif;
 	cursor: pointer;
+	box-shadow: inset 1px 1px 1px #fff;
 	min-width: 75px;
-	box-shadow:
-		inset 2px 2px 2px -1px #fff,
-		inset -2px -2px 2px -2px #0008;
 }
 .win-btn-icon {
 	min-width: auto;
+	padding: 2px 4px;
 }
 .win-btn:hover {
-	box-shadow:
-		inset 2px 2px 2px -1px #fff,
-		inset -2px -2px 2px -2px #0008,
-		0 0 2px gold; /* Fake XP hover glow */
+	background: linear-gradient(to bottom, #fafafa, #f0f0f0);
+	border-color: #0058e6;
+	box-shadow: 0 0 2px #ffad33;
 }
 .win-btn:active {
-	box-shadow: 0 0 2px gold; /* Fake XP hover glow */
+	background: #e0e0e0;
+	box-shadow: inset 1px 1px 2px #aaa;
 }
 .win-btn:disabled {
 	opacity: 0.5;
 	cursor: default;
+	background: #f0f0f0;
+	border-color: #aca899;
+	box-shadow: none;
 }
 
 /* Classic 3D borders for panels */

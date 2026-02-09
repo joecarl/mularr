@@ -54,7 +54,8 @@ export class AmuleController {
 
 	clearCompletedTransfers = async (req: Request, res: Response) => {
 		try {
-			await this.amuleService.clearCompletedTransfers();
+			const { hashes } = req.body;
+			await this.amuleService.clearCompletedTransfers(hashes);
 			res.json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });

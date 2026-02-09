@@ -1,6 +1,7 @@
 import { component, signal, bindControlledInput, bindControlledSelect, onUnmount } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
+import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
 import tpl from './SearchView.html';
 import './SearchView.css';
@@ -13,6 +14,7 @@ const fbytes = (bytes?: number) => {
 
 export const SearchView = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const dialogService = services.get(DialogService);
 
 	const results = signal<SearchResult[]>([]);
 	const statusLog = signal('');
@@ -34,7 +36,7 @@ export const SearchView = component(() => {
 			searchProgress.set(0);
 			startPolling();
 		} catch (e: any) {
-			alert(e.message);
+			await dialogService.alert(e.message, 'Search Error');
 		}
 	};
 
@@ -105,7 +107,7 @@ export const SearchView = component(() => {
 			loadResults();
 			if (!linkOrHash) downloadLink.set('');
 		} catch (e: any) {
-			alert('Error adding download: ' + e.message);
+			await dialogService.alert('Error adding download: ' + e.message, 'Download Error');
 		} finally {
 			addingDownload.set(false);
 		}

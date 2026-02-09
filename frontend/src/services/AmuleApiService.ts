@@ -87,6 +87,8 @@ export interface Transfer extends AmuleFile {
 	sources?: number;
 	priority?: number;
 	status?: string;
+	statusId?: number;
+	stopped?: boolean;
 	remaining?: number;
 	categoryId?: number;
 	categoryName?: string;
@@ -234,9 +236,10 @@ export class AmuleApiService extends BaseApiService {
 		return this.request<TransfersResponse>('/transfers');
 	}
 
-	async clearCompletedTransfers(): Promise<SuccessResponse> {
+	async clearCompletedTransfers(hashes?: string[]): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>('/transfers/clear-completed', {
 			method: 'POST',
+			body: JSON.stringify({ hashes }),
 		});
 	}
 
