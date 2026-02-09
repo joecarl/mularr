@@ -1,6 +1,6 @@
 services:
   mularr:
-    image: mularr
+    image: ghcr.io/joecarl/mularr
     container_name: mularr
     restart: unless-stopped
 
@@ -19,7 +19,7 @@ services:
       - /my-storage:/my-storage
 
     environment:
-      # All environment variables are optional, the values specidied here are the which defaults will be used if not provided. Set these if you want to customize the behavior or integrate with other services.
+      # All environment variables are optional, the values specified here are the defaults which will be used if not provided. Set these if you want to customize the behavior or integrate with other services.
 
       # Path to the SQLite database file. You can change this if you want to store the database in a different location or use an external database (just make sure the path is writable by the container and update the path accordingly).
       - DATABASE_PATH=/app/data/database.sqlite

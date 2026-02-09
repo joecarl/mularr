@@ -1,4 +1,4 @@
-import { component, signal, computed, componentList } from 'chispa';
+import { component, signal, computed, componentList, WritableSignal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { getFileIcon } from '../../utils/Icons';
@@ -12,9 +12,14 @@ const fbytes = (bytes?: number) => {
 	return `${b.text} ${b.unit}`;
 };
 
-const SharedRows = componentList<AmuleFile>(
+const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<string | null> }>(
 	(t, i, l, props) => {
+		const selectedHash = props!.selectedHash;
+		const isSelected = computed(() => selectedHash.get() === t.get().hash);
+
 		return tpl.sharedRow({
+			classes: { selected: isSelected },
+			onclick: () => selectedHash.set(t.get().hash || null),
 			nodes: {
 				nameCol: {},
 				sharedNameText: { inner: () => t.get().name || 'Unknown' },
@@ -84,7 +89,7 @@ export const SharedView = component(() => {
 		},
 
 		sharedListContainer: {
-			inner: () => (sharedListLength.get() === 0 ? tpl.noSharedRow({}) : SharedRows(sharedList)),
+			inner: () => (sharedListLength.get() === 0 ? tpl.noSharedRow({}) : SharedRows(sharedList, { selectedHash })),
 		},
 	});
 });

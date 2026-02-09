@@ -2,9 +2,21 @@
 	<aside data-cb="sidebarContainer"></aside>
 	<main class="main-content">
 		<div class="view-container" data-cb="routerView"></div>
-		<!-- Status Bar optional -->
-		<div style="border-top: 1px solid #aca899; padding: 2px; font-size: 10px; background: #ece9d8;">
-			<span data-cb="amuleVersion"></span>
+		<!-- Status Bar -->
+		<div class="win-status-bar">
+			<div class="win-status-pane" style="flex: 1;">
+				<span data-cb="amuleVersion" style="color: #404040;"></span>
+			</div>
+			<div class="win-status-pane"
+				style="width: 120px; color: #008000; font-weight: bold; justify-content: flex-end;">
+				<span style="font-size: 14px; margin-right: 4px;">🠇</span>
+				<span data-cb="globalDownloadSpeed">0.0 KB/s</span>
+			</div>
+			<div class="win-status-pane"
+				style="width: 120px; color: #0000ff; font-weight: bold; justify-content: flex-end;">
+				<span style="font-size: 14px; margin-right: 4px;">🠅</span>
+				<span data-cb="globalUploadSpeed">0.0 KB/s</span>
+			</div>
 		</div>
 	</main>
 </div>

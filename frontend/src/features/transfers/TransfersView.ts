@@ -224,12 +224,9 @@ export const TransfersView = component(() => {
 				return list.map((t) => {
 					return tpl.sharedRow({
 						nodes: {
-							sharedNameCol: {
-								nodes: {
-									sharedNameText: { inner: t.clientName || 'Unknown' },
-									sharedIcon: { inner: '' },
-								},
-							},
+							sharedNameCol: {},
+							sharedNameText: { inner: t.clientName || 'Unknown' },
+							sharedIcon: { inner: '' },
 							sharedFileNameCol: { inner: t.uploadFilename || t.remoteFilename || 'Unknown' },
 							sharedVersionCol: { inner: t.softVerStr || 'Unknown' },
 							sharedSpeedCol: { inner: t.upSpeed ? fbytes(t.upSpeed) + '/s' : '0 B/s' },

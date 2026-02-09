@@ -8,10 +8,13 @@ import { SearchView } from './features/search/SearchView';
 import { SharedView } from './features/shared/SharedView';
 import { SettingsView } from './features/settings/SettingsView';
 import { CategoriesView } from './features/categories/CategoriesView';
+import { StatsService } from './services/StatsService';
+import { formatSpeed } from './utils/formats';
 import tpl from './App.html';
 
 export const App = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const statsService = services.get(StatsService);
 	const amuleInfo = signal<AmuleInfo | null>(null);
 	const loadAmuleInfo = async () => {
 		try {
@@ -38,6 +41,24 @@ export const App = component(() => {
 				],
 			}),
 		},
+
+		globalDownloadSpeed: {
+			inner: () => {
+				const s = statsService.stats.get();
+				if (!s || typeof s.downloadSpeed !== 'number') return '';
+				const ds = formatSpeed(s.downloadSpeed);
+				return `${ds.text} ${ds.unit}`;
+			},
+		},
+		globalUploadSpeed: {
+			inner: () => {
+				const s = statsService.stats.get();
+				if (!s || typeof s.uploadSpeed !== 'number') return '';
+				const us = formatSpeed(s.uploadSpeed);
+				return `${us.text} ${us.unit}`;
+			},
+		},
+
 		amuleVersion: {
 			inner: () => {
 				const info = amuleInfo.get();

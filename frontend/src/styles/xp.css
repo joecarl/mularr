@@ -192,3 +192,22 @@ body {
 	padding: 8px;
 	overflow: hidden;
 }
+
+.win-status-bar {
+	background-color: var(--win-face);
+	border-top: 1px solid var(--win-shadow);
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+	font-size: 11px;
+}
+
+.win-status-pane {
+	border: 1px solid;
+	border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+	padding: 1px 5px;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	height: 18px;
+}

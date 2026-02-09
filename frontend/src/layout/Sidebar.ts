@@ -204,31 +204,31 @@ export const Sidebar = component(() => {
 				const result: (string | Node)[] = [];
 
 				// 1. Speeds (Always on top)
-				if (typeof s.downloadSpeed === 'number') {
-					const ds = formatSpeed(s.downloadSpeed);
-					result.push(
-						tpl.statRow({
-							nodes: {
-								statLabel: { inner: `↓` },
-								statValue: { inner: ds.text },
-								statUnit: { inner: ds.unit },
-							},
-						})
-					);
+				// if (typeof s.downloadSpeed === 'number') {
+				// 	const ds = formatSpeed(s.downloadSpeed);
+				// 	result.push(
+				// 		tpl.statRow({
+				// 			nodes: {
+				// 				statLabel: { inner: `↓` },
+				// 				statValue: { inner: ds.text },
+				// 				statUnit: { inner: ds.unit },
+				// 			},
+				// 		})
+				// 	);
 
-					const us = formatSpeed(s.uploadSpeed || 0);
-					result.push(
-						tpl.statRow({
-							nodes: {
-								statLabel: { inner: `↑` },
-								statValue: { inner: us.text },
-								statUnit: { inner: us.unit },
-							},
-						})
-					);
+				// 	const us = formatSpeed(s.uploadSpeed || 0);
+				// 	result.push(
+				// 		tpl.statRow({
+				// 			nodes: {
+				// 				statLabel: { inner: `↑` },
+				// 				statValue: { inner: us.text },
+				// 				statUnit: { inner: us.unit },
+				// 			},
+				// 		})
+				// 	);
 
-					result.push(tpl.statsSep({}));
-				}
+				// 	result.push(tpl.statsSep({}));
+				// }
 
 				// 2. Typed fields — render each stat with an appropriate formatter
 				for (const f of statsFields) {
