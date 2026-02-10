@@ -4,6 +4,20 @@ import { CategoriesApiService, Category } from '../../services/CategoriesApiServ
 import { DialogService } from '../../services/DialogService';
 import tpl from './CategoriesView.html';
 
+const numberToColor = (num: number) => {
+	const r = num & 0xff;
+	const g = (num >> 8) & 0xff;
+	const b = (num >> 16) & 0xff;
+	return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+const colorToNumber = (hex: string) => {
+	const r = parseInt(hex.slice(1, 3), 16);
+	const g = parseInt(hex.slice(3, 5), 16);
+	const b = parseInt(hex.slice(5, 7), 16);
+	return r + (g << 8) + (b << 16);
+};
+
 export const CategoriesView = component(() => {
 	const apiService = services.get(CategoriesApiService);
 	const dialogService = services.get(DialogService);
@@ -15,6 +29,8 @@ export const CategoriesView = component(() => {
 	const formName = signal('');
 	const formPath = signal('');
 	const formComment = signal('');
+	const formColor = signal('#000000');
+	const formPriority = signal(0);
 
 	const loadCategories = async () => {
 		try {
@@ -33,11 +49,15 @@ export const CategoriesView = component(() => {
 			formName.set(cat.name);
 			formPath.set(cat.path || '');
 			formComment.set(cat.comment || '');
+			formColor.set(numberToColor(cat.color || 0));
+			formPriority.set(cat.priority || 0);
 		} else {
 			editingCategoryId.set(null);
 			formName.set('');
 			formPath.set('');
 			formComment.set('');
+			formColor.set('#000000');
+			formPriority.set(0);
 		}
 		isModalOpen.set(true);
 	};
@@ -52,6 +72,8 @@ export const CategoriesView = component(() => {
 			name: formName.get(),
 			path: formPath.get(),
 			comment: formComment.get(),
+			color: colorToNumber(formColor.get()),
+			priority: Number(formPriority.get()),
 		};
 
 		try {
@@ -91,6 +113,13 @@ export const CategoriesView = component(() => {
 						nodes: {
 							catName: { inner: cat.name },
 							catPath: { inner: cat.path || '-' },
+							catColor: {
+								style: {
+									color: numberToColor(cat.color || 0),
+								},
+								inner: numberToColor(cat.color || 0),
+							},
+							catPriority: { inner: cat.priority },
 							catPatterns: { inner: cat.comment || '-' },
 							editBtn: {
 								onclick: () => openModal(cat),
@@ -105,7 +134,7 @@ export const CategoriesView = component(() => {
 		},
 		modalOverlay: {
 			style: {
-				display: () => (isModalOpen.get() ? 'flex' : 'none'),
+				display: () => (isModalOpen.get() ? '' : 'none'),
 			},
 		},
 		modalTitle: {
@@ -124,6 +153,16 @@ export const CategoriesView = component(() => {
 				path: {
 					_ref: (el) => {
 						bindControlledInput(el, formPath);
+					},
+				},
+				color: {
+					_ref: (el) => {
+						bindControlledInput(el, formColor);
+					},
+				},
+				priority: {
+					_ref: (el) => {
+						bindControlledInput(el, formPriority);
 					},
 				},
 				comment: {

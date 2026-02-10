@@ -3,14 +3,9 @@ import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
+import { fbytes } from '../../utils/formats';
 import tpl from './SearchView.html';
 import './SearchView.css';
-import { formatBytes } from '../../utils/formats';
-
-const fbytes = (bytes?: number) => {
-	const b = formatBytes(bytes || 0);
-	return `${b.text} ${b.unit}`;
-};
 
 export const SearchView = component(() => {
 	const apiService = services.get(AmuleApiService);

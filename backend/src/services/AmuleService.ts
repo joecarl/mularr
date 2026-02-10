@@ -3,8 +3,15 @@ import { AmulecmdService } from './AmulecmdService';
 import { exec } from 'child_process';
 import util from 'util';
 import db from '../db';
-import { hash } from 'crypto';
-import path from 'path';
+
+function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): string {
+	const DEFAULT_VALUE = 'default';
+	if (!name || !name.trim()) return DEFAULT_VALUE;
+	const found = ctgs.find((c) => c.name === name);
+	if (!found) return DEFAULT_VALUE;
+	if (found.id === 0) return DEFAULT_VALUE;
+	return name;
+}
 
 const execPromise = util.promisify(exec);
 
@@ -41,7 +48,6 @@ interface Download {
 	hash?: string;
 	link?: string;
 	timeLeft?: number;
-	categoryId?: number;
 	categoryName?: string | null;
 	addedOn?: string | null;
 }
@@ -192,6 +198,7 @@ export class AmuleService {
 	async getTransfers(): Promise<{ raw: string; list: Download[] }> {
 		try {
 			const queue = await this.client.getDownloadQueue();
+			const categories = await this.getCategories();
 			//console.log('Download Queue from EC Client:', queue);
 			let dbRecords = db.prepare<[], DownloadDbRecord>('SELECT * FROM downloads').all();
 
@@ -253,7 +260,7 @@ export class AmuleService {
 						remaining: 0,
 						addedOn: dbRecord.added_at,
 						timeLeft: 0,
-						categoryName: dbRecord.category_name,
+						categoryName: normalizeCategoryName(dbRecord.category_name, categories),
 						isCompleted: true,
 					} as Download;
 				}
@@ -277,7 +284,7 @@ export class AmuleService {
 						remaining: dbRecord.size || 0,
 						addedOn: dbRecord.added_at,
 						timeLeft: Infinity,
-						categoryName: dbRecord.category_name,
+						categoryName: normalizeCategoryName(dbRecord.category_name, categories),
 						isCompleted: false,
 					} as Download;
 				}
@@ -306,8 +313,7 @@ export class AmuleService {
 					priority: file.downPrio,
 					remaining: remaining,
 					timeLeft: timeLeft,
-					categoryId: file.fileCat,
-					categoryName: dbRecord ? dbRecord.category_name : null,
+					categoryName: normalizeCategoryName(dbRecord?.category_name, categories),
 					addedOn: dbRecord ? dbRecord.added_at : null,
 					isCompleted: false,
 				} as Download;

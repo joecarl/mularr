@@ -16,6 +16,11 @@ export function formatBytes(bytes: number) {
 	return { text: String(num), unit: sizes[i] };
 }
 
+export function fbytes(bytes?: number) {
+	const b = formatBytes(bytes || 0);
+	return `${b.text} ${b.unit}`;
+}
+
 export function formatAmount(val: number) {
 	if (val == null) return { text: '0', unit: '' };
 	if (val >= 1_000_000_000) {

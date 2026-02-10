@@ -11,6 +11,8 @@
 				<tr>
 					<th style="width: 200px;">Name</th>
 					<th>Save Path</th>
+					<th style="width: 100px;">Color</th>
+					<th style="width: 80px;">Priority</th>
 					<th style="width: 250px;">Comment</th>
 					<th style="width: 0px;">Actions</th>
 				</tr>
@@ -19,6 +21,8 @@
 				<tr data-cb="categoryRow">
 					<td data-cb="catName"></td>
 					<td data-cb="catPath"></td>
+					<td data-cb="catColor"></td>
+					<td data-cb="catPriority"></td>
 					<td data-cb="catPatterns"></td>
 					<td>
 						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
@@ -52,6 +56,18 @@
 						<input type="text" data-cb="path" name="path"
 							style="width: 100%; border: 2px inset; padding: 2px;"
 							placeholder="/path/to/downloads/category" />
+					</div>
+					<div style="display: flex; gap: 10px;">
+						<div class="form-group" style="margin-bottom: 10px; flex: 1;">
+							<label style="display: block; margin-bottom: 3px;">Color:</label>
+							<input type="color" data-cb="color" name="color"
+								style="width: 100%; border: 2px inset; padding: 2px; height: 30px;" />
+						</div>
+						<div class="form-group" style="margin-bottom: 10px; flex: 1;">
+							<label style="display: block; margin-bottom: 3px;">Priority:</label>
+							<input type="number" data-cb="priority" name="priority" min="0" max="255"
+								style="width: 100%; border: 2px inset; padding: 2px; height: 30px;" />
+						</div>
 					</div>
 					<div class="form-group" style="margin-bottom: 10px;">
 						<label style="display: block; margin-bottom: 3px;">Comment:</label>

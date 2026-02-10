@@ -10,7 +10,7 @@ export const DialogHost = component(() => {
 	return tpl.fragment({
 		overlay: {
 			style: {
-				display: () => (dialogService.activeDialog.get() ? 'flex' : 'none'),
+				display: () => (dialogService.activeDialog.get() ? '' : 'none'),
 			},
 		},
 		title: {
@@ -30,7 +30,7 @@ export const DialogHost = component(() => {
 		},
 		cancelBtn: {
 			style: {
-				display: () => (dialogService.activeDialog.get()?.type === 'confirm' ? 'block' : 'none'),
+				display: () => (dialogService.activeDialog.get()?.type === 'confirm' ? '' : 'none'),
 			},
 			onclick: () => dialogService.activeDialog.get()?.onCancel?.(),
 		},

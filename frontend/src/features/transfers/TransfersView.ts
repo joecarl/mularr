@@ -3,10 +3,13 @@ import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
-import { formatBytes } from '../../utils/formats';
+import { fbytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
+
+const NULL_VALUE = '-1';
+const DEFAULT_VALUE = 'default';
 
 const statusMap: Record<number, string> = {
 	0: 'Downloading',
@@ -20,11 +23,6 @@ const statusMap: Record<number, string> = {
 	8: 'Completing',
 	9: 'Completed',
 	10: 'Allocating',
-};
-
-const fbytes = (bytes?: number) => {
-	const b = formatBytes(bytes || 0);
-	return `${b.text} ${b.unit}`;
 };
 
 interface TransferListProps {
@@ -51,7 +49,7 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 					},
 				},
 				sizeCol: { inner: () => fbytes(t.get().size) },
-				categoryCol: { inner: () => t.get().categoryName || '-' },
+				categoryCol: { inner: () => (t.get().categoryName === DEFAULT_VALUE ? '-' : (t.get().categoryName ?? '-')) },
 				completedCol: { inner: () => fbytes(t.get().completed) },
 				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
 				progressCol: {
@@ -174,10 +172,18 @@ export const TransfersView = component(() => {
 		}
 	};
 
-	const changeCategory = async (catId: number) => {
+	const changeCategory = async (catName: string) => {
 		const hash = selectedHash.get();
-		if (!hash || catId < 0) return;
+		if (!hash || catName === NULL_VALUE) return;
 		try {
+			let catId: number;
+			if (catName === DEFAULT_VALUE) {
+				catId = 0;
+			} else {
+				const cat = categories.get().find((c) => c.name === catName);
+				if (!cat) throw new Error('Selected category not found');
+				catId = cat.id;
+			}
 			await apiService.setFileCategory(hash, catId);
 			loadTransfers();
 		} catch (e: any) {
@@ -208,16 +214,19 @@ export const TransfersView = component(() => {
 	const computedTransferListLength = computed(() => computedTransferList.get().length);
 
 	const ctgOptions = computed(() => {
-		const opts = [{ value: '-1', label: 'Select Category...' }, ...categories.get().map((c) => ({ value: String(c.id), label: c.name }))];
+		const opts = [
+			{ value: NULL_VALUE, label: 'Select Category...' },
+			...categories.get().map((c) => (c.id === 0 ? { value: DEFAULT_VALUE, label: 'Default' } : { value: c.name, label: c.name })),
+		];
 		return opts;
 	});
 
-	const selectedCategoryId = signal('-1');
+	const selectedCategoryName = signal(NULL_VALUE);
 	effect(() => {
 		const currentSelection = selectedHash.get();
 		const currentTransfer = transferList.get().find((t) => t.hash === currentSelection);
-		const currentCatId = currentTransfer?.categoryId ?? -1;
-		selectedCategoryId.set(String(currentCatId));
+		const currentCatName = currentTransfer?.categoryName ?? DEFAULT_VALUE;
+		selectedCategoryName.set(currentCatName);
 	});
 
 	return tpl.fragment({
@@ -241,9 +250,9 @@ export const TransfersView = component(() => {
 		catSelect: {
 			disabled: isDisabled,
 			_ref: (el) => {
-				bindControlledSelect(el, selectedCategoryId, ctgOptions);
+				bindControlledSelect(el, selectedCategoryName, ctgOptions);
 			},
-			onchange: (e: any) => changeCategory(parseInt(e.target.value)),
+			onchange: (e: any) => changeCategory(e.target.value),
 		},
 		clearSelectedBtn: {
 			disabled: computed(() => !isSelectedCompleted.get()),

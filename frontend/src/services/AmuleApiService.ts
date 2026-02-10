@@ -90,9 +90,8 @@ export interface Transfer extends AmuleFile {
 	statusId?: number;
 	stopped?: boolean;
 	remaining?: number;
-	categoryId?: number;
 	categoryName?: string;
-	addedOn?: number; // Placeholder, might be missing from backend
+	addedOn?: number;
 	isCompleted?: boolean;
 }
 

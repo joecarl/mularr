@@ -3,15 +3,10 @@ import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
-import { formatBytes } from '../../utils/formats';
+import { fbytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './SharedView.html';
 import './SharedView.css';
-
-const fbytes = (bytes?: number) => {
-	const b = formatBytes(bytes || 0);
-	return `${b.text} ${b.unit}`;
-};
 
 const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<string | null> }>(
 	(t, i, l, props) => {

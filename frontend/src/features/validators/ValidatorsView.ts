@@ -98,7 +98,7 @@ export const ValidatorsView = component(() => {
 
 		dlgAdd: {
 			style: {
-				display: () => (showDialog.get() ? 'flex' : 'none'),
+				display: () => (showDialog.get() ? '' : 'none'),
 			},
 		},
 		btnCloseDlg: { onclick: () => showDialog.set(false) },
