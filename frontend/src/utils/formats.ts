@@ -38,3 +38,30 @@ export function formatPercent(p: number) {
 	if (p == null) return { text: '0', unit: '%' };
 	return { text: Number(p).toFixed(1), unit: '%' };
 }
+
+export function formatRemaining(remainingBytes?: number, speedBytesPerSec?: number) {
+	const sizeText = fbytes(remainingBytes);
+	if (!remainingBytes) return `-`;
+	if (!speedBytesPerSec) return `? (${sizeText})`;
+
+	const seconds = Math.floor(remainingBytes / speedBytesPerSec);
+	const days = Math.floor(seconds / 86400);
+	const hours = Math.floor((seconds % 86400) / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const secs = seconds % 60;
+
+	let timeStr = '';
+	if (days > 0) {
+		timeStr = `${days} d ${hours} h`;
+	} else if (hours > 0) {
+		if (minutes > 0) timeStr = `${hours} h ${minutes} m`;
+		else timeStr = `${hours} h`;
+	} else {
+		// minutes and seconds: show M:SS mins
+		const mm = String(minutes);
+		const ss = String(secs).padStart(2, '0');
+		timeStr = `${mm}:${ss} mins`;
+	}
+
+	return `${timeStr} (${sizeText})`;
+}

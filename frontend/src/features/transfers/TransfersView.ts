@@ -3,7 +3,7 @@ import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/Icons';
-import { fbytes } from '../../utils/formats';
+import { fbytes, formatRemaining } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
@@ -71,7 +71,7 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 						return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
 					},
 				},
-				remainingCol: { inner: () => fbytes(t.get().remaining) },
+				remainingCol: { inner: () => formatRemaining(t.get().remaining, t.get().speed) },
 				addedOnCol: { inner: addedOn },
 			},
 		});
