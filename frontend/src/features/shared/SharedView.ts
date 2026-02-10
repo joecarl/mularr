@@ -42,14 +42,10 @@ export const SharedView = component(() => {
 
 	const isDisabled = computed(() => !selectedHash.get());
 
-	const loadShared = smartPoll(
-		sharedList,
-		async () => {
-			const data = await apiService.getSharedFiles();
-			return data.list || [];
-		},
-		2000
-	);
+	const loadShared = smartPoll(async () => {
+		const data = await apiService.getSharedFiles();
+		sharedList.set(data.list || []);
+	}, 2000);
 
 	const sort = (col: keyof AmuleFile) => {
 		if (sortColumn.get() === col) {

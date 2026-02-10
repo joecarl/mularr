@@ -121,32 +121,16 @@ export const TransfersView = component(() => {
 		return !!t?.isCompleted;
 	});
 
-	const loadTransfers = smartPoll(
-		transferList,
-		async () => {
-			const data = await apiService.getTransfers();
-			return data.list || [];
-		},
-		2000
-	);
+	const loadTransfers = smartPoll(async () => {
+		const data = await apiService.getTransfers();
+		transferList.set(data.list || []);
+		categories.set(data.categories || []);
+	}, 2000);
 
-	const loadUploadQueue = smartPoll(
-		uploadQueue,
-		async () => {
-			const data = await apiService.getUploadQueue();
-			return data.list || [];
-		},
-		2000
-	);
-
-	const loadCategories = smartPoll(
-		categories,
-		async () => {
-			const cats = await apiService.getCategories();
-			return cats;
-		},
-		10000
-	);
+	const loadUploadQueue = smartPoll(async () => {
+		const data = await apiService.getUploadQueue();
+		uploadQueue.set(data.list || []);
+	}, 2000);
 
 	const sort = (col: keyof Transfer) => {
 		if (sortColumn.get() === col) {

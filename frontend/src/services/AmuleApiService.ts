@@ -156,6 +156,7 @@ export interface Category {
 export interface TransfersResponse {
 	raw: string;
 	list: Transfer[];
+	categories: Category[];
 }
 
 export interface AmuleFile {

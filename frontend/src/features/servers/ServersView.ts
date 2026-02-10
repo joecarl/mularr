@@ -18,28 +18,21 @@ export const ServersView = component(() => {
 	});
 	const logText = signal('Initializing...');
 
-	const fetchLog = smartPoll(
-		logText,
-		async () => {
-			try {
-				const data = await apiService.getLog(100);
-				return data && data.lines ? data.lines.join('\n') : 'No log data';
-			} catch (e) {
-				console.error('Error fetching log:', e);
-				return 'Error fetching log';
-			}
-		},
-		3000
-	);
+	const fetchLog = smartPoll(async () => {
+		try {
+			const data = await apiService.getLog(100);
+			const res = data && data.lines ? data.lines.join('\n') : 'No log data';
+			logText.set(res);
+		} catch (e) {
+			console.error('Error fetching log:', e);
+			logText.set('Error fetching log');
+		}
+	}, 3000);
 
-	const loadServers = smartPoll(
-		servers,
-		async () => {
-			const data = await apiService.getServers();
-			return data.list || [];
-		},
-		10000
-	);
+	const loadServers = smartPoll(async () => {
+		const data = await apiService.getServers();
+		servers.set(data.list || []);
+	}, 10000);
 
 	const connectToServer = async (s: Server) => {
 		// logText.set(`Connecting to ${s.name ?? s.ip}...`);

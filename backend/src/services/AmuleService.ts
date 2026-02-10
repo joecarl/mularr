@@ -195,7 +195,7 @@ export class AmuleService {
 		return { raw: 'Error getting shared files', list: [] };
 	}
 
-	async getTransfers(): Promise<{ raw: string; list: Download[] }> {
+	async getTransfers(): Promise<{ raw: string; list: Download[]; categories: AmuleCategory[] }> {
 		try {
 			const queue = await this.client.getDownloadQueue();
 			const categories = await this.getCategories();
@@ -322,13 +322,14 @@ export class AmuleService {
 			return {
 				raw: `Downloads (${queue.length})`,
 				list: await Promise.all(transfers),
+				categories: categories,
 			};
 		} catch (error) {
 			console.error('EC Client Transfers Error:', error);
 			// if (this.amulecmdService) {
 			// 	return this.amulecmdService.getTransfers();
 			// }
-			return { raw: 'Error getting transfers', list: [] };
+			return { raw: 'Error getting transfers', list: [], categories: [] };
 		}
 	}
 
