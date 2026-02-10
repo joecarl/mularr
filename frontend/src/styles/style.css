@@ -49,7 +49,7 @@
 
 /* Fix router view expansion */
 .view-container {
-	padding: 8px;
+	padding: 6px;
 	flex: 1;
 	overflow: hidden;
 	display: flex;

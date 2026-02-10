@@ -21,9 +21,9 @@
 	--ui-header-text: #ffffff;
 
 	--ui-input-bg: #ffffff;
-	--ui-input-border-style: inset;
-	--ui-input-border-width: 2px;
-	--ui-input-border-color: #d4d0c8;
+	--ui-input-border-style: solid;
+	--ui-input-border-width: 1px;
+	--ui-input-border-color: #7f9db9;
 
 	--ui-odd-row: #ffffff;
 	--ui-even-row: #ffffff;
@@ -65,9 +65,28 @@
 		/* #d4d0c8 #8d8a85 #8d8a85 #d4d0c8; */
 	}
 
+	.ui-panel-sunken {
+		border: 1px solid #7f9db9;
+		background: var(--ui-light);
+	}
+
 	.ui-table-container {
-		border-color: var(--ui-shadow) var(--ui-light) var(--ui-light) var(--ui-shadow);
-		border-width: 1px;
+		border: 1px solid #7f9db9;
+	}
+
+	/* Inputs más específicos para XP (excluyendo los que no son cajas de texto) */
+	input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
+	select,
+	textarea {
+		border: 1px solid #7f9db9 !important;
+		padding: 3px 4px !important;
+		border-radius: 0;
+		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+
+		&:focus {
+			outline: 1px solid #ffad3365;
+			border-color: #7f9db9 !important;
+		}
 	}
 
 	.ui-status-bar {
@@ -88,6 +107,63 @@
 	}
 
 	fieldset {
+		legend {
+			color: #0b71d0;
+		}
 		border: 1px solid #d4d0c8;
+		border-radius: 4px;
+	}
+
+	/* Windows XP Modal specific */
+	.ui-window {
+		border: 1px solid #0030a6;
+		border-radius: 8px 8px 0 0;
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.4),
+			2px 2px 10px rgba(0, 0, 0, 0.4);
+		overflow: hidden;
+		background: #0054e3; /* Color del marco */
+		padding: 0px; /* El marco de XP rodea el contenido */
+		gap: 0;
+	}
+
+	.ui-window-header {
+		height: 25px;
+		background: linear-gradient(to bottom, #0058e6 0%, #3a93ff 8%, #0058e6 40%, #0058e6 70%, #0030a6 100%);
+		border: none;
+		text-shadow: 1px 1px 1px #0f3fab;
+		padding: 0 5px 0px 5px;
+		margin-bottom: 0;
+	}
+
+	.ui-window-content {
+		background: var(--ui-face);
+		border: 1px solid #0030a6;
+		margin: 0;
+		flex: 1;
+	}
+
+	.ui-window-footer {
+		background: var(--ui-face);
+		border: 1px solid #0030a6;
+		border-top: none;
+		margin: 0;
+		padding: 8px;
+	}
+
+	.ui-close-btn {
+		background: linear-gradient(135deg, #fb7256 0%, #f65230 50%, #d83d23 100%);
+		border: 1px solid #ffffff;
+		box-shadow:
+			1px 1px 1px rgba(0, 0, 0, 0.3),
+			inset 1px 1px 1px rgba(255, 255, 255, 0.3);
+		border-radius: 3px;
+		width: 21px;
+		height: 21px;
+		text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+	}
+
+	.ui-close-btn:hover {
+		filter: brightness(1.1);
 	}
 }

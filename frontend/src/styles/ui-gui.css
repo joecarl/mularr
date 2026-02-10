@@ -69,6 +69,14 @@ body {
 	color: var(--ui-text);
 }
 
+.ui-feature-topbar {
+	padding: 6px;
+	margin-bottom: 5px;
+	display: flex;
+	gap: 5px;
+	align-items: center;
+}
+
 /* Tables / Lists */
 .ui-list {
 	width: 100%;
