@@ -1,7 +1,8 @@
-import { component, signal, computed, componentList, WritableSignal, bindControlledSelect, effect } from 'chispa';
+import { component, signal, computed, componentList, WritableSignal, effect, bindControlledSelect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
@@ -82,13 +83,20 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
+	const prefs = services.get(LocalPrefsService);
 
 	const transferList = signal<Transfer[]>([]);
 	const uploadQueue = signal<AmuleUpDownClient[]>([]);
 	const categories = signal<Category[]>([]);
 	const selectedHash = signal<string | null>(null);
-	const sortColumn = signal<keyof Transfer>('name');
-	const sortDirection = signal<'asc' | 'desc'>('asc');
+
+	const initialSort = prefs.getSort<keyof Transfer>('transfers', 'name');
+	const sortColumn = signal(initialSort.column);
+	const sortDirection = signal(initialSort.direction);
+
+	effect(() => {
+		prefs.setSort('transfers', sortColumn.get(), sortDirection.get());
+	});
 
 	const isDisabled = computed(() => !selectedHash.get());
 

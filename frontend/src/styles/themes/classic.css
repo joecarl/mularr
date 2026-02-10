@@ -145,11 +145,5 @@
 				padding: 2px 0 0 2px;
 			}
 		}
-
-		.ui-window-content {
-			border: 2px inset #fff;
-			margin: 2px;
-		}
 	}
-
 }

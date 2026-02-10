@@ -1,7 +1,8 @@
-import { component, signal, bindControlledInput, bindControlledSelect, onUnmount } from 'chispa';
+import { component, signal, bindControlledInput, bindControlledSelect, onUnmount, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import tpl from './SearchView.html';
@@ -10,14 +11,23 @@ import './SearchView.css';
 export const SearchView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
+	const prefs = services.get(LocalPrefsService);
 
 	const results = signal<SearchResult[]>([]);
 	const statusLog = signal('');
 	const searchQuery = signal('');
-	const searchType = signal('Global');
+	const searchType = signal(prefs.get('search.type', 'Global'));
 	const downloadLink = signal('');
-	const sortColumn = signal<keyof SearchResult>('name');
-	const sortDirection = signal<'asc' | 'desc'>('asc');
+
+	const initialSort = prefs.getSort<keyof SearchResult>('search', 'name');
+	const sortColumn = signal(initialSort.column);
+	const sortDirection = signal(initialSort.direction);
+
+	effect(() => {
+		prefs.setSort('search', sortColumn.get(), sortDirection.get());
+		prefs.set('search.type', searchType.get());
+	});
+
 	const searchProgress = signal(0);
 	const addingDownload = signal(false);
 	let isPolling = false;

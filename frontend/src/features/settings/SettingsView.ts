@@ -1,17 +1,19 @@
 import { component, signal, bindControlledInput, bindControlledSelect, bindControlledCheckbox, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService } from '../../services/AmuleApiService';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
 import tpl from './SettingsView.html';
 
 export const SettingsView = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const prefs = services.get(LocalPrefsService);
 
-	const theme = signal(localStorage.getItem('mularr.theme') || 'xp');
+	const theme = signal(prefs.getTheme());
 
 	effect(() => {
 		const t = theme.get();
 		document.documentElement.setAttribute('data-theme', t);
-		localStorage.setItem('mularr.theme', t);
+		prefs.setTheme(t);
 	});
 
 	const interval = signal(2000);

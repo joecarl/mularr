@@ -1,7 +1,8 @@
-import { component, signal, computed, componentList, WritableSignal } from 'chispa';
+import { component, signal, computed, componentList, WritableSignal, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
@@ -34,11 +35,18 @@ const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<strin
 export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
+	const prefs = services.get(LocalPrefsService);
 
 	const sharedList = signal<AmuleFile[]>([]);
 	const selectedHash = signal<string | null>(null);
-	const sortColumn = signal<keyof AmuleFile>('name');
-	const sortDirection = signal<'asc' | 'desc'>('asc');
+
+	const initialSort = prefs.getSort<keyof AmuleFile>('shared', 'name');
+	const sortColumn = signal(initialSort.column);
+	const sortDirection = signal(initialSort.direction);
+
+	effect(() => {
+		prefs.setSort('shared', sortColumn.get(), sortDirection.get());
+	});
 
 	const isDisabled = computed(() => !selectedHash.get());
 
