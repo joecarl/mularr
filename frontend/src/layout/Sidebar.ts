@@ -125,10 +125,11 @@ export const Sidebar = component(() => {
 
 				if (info.publicIp) {
 					result.push(
-						tpl.statRow({
+						tpl.infoItem({
 							nodes: {
-								statLabel: { inner: 'Public IP:' },
-								statValue: { inner: info.publicIp },
+								infoIcon: { inner: '🌐' },
+								infoLabel: { inner: 'Public IP' },
+								infoValue: { inner: info.publicIp },
 							},
 						})
 					);
@@ -140,10 +141,11 @@ export const Sidebar = component(() => {
 					const loc = [details.city, details.region, details.country].filter(Boolean).join(', ');
 					if (loc) {
 						result.push(
-							tpl.statRow({
+							tpl.infoItem({
 								nodes: {
-									statLabel: { inner: 'Location:' },
-									statValue: { inner: loc },
+									infoIcon: { inner: '📍' },
+									infoLabel: { inner: 'Location' },
+									infoValue: { inner: loc },
 								},
 							})
 						);
@@ -153,42 +155,34 @@ export const Sidebar = component(() => {
 				// Organization / ISP
 				if (info.ipDetails && info.ipDetails.org) {
 					result.push(
-						tpl.statRow({
+						tpl.infoItem({
 							nodes: {
-								statLabel: { inner: 'ISP:' },
-								statValue: { inner: info.ipDetails.org },
+								infoIcon: { inner: '🏢' },
+								infoLabel: { inner: 'Provider' },
+								infoValue: { inner: info.ipDetails.org },
 							},
 						})
 					);
 				}
 
-				if (info.vpn && info.vpn.enabled) {
-					result.push(
-						tpl.statRow({
-							nodes: {
-								statLabel: { inner: 'VPN:' },
-								statValue: { inner: (info.vpn.status || 'Active').toUpperCase() },
-								statUnit: { inner: '' },
-							},
-						})
-					);
+				if (info.vpn) {
+					const isEnabled = info.vpn.enabled;
+					const status = (info.vpn.status || (isEnabled ? 'Active' : 'Disabled')).toUpperCase();
 
-					if (info.vpn.port) {
-						result.push(
-							tpl.statRow({
-								nodes: {
-									statLabel: { inner: 'Forwarded Port:' },
-									statValue: { inner: String(info.vpn.port) },
-								},
-							})
-						);
-					}
-				} else {
 					result.push(
-						tpl.statRow({
+						tpl.vpnInfo({
 							nodes: {
-								statLabel: { inner: 'VPN:' },
-								statValue: { inner: 'Disabled' },
+								vpnStatusBadge: {
+									inner: status,
+									classes: {
+										'vpn-badge-active': isEnabled,
+										'vpn-badge-inactive': !isEnabled,
+									},
+								},
+								vpnPortContainer: {
+									style: { display: isEnabled && info.vpn.port ? '' : 'none' },
+								},
+								vpnPortValue: { inner: String(info.vpn.port || '-') },
 							},
 						})
 					);
@@ -204,34 +198,7 @@ export const Sidebar = component(() => {
 
 				const result: (string | Node)[] = [];
 
-				// 1. Speeds (Always on top)
-				// if (typeof s.downloadSpeed === 'number') {
-				// 	const ds = formatSpeed(s.downloadSpeed);
-				// 	result.push(
-				// 		tpl.statRow({
-				// 			nodes: {
-				// 				statLabel: { inner: `↓` },
-				// 				statValue: { inner: ds.text },
-				// 				statUnit: { inner: ds.unit },
-				// 			},
-				// 		})
-				// 	);
-
-				// 	const us = formatSpeed(s.uploadSpeed || 0);
-				// 	result.push(
-				// 		tpl.statRow({
-				// 			nodes: {
-				// 				statLabel: { inner: `↑` },
-				// 				statValue: { inner: us.text },
-				// 				statUnit: { inner: us.unit },
-				// 			},
-				// 		})
-				// 	);
-
-				// 	result.push(tpl.statsSep({}));
-				// }
-
-				// 2. Typed fields — render each stat with an appropriate formatter
+				// Typed fields — render each stat with an appropriate formatter
 				for (const f of statsFields) {
 					const val = (s as any)[f.key];
 					if (val === undefined || val === null || val === '') continue;

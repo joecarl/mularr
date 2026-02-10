@@ -24,8 +24,29 @@ Shared Files
 
 	<div class="net-box">
 		<div class="net-box-header">🛜 Network</div>
-		<div class="stats-container" data-cb="systemContainer">
+		<div class="network-container" data-cb="systemContainer">
 			Loading system...
+			<div data-cb="infoItem" class="network-item">
+				<div data-cb="infoIcon" class="network-item-icon"></div>
+				<div class="network-item-right">
+					<div data-cb="infoLabel" class="network-item-label"></div>
+					<div data-cb="infoValue" class="network-item-value"></div>
+				</div>
+			</div>
+
+			<div data-cb="vpnInfo" class="vpn-info-card">
+				<div class="vpn-info-header">
+					<div class="vpn-info-title">
+						<span class="vpn-info-icon">🔒</span>
+						<span>VPN</span>
+					</div>
+					<span data-cb="vpnStatusBadge" class="vpn-badge sidebar-badge"></span>
+				</div>
+				<div data-cb="vpnPortContainer" class="vpn-port-info">
+					<span class="vpn-port-label">Forwarded Port</span>
+					<span data-cb="vpnPortValue" class="vpn-port-value"></span>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -36,8 +57,7 @@ Shared Files
 				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
 					<span data-cb="connStatusText"
 						style="font-size: 11px; font-weight: bold; color: #215dc6;">Connected</span>
-					<span data-cb="highIdBadge"
-						style="font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: bold; text-transform: uppercase;"></span>
+					<span data-cb="highIdBadge" class="sidebar-badge"></span>
 				</div>
 
 				<div
@@ -69,12 +89,11 @@ Shared Files
 		<div class="stats-container" data-cb="statsContainer">
 			Loading stats...
 			<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
-			<div data-cb="statRow"
-				style="display:flex; justify-content:space-between; font-size:10px; white-space: nowrap;">
-				<span data-cb="statLabel" style="opacity:0.8"></span>
-				<span>
-					<span data-cb="statValue" style="font-weight:bold; padding-left: 2px; max-width: 100px;"></span>
-					<span data-cb="statUnit" style="color:#5775a3; font-weight:normal; padding-left:2px;"></span>
+			<div data-cb="statRow" class="stat-row">
+				<span data-cb="statLabel" class="stat-label"></span>
+				<span class="stat-value-group">
+					<span data-cb="statValue" class="stat-value"></span>
+					<span data-cb="statUnit" class="stat-unit"></span>
 				</span>
 			</div>
 			<hr data-cb="statsSep" />
@@ -83,6 +102,6 @@ Shared Files
 	</div>
 
 	<div class="sidebar-footer">
-		<div class="sidebar-version">v0.5.1</div>
+		<div class="sidebar-version">v0.5.2</div>
 	</div>
 </aside>
