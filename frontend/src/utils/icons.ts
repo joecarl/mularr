@@ -24,6 +24,7 @@ export function getIcon(iconName: string, size?: number, color?: string) {
 
 export function getFileIcon(filename: string) {
 	const ext = filename.split('.').pop()?.toLowerCase() || '';
+	const videosOk = ['mp4', 'mkv'];
 	const videos = ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'mpg', 'mpeg', 'divx'];
 	const audio = ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'wma'];
 	const images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'];
@@ -31,7 +32,9 @@ export function getFileIcon(filename: string) {
 	const documents = ['pdf', 'doc', 'docx', 'txt', 'epub', 'rtf', 'odt'];
 	const isos = ['iso', 'bin', 'cue', 'nrg', 'img'];
 
-	if (videos.includes(ext)) return '🎬';
+	if (videosOk.includes(ext)) return '🎬';
+	// if (videos.includes(ext)) return '🎥';
+	if (videos.includes(ext)) return '🎞️';
 	if (audio.includes(ext)) return '🎵';
 	if (images.includes(ext)) return '🖼️';
 	if (archives.includes(ext)) return '📦';

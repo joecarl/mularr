@@ -2,7 +2,7 @@ import { component, signal, bindControlledInput, bindControlledSelect, onUnmount
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
-import { getFileIcon } from '../../utils/Icons';
+import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import tpl from './SearchView.html';
 import './SearchView.css';

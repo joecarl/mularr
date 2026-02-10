@@ -2,7 +2,7 @@ import { component, signal, computed, componentList, WritableSignal, bindControl
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
-import { getFileIcon } from '../../utils/Icons';
+import { getFileIcon } from '../../utils/icons';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
