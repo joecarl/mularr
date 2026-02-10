@@ -2,7 +2,7 @@ import { component, effect } from 'chispa';
 import { services } from '../services/container/ServiceContainer';
 import { DialogService } from '../services/DialogService';
 import tpl from './DialogHost.html';
-import '../styles/xp-modal.css';
+import '../styles/ui-modal.css';
 
 export const DialogHost = component(() => {
 	const dialogService = services.get(DialogService);

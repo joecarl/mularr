@@ -71,13 +71,13 @@ export const ServersView = component(() => {
 
 				return list.map((s) => {
 					const isConnected = connected && s.ip === connected.ip && s.port === connected.port;
-					const rowStyle = isConnected ? { color: 'blue', fontWeight: 'bold' } : {};
+
 					const users = formatAmount(s.users ?? 0);
 					const maxUsers = formatAmount(s.maxUsers ?? 0);
 					const files = formatAmount(s.files ?? 0);
 
 					return tpl.serverRow({
-						style: rowStyle,
+						classes: { 'connected-server-row': !!isConnected },
 						ondblclick: () => connectToServer(s),
 						nodes: {
 							nameCol: { inner: s.name ?? '' },

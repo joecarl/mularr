@@ -1,5 +1,9 @@
-@import './xp.css';
-@import './xp-modal.css';
+/* @import './themes.css'; */ /* Replaced by specific theme files */
+@import './ui-gui.css';
+@import './ui-modal.css';
+@import './themes/xp.css';
+@import './themes/classic.css';
+@import './themes/hacker.css';
 
 :root {
 	--primary-color: #7618f0;
@@ -40,5 +44,14 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	background-color: var(--win-face); /* Ensure right side is XP colored */
+	background-color: var(--ui-face); /* Ensure right side is XP colored */
+}
+
+/* Fix router view expansion */
+.view-container {
+	padding: 8px;
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }

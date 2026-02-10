@@ -18,10 +18,10 @@
 	white-space: pre;
 }
 
-.status-downloaded {
+.status-downloaded td {
 	color: #079b07;
 }
 
-.status-queued {
+.status-queued td {
 	color: #d93d00;
 }

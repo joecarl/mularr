@@ -1,5 +1,5 @@
 <div style="height: 100%; display: flex; flex-direction: column;">
-	<div class="win-panel-raised"
+	<div class="ui-panel-raised"
 		style="padding: 10px; margin-bottom: 5px; display: flex; gap: 5px; align-items: center;">
 		<label>Name:</label>
 		<input type="text" data-cb="searchInput" style="border: 2px inset; width: 200px;" />
@@ -9,16 +9,15 @@
 			<option value="Kad">Kad</option>
 			<option value="Local">Local</option>
 		</select>
-		<button class="win-btn" data-cb="searchBtn">Start</button>
+		<button class="ui-btn" data-cb="searchBtn">Start</button>
 
 		<div style="width: 20px;"></div>
 
-		<button class="win-btn" data-cb="refreshBtn">Update Results</button>
+		<button class="ui-btn" data-cb="refreshBtn">Update Results</button>
 	</div>
 
-	<div
-		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-		<table class="win-list">
+	<div class="ui-table-container" style="flex: 1;">
+		<table class="ui-list">
 			<thead>
 				<tr>
 					<th data-cb="thName" style="cursor: pointer">Name</th>
@@ -41,7 +40,7 @@
 					<td data-cb="completeCol" style="text-align: right;"></td>
 					<td data-cb="typeCol"></td>
 					<td>
-						<button class="win-btn" data-cb="downloadMiniBtn">Get</button>
+						<button class="ui-btn" data-cb="downloadMiniBtn">Get</button>
 					</td>
 				</tr>
 			</tbody>
@@ -49,7 +48,7 @@
 		<div data-cb="resultsList" style="padding: 5px; font-style: italic; color: #666;"></div>
 	</div>
 
-	<div class="win-panel-raised"
+	<div class="ui-panel-raised"
 		style="padding: 5px; display: flex; gap: 5px; align-items: center; justify-content: space-between;">
 		<div style="flex: 1; display: flex; align-items: center; gap: 10px;">
 			<div data-cb="searchProgressContainer"
@@ -63,7 +62,7 @@
 		<div style="display: flex; gap: 5px; align-items: center;">
 			<input type="text" data-cb="downloadInput" placeholder="Paste ED2K link..."
 				style="width: 300px; border: 2px inset;" />
-			<button class="win-btn" data-cb="downloadBtn">Download</button>
+			<button class="ui-btn" data-cb="downloadBtn">Download</button>
 		</div>
 	</div>
 </div>

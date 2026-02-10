@@ -1,18 +1,17 @@
 <div style="height: 100%; display: flex; flex-direction: column; gap: 10px;">
-	<div class="win-panel-raised" style="padding: 5px; display: flex; gap: 10px; align-items: center;">
-		<button class="win-btn" data-cb="refreshBtn">Reload</button>
+	<div class="ui-panel-raised" style="padding: 5px; display: flex; gap: 10px; align-items: center;">
+		<button class="ui-btn" data-cb="refreshBtn">Reload</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<button class="win-btn win-btn-icon" data-cb="cancelBtn" disabled
+		<button class="ui-btn ui-btn-icon" data-cb="cancelBtn" disabled
 			title="Cancel and remove file from disk">❌</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
 	</div>
 
 	<!-- Shared  -->
 	<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-		<div class="win-header-small">Shared </div>
-		<div
-			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-			<table class="win-list">
+		<div class="ui-header-small">Shared </div>
+		<div class="ui-table-container" style="flex: 1;">
+			<table class="ui-list">
 				<thead>
 					<tr>
 						<th>Filename</th>

@@ -268,7 +268,7 @@ export const TransfersView = component(() => {
 
 		thName: { onclick: () => sort('name') },
 		thSize: { onclick: () => sort('size') },
-		thCategory: { onclick: () => sort('categoryId') },
+		thCategory: { onclick: () => sort('categoryName') },
 		thCompleted: { onclick: () => sort('completed') },
 		thSpeed: { onclick: () => sort('speed') },
 		thProgress: { onclick: () => sort('progress') },

@@ -1,11 +1,10 @@
 <div style="height: 100%; display: flex; flex-direction: column;">
 	<div style="padding: 5px;">
-		<button class="win-btn" data-cb="refreshBtn">Update</button>
+		<button class="ui-btn" data-cb="refreshBtn">Update</button>
 	</div>
 
-	<div
-		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-		<table class="win-list">
+	<div class="ui-table-container" style="flex: 1;">
+		<table class="ui-list">
 			<thead>
 				<tr>
 					<th style="width: 200px;">Server Name</th>
@@ -43,7 +42,7 @@
 		</table>
 	</div>
 
-	<div data-cb="logContainer" class="win-panel-sunken"
+	<div data-cb="logContainer" class="ui-panel-sunken"
 		style="height: 150px; margin-top: 2px; overflow: auto; font-family: monospace; white-space: pre-wrap; background: white; padding: 2px;">
 		Ready...
 	</div>

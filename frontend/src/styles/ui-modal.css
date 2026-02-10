@@ -1,4 +1,4 @@
-/* Windows XP Style Modal */
+/* Generic Windows Modal Styles */
 .modal-overlay {
 	position: fixed;
 	top: 0;
@@ -12,23 +12,25 @@
 	z-index: 9999;
 }
 
-.xp-window {
-	background: #ece9d8;
-	border: 2px solid #0058e6;
-	border-radius: 5px 5px 0 0;
+.ui-window {
+	background: var(--ui-face);
+	border: 2px solid var(--ui-hl);
+	border-radius: var(--ui-modal-radius);
 	box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
 	min-width: 400px;
 	display: flex;
 	flex-direction: column;
+	color: var(--ui-text);
+	font-family: var(--ui-font);
 }
 
-.xp-window-header {
-	background: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0058e6 90%, #0030a6 100%);
+.ui-window-header {
+	background: var(--ui-header-bg);
 	padding: 3px 6px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	color: white;
+	color: var(--ui-header-text);
 	font-weight: bold;
 	font-size: 13px;
 	text-shadow: 1px 1px #000;
@@ -36,16 +38,16 @@
 	border-radius: 2px 2px 0 0;
 }
 
-.xp-window-title {
+.ui-window-title {
 	margin-left: 5px;
 }
 
-.xp-window-controls {
+.ui-window-controls {
 	display: flex;
 	gap: 2px;
 }
 
-.xp-close-btn {
+.ui-close-btn {
 	background: linear-gradient(to bottom, #e96b56 0%, #d83d23 50%, #c12a14 100%);
 	border: 1px solid #fff;
 	border-radius: 3px;
@@ -61,26 +63,24 @@
 	line-height: 1;
 }
 
-.xp-close-btn:hover {
+.ui-close-btn:hover {
 	filter: brightness(1.2);
 }
 
-.xp-window-content {
-	background: #f4f3ee;
-	padding: 15px;
-	border: 1px solid white;
-	border-top: none;
-	margin: 2px;
-	border-radius: 0 0 3px 3px;
+.ui-window-content {
+	padding: 10px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-face);
+	color: var(--ui-text);
 }
 
-/* Form Styles */
-.form-group label {
-	font-size: 11px;
-}
-
-.form-group input,
-.form-group textarea {
-	font-family: Tahoma, 'MS Sans Serif', sans-serif;
-	font-size: 12px;
+.ui-window-footer {
+	padding: 10px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	background: var(--ui-face);
+	border-top: 1px solid var(--ui-shadow);
 }

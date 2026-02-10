@@ -1,16 +1,15 @@
 <div class="validators-view">
-	<div class="win-panel-raised"
+	<div class="ui-panel-raised"
 		style="padding: 5px; display: flex; justify-content: space-between; align-items: center;">
 		<span style="font-weight: bold; margin-left: 5px;">Validators</span>
 		<div style="display: flex; gap: 5px;">
-			<button class="win-btn" data-cb="btnRefresh">Refresh</button>
-			<button class="win-btn" data-cb="btnAdd">Add Validator</button>
+			<button class="ui-btn" data-cb="btnRefresh">Refresh</button>
+			<button class="ui-btn" data-cb="btnAdd">Add Validator</button>
 		</div>
 	</div>
 
-	<div
-		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-		<table class="win-list">
+	<div class="ui-table-container" style="flex: 1;">
+		<table class="ui-list">
 			<thead>
 				<tr>
 					<th style="width: 40px; text-align: center;">ID</th>
@@ -30,9 +29,9 @@
 					<td data-cb="typeCol"></td>
 					<td data-cb="enabledCol" style="text-align: center;"></td>
 					<td style="text-align: center;">
-						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
+						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
 							data-cb="btnToggle">Toggle</button>
-						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px; color: #c00;"
+						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px; color: #c00;"
 							data-cb="btnDelete">Del</button>
 					</td>
 				</tr>
@@ -48,14 +47,14 @@
 
 	<!-- Modal -->
 	<div class="modal-overlay" data-cb="dlgAdd" style="display: none;">
-		<div class="xp-window" style="width: 400px;">
-			<div class="xp-window-header">
-				<div class="xp-window-title">Add Validator</div>
-				<div class="xp-window-controls">
-					<button class="xp-close-btn" data-cb="btnCloseDlg">×</button>
+		<div class="ui-window" style="width: 400px;">
+			<div class="ui-window-header">
+				<div class="ui-window-title">Add Validator</div>
+				<div class="ui-window-controls">
+					<button class="ui-close-btn" data-cb="btnCloseDlg">×</button>
 				</div>
 			</div>
-			<div class="xp-window-content" style="padding: 10px;">
+			<div class="ui-window-content" style="padding: 10px;">
 				<form data-cb="formAdd">
 					<div class="form-group" style="margin-bottom: 10px;">
 						<label style="display: block; margin-bottom: 3px;">Name:</label>
@@ -80,8 +79,8 @@
 					</div>
 
 					<div style="display: flex; justify-content: flex-end; gap: 8px;">
-						<button type="submit" class="win-btn">Save</button>
-						<button type="button" class="win-btn" data-cb="btnCancelDlg">Cancel</button>
+						<button type="submit" class="ui-btn">Save</button>
+						<button type="button" class="ui-btn" data-cb="btnCancelDlg">Cancel</button>
 					</div>
 				</form>
 			</div>

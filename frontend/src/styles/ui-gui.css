@@ -1,0 +1,193 @@
+body {
+	background-color: var(--ui-face);
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: 11px;
+	margin: 0;
+	padding: 0;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	cursor: default;
+}
+
+/* Generic Windows Controls */
+.ui-btn {
+	background: var(--ui-btn-bg);
+	border: 1px solid var(--ui-btn-border);
+	border-radius: var(--ui-btn-radius);
+	padding: 3px 12px;
+	font-size: 11px;
+	font-family: var(--ui-font);
+	cursor: pointer;
+	box-shadow: var(--ui-btn-shadow);
+	min-width: 75px;
+	color: var(--ui-text);
+	text-align: center;
+	outline: none;
+}
+
+.ui-btn-icon {
+	min-width: auto;
+	padding: 2px 4px;
+}
+
+.ui-btn:not(:disabled):hover {
+	background: var(--ui-btn-hover-bg);
+}
+
+.ui-btn:not(:disabled):active {
+	background: var(--ui-btn-hover-bg);
+	box-shadow: var(--ui-btn-active-shadow);
+}
+
+.ui-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+	background: var(--ui-face);
+	border-color: var(--ui-shadow);
+	box-shadow: none;
+	color: var(--ui-shadow);
+}
+
+/* Panels - Base */
+.ui-panel-sunken {
+	border: 1px solid var(--ui-shadow);
+	background: var(--ui-light);
+	color: var(--ui-text);
+}
+
+.ui-panel-raised {
+	border: 1px solid var(--ui-shadow);
+	background: var(--ui-face);
+	color: var(--ui-text);
+}
+
+.ui-header-small {
+	padding: 2px 2px;
+	font-weight: bold;
+	color: var(--ui-text);
+}
+
+/* Tables / Lists */
+.ui-list {
+	width: 100%;
+	border-collapse: collapse;
+	background-color: var(--ui-light);
+}
+
+/* Table Header */
+.ui-list th {
+	background-color: var(--ui-th-bg);
+	background-image: var(--ui-th-bg-image);
+	border-right: 1px solid var(--ui-shadow);
+	border-bottom: 1px solid var(--ui-shadow);
+	padding: 2px 5px;
+	text-align: left;
+	font-weight: normal;
+	position: sticky;
+	z-index: 99;
+	top: 0;
+	box-shadow: 1px 1px 0 var(--ui-light) inset;
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	cursor: default;
+}
+
+.ui-list th:hover {
+	background-color: var(--ui-th-hover-bg);
+	background-image: var(--ui-th-hover-image);
+}
+
+.ui-list td {
+	padding: 2px 5px;
+	border-right: 1px dotted var(--ui-shadow);
+	border-bottom: 1px solid transparent;
+	cursor: default;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-text);
+}
+
+/* Row selection */
+.ui-list tr.selected {
+	background-color: var(--ui-hl);
+	color: var(--ui-hl-text);
+}
+
+.ui-list tr.selected td {
+	color: var(--ui-hl-text);
+	border-right-color: transparent;
+}
+
+/* Common inputs */
+input[type='text'],
+input[type='password'],
+input[type='number'],
+select,
+textarea {
+	border-style: var(--ui-input-border-style);
+	border-width: var(--ui-input-border-width);
+	border-color: var(--ui-input-border-color);
+	background-color: var(--ui-input-bg);
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: 11px;
+	padding: 2px;
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+	background-color: var(--ui-face);
+	color: var(--ui-shadow);
+}
+
+/* Status Bar Generic */
+.ui-status-bar {
+	height: 23px;
+	background-color: var(--status-bar-bg);
+	border-top: 1px solid var(--ui-shadow);
+	display: flex;
+	align-items: center;
+	padding: 1px 1px 1px 2px;
+	gap: 2px;
+	font-family: var(--ui-font);
+	font-size: 11px;
+	cursor: default;
+	color: var(--status-bar-text);
+	flex-shrink: 0;
+}
+
+.ui-status-pane {
+	height: 18px;
+	border: var(--status-pane-border);
+	display: flex;
+	align-items: center;
+	padding: 0 4px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* Fix: Hover effect on rows - only for unselected rows */
+.ui-list tbody tr:not(.selected):hover {
+	background-color: var(--ui-list-hover-bg);
+}
+
+/* Connected Server Style */
+.connected-server-row td {
+	color: var(--ui-text-accent);
+	font-weight: bold;
+}
+/* Ensure selection visibility on connected row */
+.ui-list tr.selected.connected-server-row td {
+	color: var(--ui-hl-text);
+}
+
+/* Generic Table Container */
+.ui-table-container {
+	overflow: auto;
+	background: var(--ui-light);
+	border: var(--ui-input-border-width) var(--ui-input-border-style) var(--ui-input-border-color);
+	min-height: 0;
+}

@@ -1,0 +1,93 @@
+[data-theme='xp'],
+:root:not([data-theme]) {
+	--ui-face: #ece9d8;
+	--ui-text: #000000;
+	--ui-hl: #316ac5;
+	--ui-hl-text: #ffffff;
+	--ui-shadow: #aca899;
+	--ui-dark-shadow: #404040;
+	--ui-light: #ffffff;
+	--ui-font: 'Tahoma', 'Verdana', sans-serif;
+
+	--ui-btn-bg: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+	--ui-btn-border: #003c74;
+	--ui-btn-hover-bg: linear-gradient(to bottom, #fafafa, #f0f0f0);
+	--ui-btn-hover-border: #0058e6;
+	--ui-btn-radius: 3px;
+	--ui-btn-shadow: inset 1px 1px 1px #fff;
+	--ui-btn-active-shadow: inset 1px 1px 2px #aaa;
+
+	--ui-header-bg: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0058e6 90%, #0030a6 100%);
+	--ui-header-text: #ffffff;
+
+	--ui-input-bg: #ffffff;
+	--ui-input-border-style: inset;
+	--ui-input-border-width: 2px;
+	--ui-input-border-color: #d4d0c8;
+
+	--ui-odd-row: #ffffff;
+	--ui-even-row: #ffffff;
+	--ui-th-bg: #ece9d8;
+	--ui-th-bg-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23ece9d8"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+	--ui-th-hover-bg: #f8f7f1;
+	--ui-th-hover-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23f8f7f1"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+
+	--ui-modal-radius: 5px 5px 0 0;
+
+	--sidebar-bg: #7a96df;
+	--sidebar-header-bg: linear-gradient(to right, white, transparent);
+	--sidebar-box-bg: #ffffff;
+	--sidebar-box-header-bg: linear-gradient(to right, #f0f4ff, #c6d3f7);
+	--sidebar-box-header-text: #215dc6;
+	--sidebar-item-hover: #eef3fb;
+	--sidebar-item-active: #c6d3f7;
+
+	--status-bar-bg: #ece9d8;
+	--status-bar-text: #000000;
+	--status-pane-border: 0;
+
+	--ui-list-hover-bg: #eef3fb;
+	--ui-text-accent: #0000ff;
+
+	/* Nested Component Overrides for XP */
+	.ui-btn:not(:disabled):hover {
+		border-color: var(--ui-btn-hover-border);
+		box-shadow: 0 0 2px #ffad33;
+	}
+
+	.ui-btn:not(:disabled):active {
+		box-shadow: var(--ui-btn-active-shadow);
+	}
+
+	.ui-panel-raised {
+		border-radius: 2px;
+		border-color: var(--ui-light) var(--ui-shadow) var(--ui-shadow) var(--ui-light);
+		/* #d4d0c8 #8d8a85 #8d8a85 #d4d0c8; */
+	}
+
+	.ui-table-container {
+		border-color: var(--ui-shadow) var(--ui-light) var(--ui-light) var(--ui-shadow);
+		border-width: 1px;
+	}
+
+	.ui-status-bar {
+		border-top: 1px solid #d4d0c8;
+		box-shadow: 0 -1px 0 var(--ui-shadow);
+		gap: 0;
+	}
+
+	.ui-status-pane {
+		border: none;
+		border-right: 1px solid #aca899;
+		box-shadow: 1px 0 0 white;
+		margin-right: 2px;
+		&:last-child {
+			border-right: none;
+			box-shadow: none;
+		}
+	}
+
+	fieldset {
+		border: 1px solid #d4d0c8;
+	}
+}

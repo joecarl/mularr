@@ -1,0 +1,102 @@
+[data-theme='hacker'] {
+	--ui-face: #000000;
+	--ui-text: #00ff00;
+	--ui-hl: #00ff00;
+	--ui-hl-text: #000000;
+	--ui-shadow: #003300;
+	--ui-dark-shadow: #00ff00;
+	--ui-light: #003300;
+	--ui-font: 'Courier New', 'Courier', monospace;
+
+	--ui-btn-bg: #000000;
+	--ui-btn-border: #00ff00;
+	--ui-btn-hover-bg: #001100;
+	--ui-btn-hover-border: #00ff00;
+	--ui-btn-radius: 0;
+	--ui-btn-shadow: 0 0 5px #00ff00;
+	--ui-btn-active-shadow: inset 0 0 5px #00ff00;
+
+	--ui-header-bg: #001100;
+	--ui-header-text: #00ff00;
+
+	--ui-input-bg: #000000;
+	--ui-input-border-style: solid;
+	--ui-input-border-width: 1px;
+	--ui-input-border-color: #00ff00;
+
+	--ui-odd-row: #000000;
+	--ui-even-row: #001100;
+	--ui-th-bg: #002200;
+	--ui-th-bg-image: none;
+	--ui-th-hover-bg: #004400;
+	--ui-th-hover-image: none;
+
+	--ui-modal-radius: 0;
+
+	--sidebar-bg: #001100;
+	--sidebar-header-bg: transparent;
+	--sidebar-box-bg: #000000;
+	--sidebar-box-header-bg: #002200;
+	--sidebar-box-header-text: #00ff00;
+	--sidebar-item-hover: #003300;
+	--sidebar-item-active: #00ff00;
+
+	--status-bar-bg: #000000;
+	--status-bar-text: #00ff00;
+	--status-pane-border: 1px solid #00ff00;
+
+	--ui-list-hover-bg: #002200;
+	--ui-text-accent: #00ff00;
+
+	/* Nested Component Overrides for Hacker */
+	.ui-btn {
+		box-shadow: 0 0 5px var(--ui-btn-border);
+		text-shadow: 0 0 2px var(--ui-text);
+		border-radius: 0;
+
+		&:not(:disabled):active {
+			background-color: var(--ui-text);
+			color: var(--ui-face);
+			box-shadow: inset 0 0 10px #000;
+		}
+	}
+
+	.ui-list td {
+		border-right: 1px solid var(--ui-shadow);
+	}
+
+	.ui-status-bar {
+		border-top: 1px solid var(--ui-text);
+		box-shadow: none;
+	}
+
+	.ui-status-pane {
+		border: 1px solid var(--ui-text);
+		box-shadow: none;
+		margin-right: 5px;
+
+		span {
+			color: #00ff00 !important;
+		}
+	}
+
+	/* Modal Hacker Overrides */
+	.ui-window {
+		border: 1px solid var(--ui-text);
+		box-shadow: 0 0 15px var(--ui-text);
+
+		.ui-window-header {
+			text-shadow: 0 0 5px var(--ui-text);
+			border-radius: 0;
+			border-bottom: 1px solid var(--ui-text);
+		}
+
+		.ui-close-btn {
+			border-radius: 0;
+			background: #000;
+			border: 1px solid var(--ui-text);
+			box-shadow: 0 0 5px var(--ui-text);
+		}
+	}
+
+}

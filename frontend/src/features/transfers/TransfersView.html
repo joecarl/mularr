@@ -1,13 +1,13 @@
 <div style="height: 100%; display: flex; flex-direction: column; gap: 10px;">
-	<div class="win-panel-raised" style="padding: 5px; display: flex; gap: 10px; align-items: center;">
-		<button class="win-btn" data-cb="refreshBtn">Reload</button>
+	<div class="ui-panel-raised" style="padding: 5px; display: flex; gap: 10px; align-items: center;">
+		<button class="ui-btn" data-cb="refreshBtn">Reload</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<button class="win-btn win-btn-icon" data-cb="pauseBtn" disabled>⏸️</button>
-		<button class="win-btn win-btn-icon" data-cb="resumeBtn" disabled>▶️</button>
-		<button class="win-btn win-btn-icon" data-cb="stopBtn" disabled>⏹️</button>
-		<button class="win-btn win-btn-icon" data-cb="cancelBtn" disabled
+		<button class="ui-btn ui-btn-icon" data-cb="pauseBtn" disabled>⏸️</button>
+		<button class="ui-btn ui-btn-icon" data-cb="resumeBtn" disabled>▶️</button>
+		<button class="ui-btn ui-btn-icon" data-cb="stopBtn" disabled>⏹️</button>
+		<button class="ui-btn ui-btn-icon" data-cb="cancelBtn" disabled
 			title="Cancel and remove file from disk">❌</button>
-		<button class="win-btn win-btn-icon" data-cb="clearSelectedBtn"
+		<button class="ui-btn ui-btn-icon" data-cb="clearSelectedBtn"
 			title="Clear Selected completed transfer from list (Removes from DB, keeps file on disk)"
 			disabled>❎</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
@@ -16,16 +16,15 @@
 			<option value="-1">Select...</option>
 		</select>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<button class="win-btn win-btn-icon" data-cb="clearCompletedBtn"
+		<button class="ui-btn ui-btn-icon" data-cb="clearCompletedBtn"
 			title="Clear ALL Completed transfers from list (Removes from DB, keeps file on disk)">🧹</button>
 	</div>
 
 	<!-- Active Downloads -->
 	<div style="flex: 3; display: flex; flex-direction: column; min-height: 0;">
-		<div class="win-header-small">Active Downloads</div>
-		<div
-			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-			<table class="win-list">
+		<div class="ui-header-small">Active Downloads</div>
+		<div class="ui-table-container" style="flex: 1;">
+			<table class="ui-list">
 				<thead>
 					<tr>
 						<th data-cb="thName" style="cursor: pointer">Filename</th>
@@ -75,10 +74,9 @@
 
 	<!-- Uploading  -->
 	<div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-		<div class="win-header-small">Upload Queue</div>
-		<div
-			style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-			<table class="win-list">
+		<div class="ui-header-small">Upload Queue</div>
+		<div class="ui-table-container" style="flex: 1;">
+			<table class="ui-list">
 				<thead>
 					<tr>
 						<th>Client Name</th>

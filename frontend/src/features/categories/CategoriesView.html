@@ -1,13 +1,12 @@
 <div style="height: 100%; display: flex; flex-direction: column; gap: 5px;">
-	<div class="win-panel-raised"
+	<div class="ui-panel-raised"
 		style="padding: 5px; display: flex; justify-content: space-between; align-items: center;">
 		<span style="font-weight: bold; margin-left: 5px;">Manage Categories</span>
-		<button class="win-btn" data-cb="addBtn">New Category</button>
+		<button class="ui-btn" data-cb="addBtn">New Category</button>
 	</div>
 
-	<div
-		style="flex: 1; overflow: auto; background: white; border: 2px solid; border-color: #808080 white white #808080;">
-		<table class="win-list">
+	<div class="ui-table-container" style="flex: 1;">
+		<table class="ui-list">
 			<thead>
 				<tr>
 					<th style="width: 200px;">Name</th>
@@ -22,9 +21,9 @@
 					<td data-cb="catPath"></td>
 					<td data-cb="catPatterns"></td>
 					<td>
-						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
+						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
 							data-cb="editBtn">Edit</button>
-						<button class="win-btn" style="min-width: 40px; height: 20px; padding: 0 5px; color: #c00;"
+						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px; color: #c00;"
 							data-cb="deleteBtn">Del</button>
 					</td>
 				</tr>
@@ -34,14 +33,14 @@
 
 	<!-- Modal -->
 	<div class="modal-overlay" data-cb="modalOverlay" style="display: none;">
-		<div class="xp-window">
-			<div class="xp-window-header">
-				<div class="xp-window-title" data-cb="modalTitle">Category Details</div>
-				<div class="xp-window-controls">
-					<button class="xp-close-btn" data-cb="closeModalBtn">×</button>
+		<div class="ui-window">
+			<div class="ui-window-header">
+				<div class="ui-window-title" data-cb="modalTitle">Category Details</div>
+				<div class="ui-window-controls">
+					<button class="ui-close-btn" data-cb="closeModalBtn">×</button>
 				</div>
 			</div>
-			<div class="xp-window-content" style="padding: 10px;">
+			<div class="ui-window-content" style="padding: 10px;">
 				<form data-cb="categoryForm">
 					<div class="form-group" style="margin-bottom: 10px;">
 						<label style="display: block; margin-bottom: 3px;">Name:</label>
@@ -61,8 +60,8 @@
 							placeholder="Optional comment"></textarea>
 					</div>
 					<div style="display: flex; gap: 5px; justify-content: flex-end; margin-top: 15px;">
-						<button type="submit" class="win-btn">Save</button>
-						<button type="button" class="win-btn" data-cb="cancelModalBtn">Cancel</button>
+						<button type="submit" class="ui-btn">Save</button>
+						<button type="button" class="ui-btn" data-cb="cancelModalBtn">Cancel</button>
 					</div>
 				</form>
 			</div>

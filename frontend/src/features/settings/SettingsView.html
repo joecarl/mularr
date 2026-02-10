@@ -1,8 +1,8 @@
 <div style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
-	<div class="win-panel-raised" style="padding: 10px; flex: 1;">
+	<div class="ui-panel-raised" style="padding: 10px; flex: 1;">
 		<div style="display: flex; gap: 10px; flex-wrap: wrap;">
 
-			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
 				<legend>Connection (Read Only)</legend>
 				<div style="display: flex; flex-direction: column; gap: 5px;">
 					<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -24,7 +24,7 @@
 				</div>
 			</fieldset>
 
-			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
 				<legend>Limits (Read Only)</legend>
 				<div style="display: flex; flex-direction: column; gap: 5px;">
 					<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -41,14 +41,14 @@
 							KB/s
 						</div>
 					</div>
-					<div style="margin-top: 10px; border-top: 1px solid #d4d0c8; padding-top: 5px;">
+					<div style="margin-top: 10px; border-top: 1px solid var(--ui-shadow); padding-top: 5px;">
 						<label><input type="checkbox" data-cb="netEd2k" checked disabled /> Network: ED2K</label><br />
 						<label><input type="checkbox" data-cb="netKad" checked disabled /> Network: Kad</label>
 					</div>
 				</div>
 			</fieldset>
 
-			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
 				<legend>Directories</legend>
 				<div style="display: flex; flex-direction: column; gap: 5px;">
 					<label>Incoming Files:</label>
@@ -58,13 +58,14 @@
 				</div>
 			</fieldset>
 
-			<fieldset style="border: 1px solid #d4d0c8; padding: 10px; flex: 1; min-width: 250px;">
+			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
 				<legend>Interface Settings</legend>
 				<div style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
 					<label>Theme:</label>
 					<select data-cb="themeSelect" style="border: 2px inset; width: 120px;">
 						<option value="classic">Windows Classic</option>
 						<option value="xp">Windows XP</option>
+						<option value="hacker">Hacker Mode</option>
 					</select>
 				</div>
 
@@ -83,9 +84,9 @@
 	</div>
 
 	<div style="display: flex; justify-content: flex-end; padding-top: 10px; gap: 5px;">
-		<button class="win-btn" data-cb="restartDaemonBtn">Restart daemon</button>
+		<button class="ui-btn" data-cb="restartDaemonBtn">Restart daemon</button>
 		<div style="flex: 1 1 auto;"></div>
-		<button class="win-btn">Apply</button>
-		<button class="win-btn">Cancel</button>
+		<button class="ui-btn">Apply</button>
+		<button class="ui-btn">Cancel</button>
 	</div>
 </div>
