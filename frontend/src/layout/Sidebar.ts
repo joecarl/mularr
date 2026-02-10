@@ -55,25 +55,27 @@ export const Sidebar = component(() => {
 	setInterval(fetchSystemInfo, 60000 * 5);
 
 	const linksData = [
-		//{ to: '/', inner: [getIcon('layout-dashboard'), ' Dashboard'] },
-		{ to: '/servers', inner: ['🔌', ' Servers'] },
-		{ to: '/transfers', inner: ['🔽', ' Transfers'] },
-		{ to: '/search', inner: ['🔍', ' Search'] },
-		{ to: '/shared', inner: ['🌏', ' Shared'] },
-		{ to: '/categories', inner: ['🏷️', ' Categories'] },
-		{ to: '/validators', inner: ['🛡️', ' Validators'] },
-		{ to: '/settings', inner: ['⚙️', ' Settings'] },
+		{ to: '/servers', icon: '/assets/icons/Server.ico', label: 'Servers' },
+		{ to: '/transfers', icon: '/assets/icons/Transfer.ico', label: 'Transfers' },
+		{ to: '/search', icon: '/assets/icons/Search.ico', label: 'Search' },
+		{ to: '/shared', icon: '/assets/icons/SharedFiles.ico', label: 'Shared' },
+		{ to: '/categories', emoji: '🏷️', label: 'Categories' },
+		{ to: '/validators', emoji: '🛡️', label: 'Validators' },
+		{ to: '/settings', icon: '/assets/icons/Preferences.ico', label: 'Settings' },
 	];
 
 	// Como linksData es un array que no va a cambiar, podemos crear una
 	// lista de componentes Link sin necesidad de usar componentList,
-	const links = linksData.map((link) =>
-		Link({
+	const links = linksData.map((link) => {
+		const icon = link.icon ? tpl.navIcon({ src: link.icon }) : tpl.navIconEmoji({ inner: link.emoji });
+		const label = tpl.navLabel({ inner: link.label });
+
+		return Link({
 			to: link.to,
-			inner: link.inner,
+			inner: [icon, label],
 			classes: { 'nav-link': true, 'active-link': pathMatches(link.to) },
-		})
-	);
+		});
+	});
 
 	return tpl.fragment({
 		navLinks: { inner: links },

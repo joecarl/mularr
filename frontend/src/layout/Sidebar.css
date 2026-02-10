@@ -65,9 +65,25 @@
 				font-size: 11px;
 				cursor: pointer;
 
+				.nav-icon {
+					width: 16px;
+					height: 16px;
+				}
+
+				.nav-icon-emoji {
+					width: 16px;
+					height: 16px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-size: 14px; /* A bit larger for emoji to match icon visual weight */
+				}
+
 				&:hover {
 					background-color: var(--sidebar-item-hover);
-					text-decoration: underline;
+					.nav-label {
+						text-decoration: underline;
+					}
 				}
 
 				&.active-link {
