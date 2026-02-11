@@ -84,25 +84,6 @@
 				</div>
 			</fieldset>
 
-			<!-- Behavior & Files -->
-			<fieldset class="settings-fieldset">
-				<legend>Behavior & Files</legend>
-				<div class="settings-group-compact">
-					<label><input type="checkbox" data-cb="autoconnect" /> Autoconnect on startup</label>
-					<label><input type="checkbox" data-cb="reconnect" /> Reconnect on loss</label>
-					<label><input type="checkbox" data-cb="smartIdCheck" /> Smart ID Check</label>
-					<div class="settings-separator"></div>
-					<label title="Intelligent Corrupt Handling">
-						<input type="checkbox" data-cb="ich" /> Enable ICH
-					</label>
-					<label><input type="checkbox" data-cb="allocateFullFile" /> Allocate full file space</label>
-					<div class="settings-row" style="margin-top: 4px;">
-						<label>Buffer Size (MB):</label>
-						<input type="text" data-cb="fileBufferSizePref" class="settings-input settings-input-m" />
-					</div>
-				</div>
-			</fieldset>
-
 			<!-- Paths -->
 			<fieldset class="settings-fieldset">
 				<legend>Paths</legend>
@@ -116,6 +97,30 @@
 					<input type="text" data-cb="tempDir" class="settings-input settings-input-full" />
 					<div data-cb="lockedTempInfo" class="settings-info">
 						Managed via environment variable.
+					</div>
+				</div>
+			</fieldset>
+
+			<!-- Behavior & Files -->
+			<fieldset class="settings-fieldset">
+				<legend>Behavior & Files</legend>
+				<div class="settings-group-compact">
+					<label><input type="checkbox" data-cb="autoconnect" /> Autoconnect on startup</label>
+					<label><input type="checkbox" data-cb="reconnect" /> Reconnect on loss</label>
+					<label><input type="checkbox" data-cb="smartIdCheck" /> Smart ID Check</label>
+
+					<div class="settings-separator"></div>
+					<label title="Intelligent Corrupt Handling">
+						<input type="checkbox" data-cb="ich" /> Enable ICH
+					</label>
+					<label>
+						<input type="checkbox" data-cb="allocateFullFile" /> Allocate full file space
+					</label>
+
+					<div class="settings-separator"></div>
+					<div class="settings-row">
+						<label>Buffer Size (MB):</label>
+						<input type="text" data-cb="fileBufferSizePref" class="settings-input settings-input-m" />
 					</div>
 				</div>
 			</fieldset>

@@ -25,11 +25,41 @@ body {
 	color: var(--ui-text);
 	text-align: center;
 	outline: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	vertical-align: middle;
 }
 
 .ui-btn-icon {
 	min-width: auto;
 	padding: 2px 4px;
+	font-size: 12px;
+}
+
+/* Icon classes for background images */
+.icon-img {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	vertical-align: middle;
+}
+
+.icon-start {
+	background-image: url('/assets/icons/Start.ico');
+}
+.icon-pause {
+	background-image: url('/assets/icons/Pause.ico');
+}
+.icon-stop {
+	background-image: url('/assets/icons/Stop.ico');
+}
+.icon-delete {
+	background-image: url('/assets/icons/Delete.ico');
 }
 
 .ui-btn:not(:disabled):hover {

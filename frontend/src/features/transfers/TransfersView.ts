@@ -57,7 +57,11 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 					nodes: {
 						progressBar: {
 							style: { width: () => `${(t.get().progress || 0) * 100}%` },
-							classes: { 'transfer-progress-bar-complete': () => !!t.get().isCompleted },
+							addClass: () => {
+								if (t.get().stopped || t.get().statusId === 7) return 'transfer-progress-bar-paused';
+								if (t.get().isCompleted) return 'transfer-progress-bar-complete';
+								return '';
+							},
 						},
 						progressText: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
 					},

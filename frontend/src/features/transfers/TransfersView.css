@@ -27,6 +27,11 @@
 	height: 100%;
 }
 
+.transfer-progress-bar-paused {
+	--edge-color: #530e0e;
+	--center-color: rgb(198, 105, 105);
+}
+
 .transfer-progress-bar-complete {
 	--edge-color: green;
 	--center-color: rgb(85, 255, 85);

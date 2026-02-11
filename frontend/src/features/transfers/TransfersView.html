@@ -2,14 +2,22 @@
 	<div class="ui-panel-raised ui-feature-topbar">
 		<button class="ui-btn" data-cb="refreshBtn">Reload</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<button class="ui-btn ui-btn-icon" data-cb="pauseBtn" disabled>⏸️</button>
-		<button class="ui-btn ui-btn-icon" data-cb="resumeBtn" disabled>▶️</button>
-		<button class="ui-btn ui-btn-icon" data-cb="stopBtn" disabled>⏹️</button>
-		<button class="ui-btn ui-btn-icon" data-cb="cancelBtn" disabled
-			title="Cancel and remove file from disk">❌</button>
+		<button class="ui-btn ui-btn-icon" data-cb="pauseBtn">
+			<span class="icon-img icon-pause"></span>
+		</button>
+		<button class="ui-btn ui-btn-icon" data-cb="resumeBtn">
+			<span class="icon-img icon-start"></span>
+		</button>
+		<button class="ui-btn ui-btn-icon" data-cb="stopBtn">
+			<span class="icon-img icon-stop"></span>
+		</button>
+		<button class="ui-btn ui-btn-icon" data-cb="cancelBtn" title="Cancel and remove file from disk">
+			<span class="icon-img icon-delete"></span>
+		</button>
 		<button class="ui-btn ui-btn-icon" data-cb="clearSelectedBtn"
-			title="Clear Selected completed transfer from list (Removes from DB, keeps file on disk)"
-			disabled>❎</button>
+			title="Clear Selected completed transfer from list (Removes from DB, keeps file on disk)">
+			❎
+		</button>
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
 		<label>Category:</label>
 		<select data-cb="catSelect" style="border: 2px inset;" disabled>
