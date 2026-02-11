@@ -111,7 +111,13 @@ export class AmuledService {
 	}
 
 	async getConfig() {
-		const config: any = {};
+		const config: any = {
+			lockedFields: {
+				incomingDir: !!process.env.AMULE_INCOMING_DIR,
+				tempDir: !!process.env.AMULE_TEMP_DIR,
+				ports: process.env.GLUETUN_ENABLED?.toLowerCase() === 'true',
+			},
+		};
 
 		try {
 			const confPath = path.join(this.configDir, 'amule.conf');
@@ -129,17 +135,89 @@ export class AmuledService {
 				config.udpPort = findVal('UDPPort');
 				config.maxSources = findVal('MaxSourcesPerFile');
 				config.maxConnections = findVal('MaxConnections');
+				config.maxConnectionsPerFiveSeconds = findVal('MaxConnectionsPerFiveSeconds');
+				config.slotAllocation = findVal('SlotAllocation');
+				config.queueSizePref = findVal('QueueSizePref');
+				config.fileBufferSizePref = findVal('FileBufferSizePref');
 				config.downloadCap = findVal('DownloadCapacity');
 				config.uploadCap = findVal('UploadCapacity');
 				config.incomingDir = findVal('IncomingDir');
 				config.tempDir = findVal('TempDir');
 				config.maxUpload = findVal('MaxUpload');
 				config.maxDownload = findVal('MaxDownload');
+				config.ed2k = findVal('ConnectToED2K') === '1';
+				config.kad = findVal('ConnectToKad') === '1';
+				config.autoconnect = findVal('Autoconnect') === '1';
+				config.reconnect = findVal('Reconnect') === '1';
+				config.upnp = findVal('UPnPEnabled') === '1';
+				config.obfuscationRequested = findVal('IsCryptLayerRequested') === '1';
+				config.obfuscationRequired = findVal('IsClientCryptLayerRequired') === '1';
+				config.smartIdCheck = findVal('SmartIdCheck') === '1';
+				config.ich = findVal('ICH') === '1';
+				config.allocateFullFile = findVal('AllocateFullFile') === '1';
 			}
 		} catch (e) {
 			console.warn('Could not read local amule.conf:', e);
 		}
 
 		return config;
+	}
+
+	async updateConfig(newConfig: any): Promise<void> {
+		const confPath = path.join(this.configDir, 'amule.conf');
+		if (!fs.existsSync(confPath)) {
+			throw new Error('amule.conf not found');
+		}
+
+		let content = fs.readFileSync(confPath, 'utf-8');
+
+		const fromBool = (val: boolean | undefined) => (val !== undefined ? (val ? '1' : '0') : undefined);
+
+		const replacements: { [key: string]: string | undefined } = {
+			Nick: newConfig.nick,
+			MaxSourcesPerFile: newConfig.maxSources,
+			MaxConnections: newConfig.maxConnections,
+			MaxConnectionsPerFiveSeconds: newConfig.maxConnectionsPerFiveSeconds,
+			SlotAllocation: newConfig.slotAllocation,
+			QueueSizePref: newConfig.queueSizePref,
+			FileBufferSizePref: newConfig.fileBufferSizePref,
+			DownloadCapacity: newConfig.downloadCap,
+			UploadCapacity: newConfig.uploadCap,
+			MaxUpload: newConfig.maxUpload,
+			MaxDownload: newConfig.maxDownload,
+			ConnectToED2K: fromBool(newConfig.ed2k),
+			ConnectToKad: fromBool(newConfig.kad),
+			Autoconnect: fromBool(newConfig.autoconnect),
+			Reconnect: fromBool(newConfig.reconnect),
+			UPnPEnabled: fromBool(newConfig.upnp),
+			IsCryptLayerRequested: fromBool(newConfig.obfuscationRequested),
+			IsClientCryptLayerRequired: fromBool(newConfig.obfuscationRequired),
+			SmartIdCheck: fromBool(newConfig.smartIdCheck),
+			ICH: fromBool(newConfig.ich),
+			AllocateFullFile: fromBool(newConfig.allocateFullFile),
+		};
+
+		if (process.env.GLUETUN_ENABLED?.toLowerCase() !== 'true') {
+			replacements.Port = newConfig.tcpPort;
+			replacements.UDPPort = newConfig.udpPort;
+		}
+
+		if (!process.env.AMULE_INCOMING_DIR) {
+			replacements.IncomingDir = newConfig.incomingDir;
+		}
+		if (!process.env.AMULE_TEMP_DIR) {
+			replacements.TempDir = newConfig.tempDir;
+		}
+
+		for (const [key, value] of Object.entries(replacements)) {
+			if (value !== undefined) {
+				const regex = new RegExp(`^${key}=.*$`, 'm');
+				if (content.match(regex)) {
+					content = content.replace(regex, `${key}=${value}`);
+				}
+			}
+		}
+
+		fs.writeFileSync(confPath, content, 'utf-8');
 	}
 }

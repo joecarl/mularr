@@ -1,92 +1,168 @@
-<div style="height: 100%; display: flex; flex-direction: column; overflow-y: auto;">
-	<div class="ui-panel-raised" style="padding: 10px; flex: 1;">
-		<div style="display: flex; gap: 10px; flex-wrap: wrap;">
+<div class="settings-view">
+	<div class="ui-panel-raised settings-panel">
+		<div class="settings-grid">
 
-			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
-				<legend>Connection (Read Only)</legend>
-				<div style="display: flex; flex-direction: column; gap: 5px;">
-					<div style="display: flex; justify-content: space-between; align-items: center;">
+			<!-- Network & Security -->
+			<fieldset class="settings-fieldset">
+				<legend>Network & Security</legend>
+				<div class="settings-group">
+					<div class="settings-row">
 						<label>TCP Port:</label>
-						<input type="text" data-cb="tcpPort" disabled style="width: 60px; border: 2px inset;" />
+						<input type="text" data-cb="tcpPort" class="settings-input settings-input-m" />
 					</div>
-					<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div class="settings-row">
 						<label>UDP Port:</label>
-						<input type="text" data-cb="udpPort" disabled style="width: 60px; border: 2px inset;" />
+						<input type="text" data-cb="udpPort" class="settings-input settings-input-m" />
 					</div>
-					<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div data-cb="lockedPortsInfo" class="settings-info">
+						Ports managed by Gluetun.
+					</div>
+
+					<div class="settings-separator"></div>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="netEd2k" />
+						Enable ED2K</label>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="netKad" />
+						Enable Kad</label>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="upnp" /> Use
+						UPnP</label>
+
+
+					<div class="settings-separator"></div>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="obfuscationRequested" />
+						Obfuscation Requested</label>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="obfuscationRequired" />
+						Obfuscation Required</label>
+
+				</div>
+			</fieldset>
+
+			<!-- Bandwidth & Limits -->
+			<fieldset class="settings-fieldset">
+				<legend>Bandwidth & Limits</legend>
+				<div class="settings-group">
+					<div class="settings-row">
+						<label>Line Capacity (DL/UL):</label>
+						<div class="settings-row-gap">
+							<input type="text" data-cb="downloadCap" class="settings-input settings-input-s" />
+							<input type="text" data-cb="uploadCap" class="settings-input settings-input-s" />
+							<span style="font-size: 0.9em;">KB/s</span>
+						</div>
+					</div>
+					<div class="settings-row">
+						<label>Speed Limit (DL/UL):</label>
+						<div class="settings-row-gap">
+							<input type="text" data-cb="maxDownload" class="settings-input settings-input-s" />
+							<input type="text" data-cb="maxUpload" class="settings-input settings-input-s" />
+							<span style="font-size: 0.9em;">KB/s</span>
+						</div>
+					</div>
+
+					<div class="settings-separator"></div>
+
+					<div class="settings-row">
 						<label>Max Sources / file:</label>
-						<input type="text" data-cb="maxSources" disabled style="width: 60px; border: 2px inset;" />
+						<input type="text" data-cb="maxSources" class="settings-input settings-input-m" />
 					</div>
-					<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div class="settings-row">
 						<label>Max Connections:</label>
-						<input type="text" data-cb="maxConnections" disabled style="width: 60px; border: 2px inset;" />
+						<input type="text" data-cb="maxConnections" class="settings-input settings-input-m" />
+					</div>
+
+					<div class="settings-row">
+						<label>Max Conn/5s:</label>
+						<input type="text" data-cb="maxConnectionsPerFiveSeconds"
+							class="settings-input settings-input-m" />
+					</div>
+					<div class="settings-row">
+						<label>Slot Allocation (KB):</label>
+						<input type="text" data-cb="slotAllocation" class="settings-input settings-input-m" />
+					</div>
+					<div class="settings-row">
+						<label>Queue Size:</label>
+						<input type="text" data-cb="queueSizePref" class="settings-input settings-input-m" />
 					</div>
 				</div>
 			</fieldset>
 
-			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
-				<legend>Limits (Read Only)</legend>
-				<div style="display: flex; flex-direction: column; gap: 5px;">
-					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<label>Max Download Speed:</label>
-						<div style="display: flex; align-items: center; gap: 2px;">
-							<input type="text" data-cb="maxDownload" disabled style="width: 60px; border: 2px inset;" />
-							KB/s
-						</div>
-					</div>
-					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<label>Max Upload Speed:</label>
-						<div style="display: flex; align-items: center; gap: 2px;">
-							<input type="text" data-cb="maxUpload" disabled style="width: 60px; border: 2px inset;" />
-							KB/s
-						</div>
-					</div>
-					<div style="margin-top: 10px; border-top: 1px solid var(--ui-shadow); padding-top: 5px;">
-						<label><input type="checkbox" data-cb="netEd2k" checked disabled /> Network: ED2K</label><br />
-						<label><input type="checkbox" data-cb="netKad" checked disabled /> Network: Kad</label>
+			<!-- Behavior & Files -->
+			<fieldset class="settings-fieldset">
+				<legend>Behavior & Files</legend>
+				<div class="settings-group-compact">
+					<label><input type="checkbox" data-cb="autoconnect" /> Autoconnect on startup</label>
+					<label><input type="checkbox" data-cb="reconnect" /> Reconnect on loss</label>
+					<label><input type="checkbox" data-cb="smartIdCheck" /> Smart ID Check</label>
+					<div class="settings-separator"></div>
+					<label title="Intelligent Corrupt Handling">
+						<input type="checkbox" data-cb="ich" /> Enable ICH
+					</label>
+					<label><input type="checkbox" data-cb="allocateFullFile" /> Allocate full file space</label>
+					<div class="settings-row" style="margin-top: 4px;">
+						<label>Buffer Size (MB):</label>
+						<input type="text" data-cb="fileBufferSizePref" class="settings-input settings-input-m" />
 					</div>
 				</div>
 			</fieldset>
 
-			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
-				<legend>Directories</legend>
+			<!-- Paths -->
+			<fieldset class="settings-fieldset">
+				<legend>Paths</legend>
 				<div style="display: flex; flex-direction: column; gap: 5px;">
 					<label>Incoming Files:</label>
-					<input type="text" data-cb="incomingDir" disabled style="width: 100%; border: 2px inset;" />
+					<input type="text" data-cb="incomingDir" class="settings-input settings-input-full" />
+					<div data-cb="lockedIncomingInfo" class="settings-info">
+						Managed via environment variable.
+					</div>
 					<label>Temporary Files:</label>
-					<input type="text" data-cb="tempDir" disabled style="width: 100%; border: 2px inset;" />
+					<input type="text" data-cb="tempDir" class="settings-input settings-input-full" />
+					<div data-cb="lockedTempInfo" class="settings-info">
+						Managed via environment variable.
+					</div>
 				</div>
 			</fieldset>
 
-			<fieldset style="padding: 10px; flex: 1; min-width: 250px;">
-				<legend>Interface Settings</legend>
-				<div style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-					<label>Theme:</label>
-					<select data-cb="themeSelect" style="border: 2px inset; width: 120px;">
-						<option value="classic">Windows Classic</option>
-						<option value="xp">Windows XP</option>
-						<option value="hacker">Hacker Mode</option>
-					</select>
-				</div>
+			<!-- Interface Settings -->
+			<fieldset class="settings-fieldset">
+				<legend>Interface & Nostalgia</legend>
+				<div class="settings-group">
+					<div class="settings-row">
+						<label>Nickname:</label>
+						<input type="text" data-cb="nick" class="settings-input settings-input-l" />
+					</div>
 
-				<div style="display: flex; justify-content: space-between; align-items: center;">
-					<label>Refresh Interval (ms):</label>
-					<input type="number" data-cb="intervalInput" style="border: 2px inset; width: 80px;" />
-				</div>
+					<div class="settings-separator"></div>
 
-				<div style="margin-top: 10px;">
-					<label><input type="checkbox" data-cb="showSplash" checked disabled /> Show splash
-						screen</label><br />
-					<label><input type="checkbox" data-cb="startMinimized" checked disabled /> Start minimized</label>
+					<div class="settings-row">
+						<label>Current Theme:</label>
+						<select data-cb="themeSelect" class="settings-input settings-input-l">
+							<option value="classic">Windows Classic</option>
+							<option value="xp">Windows XP</option>
+							<option value="hacker">Hacker Mode</option>
+						</select>
+					</div>
+
+					<div class="settings-row">
+						<label>Refresh Interval (ms):</label>
+						<input type="number" data-cb="intervalInput" class="settings-input settings-input-m"
+							style="width: 80px;" />
+					</div>
+
+					<div class="settings-separator"></div>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="showSplash" /> Show
+						splash screen</label>
+					<label class="settings-checkbox-label"><input type="checkbox" data-cb="startMinimized" /> Start
+						minimized</label>
+
 				</div>
 			</fieldset>
+
 		</div>
 	</div>
 
-	<div style="display: flex; justify-content: flex-end; padding-top: 10px; gap: 5px;">
+	<div class="settings-actions">
 		<button class="ui-btn" data-cb="restartDaemonBtn">Restart daemon</button>
 		<div style="flex: 1 1 auto;"></div>
-		<button class="ui-btn">Apply</button>
-		<button class="ui-btn">Cancel</button>
+		<button class="ui-btn" data-cb="applyBtn">Apply</button>
+		<button class="ui-btn" data-cb="cancelBtn">Cancel</button>
 	</div>
+</div>
 </div>

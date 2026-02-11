@@ -8,6 +8,7 @@ export const amuleRoutes = () => {
 	router.get('/info', controller.getInfo);
 	router.get('/status', controller.getStatus);
 	router.get('/config', controller.getConfig);
+	router.post('/config', controller.updateConfig);
 	router.get('/servers', controller.getServers);
 	router.get('/transfers', controller.getTransfers);
 	router.post('/transfers/clear-completed', controller.clearCompletedTransfers);

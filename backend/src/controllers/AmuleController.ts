@@ -34,6 +34,15 @@ export class AmuleController {
 		}
 	};
 
+	updateConfig = async (req: Request, res: Response) => {
+		try {
+			await this.amuledService.updateConfig(req.body);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getServers = async (req: Request, res: Response) => {
 		try {
 			const servers = await this.amuleService.getServers();

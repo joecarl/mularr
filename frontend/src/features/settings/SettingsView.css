@@ -1,0 +1,87 @@
+.settings-view {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+
+	.settings-panel {
+		padding: 10px;
+		flex: 1;
+	}
+
+	.settings-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 10px;
+		width: 100%;
+	}
+
+	.settings-fieldset {
+		padding: 10px;
+	}
+
+	.settings-group {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.settings-group-compact {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.settings-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.settings-row-gap {
+		display: flex;
+		gap: 4px;
+	}
+
+	.settings-separator {
+		border-top: 1px solid var(--ui-shadow);
+		padding-top: 8px;
+		margin-top: 4px;
+	}
+
+	.settings-info {
+		font-size: 0.9em;
+		opacity: 0.6;
+		color: var(--ui-text-disabled);
+		margin-bottom: 5px;
+		font-style: italic;
+	}
+
+	.settings-input {
+		border: 2px inset;
+	}
+
+	.settings-input-s {
+		width: 50px;
+	}
+	.settings-input-m {
+		width: 70px;
+	}
+	.settings-input-l {
+		width: 130px;
+	}
+	.settings-input-full {
+		width: 100%;
+	}
+
+	.settings-checkbox-label {
+		display: block;
+	}
+
+	.settings-actions {
+		display: flex;
+		justify-content: flex-end;
+		padding-top: 10px;
+		gap: 5px;
+	}
+}

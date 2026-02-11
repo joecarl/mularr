@@ -44,12 +44,31 @@ export interface ConfigValues {
 	udpPort?: string;
 	maxSources?: string;
 	maxConnections?: string;
+	maxConnectionsPerFiveSeconds?: string;
+	slotAllocation?: string;
+	queueSizePref?: string;
+	fileBufferSizePref?: string;
 	downloadCap?: string;
 	uploadCap?: string;
 	maxUpload?: string;
 	maxDownload?: string;
 	incomingDir?: string;
 	tempDir?: string;
+	ed2k?: boolean;
+	kad?: boolean;
+	autoconnect?: boolean;
+	reconnect?: boolean;
+	upnp?: boolean;
+	obfuscationRequested?: boolean;
+	obfuscationRequired?: boolean;
+	smartIdCheck?: boolean;
+	ich?: boolean;
+	allocateFullFile?: boolean;
+	lockedFields?: {
+		incomingDir?: boolean;
+		tempDir?: boolean;
+		ports?: boolean;
+	};
 }
 
 export interface Server {
@@ -226,6 +245,13 @@ export class AmuleApiService extends BaseApiService {
 
 	async getConfig(): Promise<ConfigValues> {
 		return this.request<ConfigValues>('/config');
+	}
+
+	async updateConfig(config: ConfigValues): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>('/config', {
+			method: 'POST',
+			body: JSON.stringify(config),
+		});
 	}
 
 	async getServers(): Promise<ServersResponse> {
