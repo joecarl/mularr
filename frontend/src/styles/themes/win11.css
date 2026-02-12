@@ -4,7 +4,7 @@
 	--ui-text: #ffffff;
 	--ui-hl: #60cdff; /* System accent */
 	--ui-hl-text: #000000;
-	--ui-shadow: #000000;
+	--ui-shadow: #434343e7;
 	--ui-dark-shadow: #000000;
 	--ui-light: #2c2c2c;
 	--ui-font: 'Segoe UI Variable', 'Segoe UI', sans-serif;
@@ -100,8 +100,10 @@
 	--ui-legend-color: #60cdff;
 
 	/* Panel Raised */
-	--ui-panel-raised-border: 1px solid #333;
-	--ui-panel-sunken-border: 1px solid #333;
+	--ui-panel-raised-border: 1px solid;
+	--ui-panel-raised-border-color: #333;
+	--ui-panel-sunken-border: 1px solid;
+	--ui-panel-sunken-border-color: #333;
 	--ui-panel-sunken-shadow: none;
 
 	color-scheme: dark;
