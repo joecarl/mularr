@@ -51,7 +51,7 @@
 	--sidebar-box-header-text: #215dc6;
 	--sidebar-item-hover: #c6d3f7;
 	--sidebar-item-active: #c6d3f7;
-	--sidebar-box-content-separator: rgba(0, 0, 0, 0.05);
+	--sidebar-box-content-separator: rgba(122, 150, 223, 0.33);
 
 	/* Sidebar Extra Vars */
 	--sidebar-box-header-shadow: 0 -3px 4px 0px black;
@@ -127,6 +127,15 @@
 	--ui-close-btn-hover-filter: brightness(1.1);
 
 	/* Specific Overrides */
+	.sidebar {
+		--sidebar-text-primary: #003c74;
+		--sidebar-text-secondary: #215dc6;
+		--sidebar-text-dim: #5775a3;
+		--sidebar-text-muted: #00000072;
+		--sidebar-text-label: #003c74a4;
+		--sidebar-text-value: #003c74;
+		--sidebar-border-light: rgba(0, 0, 0, 0.1);
+	}
 
 	.sidebar-box-primary {
 		--sidebar-box-bg: #eff3ff;

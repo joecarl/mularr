@@ -1,4 +1,4 @@
-import { component, Link, pathMatches, signal } from 'chispa';
+import { component, computed, Link, pathMatches, signal } from 'chispa';
 import { formatAmount, formatBytes, formatPercent, formatSpeed } from '../utils/formats';
 import { services } from '../services/container/ServiceContainer';
 import { SystemApiService, type SystemInfo } from '../services/SystemApiService';
@@ -77,11 +77,15 @@ export const Sidebar = component(() => {
 		});
 	});
 
+	const serverIsConnected = computed(() => {
+		const s = statsService.stats.get();
+		return !!s && !!s.connectedServer;
+	});
+
 	return tpl.fragment({
 		navLinks: { inner: links },
 		connectionContainer: () => {
-			const s = statsService.stats.get();
-			if (!s || !s.connectedServer) {
+			if (!serverIsConnected.get()) {
 				return tpl.connectionContainer({
 					nodes: {
 						connStatusText: { inner: 'Disconnected' },
@@ -95,24 +99,26 @@ export const Sidebar = component(() => {
 				});
 			}
 
-			const isHigh = !!s.isHighID;
+			const s = () => statsService.stats.get()!;
+			const server = () => s().connectedServer!;
+			const isHigh = () => !!s().isHighID;
 
 			return tpl.connectionContainer({
 				nodes: {
-					connStatusText: { inner: s.connectionState || 'Connected' },
+					connStatusText: { inner: () => s().connectionState || 'Connected' },
 					highIdBadge: {
-						inner: isHigh ? 'High ID' : 'Low ID',
+						inner: () => (isHigh() ? 'High ID' : 'Low ID'),
 						style: {
-							background: isHigh ? '#4caf50' : '#f44336',
+							background: () => (isHigh() ? '#4caf50' : '#f44336'),
 							color: 'white',
-							border: isHigh ? '1px solid #388e3c' : '1px solid #d32f2f',
+							border: () => (isHigh() ? '1px solid #388e3c' : '1px solid #d32f2f'),
 						},
 					},
-					serverName: { inner: s.connectedServer.name || 'Unknown Server' },
-					serverIpPort: { inner: `${s.connectedServer.ip}:${s.connectedServer.port}` },
-					serverDesc: { inner: s.connectedServer.description || 'No description available' },
-					ed2kIdVal: { inner: String(s.ed2kId || s.id || '-') },
-					kadIdVal: { inner: s.kadId || '-' },
+					serverName: { inner: () => server().name || 'Unknown Server' },
+					serverIpPort: { inner: () => `${server().ip}:${server().port}` },
+					serverDesc: { inner: () => server().description || 'No description available' },
+					ed2kIdVal: { inner: () => String(s().ed2kId || s().id || '-') },
+					kadIdVal: { inner: () => s().kadId || '-' },
 				},
 			});
 		},
