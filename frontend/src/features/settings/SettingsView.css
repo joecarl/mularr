@@ -2,7 +2,6 @@
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	overflow-y: auto;
 
 	.settings-panel {
 		padding: 10px;

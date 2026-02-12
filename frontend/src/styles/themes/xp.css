@@ -9,15 +9,24 @@
 	--ui-light: #ffffff;
 	--ui-font: 'Tahoma', 'Verdana', sans-serif;
 
-	--ui-btn-bg: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
-	--ui-btn-border: #003c74;
-	--ui-btn-hover-bg: linear-gradient(to bottom, #fafafa, #f0f0f0);
-	--ui-btn-hover-border: #0058e6;
-	--ui-btn-hover-border-color: #0058e6;
 	--ui-btn-radius: 3px;
-	--ui-btn-shadow: inset 1px 1px 1px #fff;
-	--ui-btn-active-shadow: inset 1px 1px 2px #aaa;
-	--ui-btn-hover-shadow: 0 0 2px #ffad33;
+	--ui-btn-shadow: none;
+	--ui-btn-border: 1px solid;
+	--ui-btn-border-color: #003c74;
+	--ui-btn-bg: linear-gradient(180deg, #fff, #ecebe5 86%, #d8d0c4);
+	--ui-btn-hover-bg: linear-gradient(to bottom, #fafafa, #f0f0f0);
+	--ui-btn-hover-shadow: inset -1px 1px #fff0cf, inset 1px 2px #fdd889, inset -2px 2px #fbc761, inset 2px -2px #e5a01a;
+	--ui-btn-active-bg: linear-gradient(180deg, #cdcac3, #e3e3db 8%, #e5e5de 94%, #f2f2f1);
+	--ui-btn-active-shadow: none;
+
+	/* font-family: "Pixelated MS Sans Serif", Arial;
+    -webkit-font-smoothing: antialiased;
+    font-size: 11px;
+    box-sizing: border-box;
+    border: 1px solid #003c74;
+    background: linear-gradient(180deg, #fff, #ecebe5 86%, #d8d0c4);
+    box-shadow: none;
+    border-radius: 3px; */
 
 	/* --ui-window-header-bg: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0058e6 90%, #0030a6 100%); */
 	--ui-window-header-bg: linear-gradient(to bottom, #0058e6 0%, #3a93ff 8%, #0058e6 40%, #0058e6 70%, #0030a6 100%);
@@ -29,14 +38,9 @@
 	--ui-input-border-color: #7f9db9;
 	--ui-input-padding: 3px 4px;
 	--ui-input-radius: 0;
-	--ui-input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
-
-	--ui-odd-row: #ffffff;
-	--ui-even-row: #ffffff;
-	--ui-th-bg: #ece9d8;
-	--ui-th-bg-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23ece9d8"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
-	--ui-th-hover-bg: #f8f7f1;
-	--ui-th-hover-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23f8f7f1"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+	/* --ui-input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+	--ui-input-focus-outline: 1px solid #ffad3365;
+	--ui-input-focus-border-color: #7f9db9; */
 
 	--ui-modal-radius: 5px 5px 0 0;
 
@@ -55,9 +59,11 @@
 	--sidebar-box-header-position: relative;
 	--sidebar-box-content-border: 0 solid white;
 	--sidebar-box-content-border-right: 1px solid #e7ecff;
+	--sidebar-box-border-radius: 3px;
 
-	--sidebar-info-card-bg: #ffffff9e;
-	--sidebar-info-card-border: 1px solid #ffffffbd;
+	--sidebar-info-card-bg: #ffffffe8;
+	--sidebar-info-card-border: 1px solid;
+	--sidebar-info-card-border-color: #ffffffe1;
 	--sidebar-info-card-radius: 4px;
 	--sidebar-info-card-padding: 6px;
 	--sidebar-info-card-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.05);
@@ -77,8 +83,20 @@
 
 	/* Panel & Table Vars */
 	/* --ui-panel-raised-border handled in override below due to 4-color syntax */
-	--ui-panel-sunken-border: 1px solid #7f9db9;
+	--ui-panel-sunken-border: 1px solid;
+	--ui-panel-sunken-border-color: #7f9db9;
 	--ui-table-border: 1px solid #7f9db9;
+	--ui-odd-row: #ffffff;
+	--ui-even-row: #ffffff;
+	--ui-th-border-right: 1px solid var(--ui-shadow);
+	--ui-th-border-bottom: 1px solid var(--ui-shadow);
+	--ui-th-padding: 2px 5px;
+	--ui-th-bg: #ece9d8;
+	--ui-th-bg-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23ece9d8"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+	--ui-th-hover-bg: #f8f7f1;
+	--ui-th-hover-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23f8f7f1"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+	--ui-th-active-bg: #f0f0f0;
+	--ui-th-active-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23f0f0f0"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
 
 	/* Generic Fieldset */
 	--ui-fieldset-border: 1px solid #d4d0c8;
@@ -88,6 +106,7 @@
 	/* Window / Modal Vars */
 	--ui-window-bg: #0054e3;
 	--ui-window-border: 1px solid #0030a6;
+	--ui-window-border-color: #0030a6;
 	--ui-window-padding: 0;
 	--ui-window-gap: 0;
 	--ui-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 2px 2px 10px rgba(0, 0, 0, 0.4);
@@ -98,16 +117,16 @@
 	--ui-window-header-text-shadow: 1px 1px 1px #0f3fab;
 	/* XP uses a vertical gradient for window headers, distinct from generic headers */
 	--ui-window-header-padding: 0 5px 0px 5px;
-
 	--ui-window-content-border: 1px solid #0030a6;
 	--ui-window-content-margin: 0;
-
 	--ui-window-footer-border-top: none;
 
 	--ui-close-btn-bg: linear-gradient(135deg, #fb7256 0%, #f65230 50%, #d83d23 100%);
 	--ui-close-btn-border: 1px solid #ffffff;
 	--ui-close-btn-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3), inset 1px 1px 1px rgba(255, 255, 255, 0.3);
 	--ui-close-btn-hover-filter: brightness(1.1);
+
+	/* Specific Overrides */
 
 	.sidebar-box-primary {
 		--sidebar-box-bg: #eff3ff;
@@ -116,8 +135,6 @@
 			color: white;
 		}
 	}
-
-	/* Specific Overrides (Reduced) */
 
 	.ui-panel-raised {
 		border-radius: 2px;
@@ -128,50 +145,4 @@
 		border-right: none;
 		box-shadow: none;
 	}
-
-	/* Restore specific XP input styling */
-	/* input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
-	select,
-	textarea {
-		border: 1px solid #7f9db9 !important;
-		padding: 3px 4px !important;
-		border-radius: 0;
-		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
-
-		&:focus {
-			outline: 1px solid #ffad3365;
-			border-color: #7f9db9 !important;
-		}
-	} */
-
-	/*
-	border-style: var(--ui-input-border-style);
-	border-width: var(--ui-input-border-width);
-	border-color: var(--ui-input-border-color);
-	background-color: var(--ui-input-bg);
-	color: var(--ui-text);
-	font-family: var(--ui-font);
-	font-size: 11px;
-	padding: var(--ui-input-padding, 2px);
-	border-radius: var(--ui-input-radius, 0);
-	box-shadow: var(--ui-input-shadow, none);
-
-	&:focus {
-		outline: var(--ui-input-focus-outline, none);
-		border-color: var(--ui-input-focus-border-color);
-	}
-
-	&:disabled {
-		background-color: var(--ui-face);
-		color: var(--ui-shadow);
-	}
-	*/
-	--ui-input-border-style: solid;
-	--ui-input-border-width: 1px;
-	--ui-input-border-color: #7f9db9;
-	--ui-input-padding: 3px 4px;
-	--ui-input-radius: 0;
-	--ui-input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
-	--ui-input-focus-outline: 1px solid #ffad3365;
-	--ui-input-focus-border-color: #7f9db9;
 }

@@ -8,38 +8,51 @@
 	--ui-light: #ffffff;
 	--ui-font: 'MS Sans Serif', 'Microsoft Sans Serif', 'Tahoma', sans-serif;
 
-	/* Button styling */
-	--ui-btn-bg: #d4d0c8;
-	--ui-btn-border: #808080; /* Fallback */
-	--ui-btn-border-definition: 2px outset #ffffff;
-	--ui-btn-hover-bg: #d4d0c8;
-	--ui-btn-hover-border-color: #ffffff; /* Unused with outset */
-	--ui-btn-radius: 0;
-	--ui-btn-shadow: none;
-	--ui-btn-active-shadow: none;
+	--ui-raised-border: 1px solid;
+	/* --ui-raised-border-color: #ffffff #808080 #808080 #ffffff;
+	--ui-raised-shadow: -0.5px -0.5px 0 0.5px #d4d0c8, 0.5px 0.5px 0 0.5px #404040; */
+	--ui-raised-border-color: #d4d0c8 #404040 #404040 #d4d0c8;
+	--ui-raised-shadow: inset -0.5px -0.5px 0 0.5px #808080, inset 0.5px 0.5px 0 0.5px #ffffff;
 
-	/* Button Active State with "Pushed" look */
-	--ui-btn-active-border: 2px inset #ffffff;
+	--ui-sunken-border: 1px solid;
+	/* --ui-sunken-border-color: #404040 #d4d0c8 #d4d0c8 #404040;
+	--ui-sunken-shadow: 0.5px 0.5px 0 0.5px #ffffff, -0.5px -0.5px 0 0.5px #808080; */
+	--ui-sunken-border-color: #808080 #ffffff #ffffff #808080;
+	--ui-sunken-shadow: inset 0.5px 0.5px 0 0.5px #404040, inset -0.5px -0.5px 0 0.5px #d4d0c8;
+
+	/* Button styling */
+	--ui-btn-bg: var(--ui-face);
+	--ui-btn-border: var(--ui-raised-border);
+	--ui-btn-border-color: var(--ui-raised-border-color);
+	--ui-btn-shadow: var(--ui-raised-shadow);
+	--ui-btn-radius: 0;
+
+	--ui-btn-active-shadow: var(--ui-sunken-shadow);
+	--ui-btn-active-border-color: var(--ui-sunken-border-color);
+	--ui-btn-active-border: var(--ui-sunken-border);
 	--ui-btn-active-padding: 4px 11px 2px 13px; /* Shift text for pressed effect */
+	--ui-btn-active-top: 1px;
+	--ui-btn-active-left: 1px;
 
 	/* Header styling */
-	--ui-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
+	--ui-window-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
 	--ui-header-text: #ffffff;
 
 	/* Input styling */
 	--ui-input-bg: #ffffff;
-	--ui-input-border-style: inset;
-	--ui-input-border-width: 2px;
-	--ui-input-border-color: #d4d0c8;
+	--ui-input-border-style: solid;
+	--ui-input-border-width: 1px;
+	--ui-input-border-color: var(--ui-sunken-border-color);
+	--ui-input-shadow: var(--ui-sunken-shadow);
 
 	/* Table/Grid */
-	--ui-odd-row: #ffffff;
-	--ui-even-row: #ffffff;
+	--ui-odd-row: transparent;
+	--ui-even-row: transparent;
 	--ui-th-bg: #d4d0c8;
 	--ui-th-bg-image: none;
 	--ui-th-hover-bg: #d4d0c8;
 	--ui-th-hover-image: none;
-	--ui-th-box-shadow: none;
+	--ui-th-box-shadow: inset -1px -1px 0 0 #808080;
 	--ui-th-font-weight: normal;
 
 	/* Classic 3D Table Header Borders */
@@ -58,21 +71,31 @@
 	--ui-modal-radius: 0;
 
 	/* Sidebar */
-	--sidebar-bg: #aca899;
+	--sidebar-bg: #bdb9b1;
+
 	--sidebar-header-bg: transparent;
 	--sidebar-box-bg: #d4d0c8;
 	--sidebar-box-header-bg: #0a246a;
 	--sidebar-box-header-text: #ffffff;
+	--sidebar-box-border: var(--ui-raised-border);
+	--sidebar-box-border-color: var(--ui-raised-border-color);
+	--sidebar-box-shadow: var(--ui-raised-shadow);
+	--sidebar-box-padding: 1px;
+
+	--sidebar-info-card-bg: #f6f4f0;
+	--sidebar-info-card-border: var(--ui-sunken-border);
+	--sidebar-info-card-border-color: var(--ui-sunken-border-color);
+	--sidebar-info-card-radius: 0;
+	--sidebar-info-card-padding: 6px;
+	--sidebar-info-card-shadow: var(--ui-sunken-shadow);
+
 	--sidebar-item-hover: #0a246a;
 	--sidebar-item-active: #0a246a;
 
 	/* Sidebar Components */
 	--sidebar-box-content-separator: rgba(0, 0, 0, 0.1);
-	--sidebar-box-content-border: 2px outset #ffffff;
-	--sidebar-box-content-border-right: 2px outset #ffffff; /* Override base */
-
-	/* Sidebar Boxes need outset border */
-	--sidebar-info-card-border: 2px inset #ffffff; /* Except cards maybe? */
+	--sidebar-box-content-border: none;
+	--sidebar-box-content-border-right: none /* Sidebar Boxes need outset border */ --sidebar-info-card-border: 2px inset #ffffff; /* Except cards maybe? */
 	/* Actually classic sidebar boxes have 3D borders if we invoke sidebar-box override */
 
 	/* Status Bar */
@@ -92,65 +115,51 @@
 	/* Panels & Containers */
 	/* Classic requires specific coloring for 3D effects that simple border-style: inset/outset doesn't fully capture (usually needs 4 colors) */
 
+	--ui-panel-sunken-border: var(--ui-sunken-border);
+	--ui-panel-sunken-border-color: var(--ui-sunken-border-color);
+	--ui-panel-sunken-shadow: var(--ui-sunken-shadow);
+
+	--ui-panel-raised-border: var(--ui-raised-border);
+	--ui-panel-raised-border-color: var(--ui-raised-border-color);
+	--ui-panel-raised-shadow: var(--ui-raised-shadow);
+
+	--ui-table-border: var(--ui-sunken-border);
+	--ui-table-border-color: var(--ui-sunken-border-color);
+	--ui-table-shadow: var(--ui-sunken-shadow);
+
 	/* Window / Modal */
-	--ui-window-bg: #d4d0c8;
-	--ui-window-border: 2px outset #d4d0c8;
-	--ui-window-shadow: 2px 2px 0 #000;
+	--ui-window-bg: var(--ui-face);
+	--ui-window-border: var(--ui-raised-border);
+	--ui-window-border-color: var(--ui-raised-border-color);
+	--ui-window-shadow: var(--ui-raised-shadow);
+	--ui-window-padding: 1px;
 	--ui-window-header-text-shadow: none;
 	--ui-window-header-border-radius: 0;
 	--ui-window-header-height: auto;
 	--ui-window-footer-border-top: none; /* Usually implied by window structure */
 
-	--ui-close-btn-bg: #d4d0c8;
-	--ui-close-btn-border: 2px outset #ffffff;
+	--ui-close-btn-bg: var(--ui-face);
+	--ui-close-btn-border: var(--ui-raised-border);
+	--ui-close-btn-border-color: var(--ui-raised-border-color);
 	--ui-close-btn-radius: 0;
 	--ui-close-btn-width: 16px;
 	--ui-close-btn-height: 14px;
-	--ui-close-btn-shadow: none;
+	--ui-close-btn-shadow: var(--ui-raised-shadow);
 	--ui-close-btn-hover-bg: #d4d0c8;
-	--ui-close-btn-hover-color: #000;
+	--ui-close-btn-color: #000;
 	--ui-close-btn-hover-filter: none;
 
-	/* Overrides where variables fall short (Complex 3D Borders) */
-
-	.ui-panel-sunken {
-		border: 2px solid;
-		border-color: #808080 #ffffff #ffffff #808080;
+	/* Overrides where variables fall short */
+	.sidebar {
+		border-right: 1px solid white;
+		box-shadow: inset -2px 0 0 -1px #808080;
 	}
-
-	.ui-panel-raised {
-		border: 2px solid;
-		border-color: #ffffff #404040 #404040 #ffffff;
-	}
-
-	.ui-table-container {
-		border: 2px solid;
-		border-color: #808080 #ffffff #ffffff #808080;
-	}
-
 	.ui-status-pane {
 		border: 1px solid;
 		border-color: #808080 white white #808080;
 	}
-
-	.sidebar-box {
-		border: 2px outset #ffffff;
-		border-right-color: #404040;
-		border-bottom-color: #404040;
-	}
-
-	/* Connection Status Box in Sidebar */
-	.connection-status {
-		border: 2px inset #ffffff;
-		border-radius: 0;
-	}
-
-	/* Nav Links special hover */
 	.nav-link:hover {
 		color: white !important;
 		background-color: #0a246a !important;
-		/* !important needed to override variable usage if specific specificity isn't enough, 
-		   but wait: nav-link uses background-color: var(--sidebar-item-hover); 
-		   So setting var is enough for bg, but color needs var. */
 	}
 }

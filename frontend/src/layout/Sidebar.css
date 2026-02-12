@@ -34,8 +34,12 @@
 	}
 
 	.sidebar-box {
+		border: var(--sidebar-box-border, none);
+		border-color: var(--sidebar-box-border-color);
+		box-shadow: var(--sidebar-box-shadow, none);
 		background: var(--sidebar-box-bg);
-		border-radius: 3px;
+		border-radius: var(--sidebar-box-border-radius);
+		padding: var(--sidebar-box-padding, 0);
 		overflow: hidden;
 
 		/* Nested header inside sidebar-box */
@@ -45,8 +49,6 @@
 			font-weight: bold;
 			color: var(--sidebar-box-header-text);
 			cursor: default;
-			border-top-left-radius: 3px;
-			border-top-right-radius: 3px;
 			box-shadow: var(--sidebar-box-header-shadow, none);
 			z-index: var(--sidebar-box-header-z-index, auto);
 			position: var(--sidebar-box-header-position, static);
@@ -102,13 +104,13 @@
 		.sidebar-box-info-card {
 			background: var(--sidebar-info-card-bg, transparent);
 			border: var(--sidebar-info-card-border, none);
+			border-color: var(--sidebar-info-card-border-color);
 			border-radius: var(--sidebar-info-card-radius, 0);
 			padding: var(--sidebar-info-card-padding, 0);
 			box-shadow: var(--sidebar-info-card-shadow, none);
 		}
 
 		.network-container {
-			background: var(--sidebar-box-bg);
 			padding: 8px;
 			padding-top: 2px;
 
@@ -239,31 +241,6 @@
 				border-top: 1px solid var(--sidebar-item-active);
 				margin: 5px 0;
 			}
-		}
-	}
-
-	.connection-status {
-		background: white;
-		padding: 5px;
-		border-radius: 3px;
-		margin-top: 10px;
-		font-size: 10px;
-		display: flex;
-		align-items: center;
-		gap: 5px;
-		color: #000;
-
-		.status-indicator {
-			width: 8px;
-			height: 8px;
-			border-radius: 50%;
-			background: gray;
-		}
-		.status-indicator.connected {
-			background: #46d369;
-		}
-		.status-indicator.disconnected {
-			background: red;
 		}
 	}
 

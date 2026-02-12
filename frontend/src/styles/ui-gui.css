@@ -15,7 +15,8 @@ body {
 .ui-btn {
 	--ui-btn-padding: 3px 12px;
 	background: var(--ui-btn-bg);
-	border: var(--ui-btn-border-definition, 1px solid var(--ui-btn-border));
+	border: var(--ui-btn-border);
+	border-color: var(--ui-btn-border-color);
 	border-radius: var(--ui-btn-radius);
 	padding: var(--ui-btn-padding);
 	font-size: 11px;
@@ -31,6 +32,8 @@ body {
 	justify-content: center;
 	gap: 4px;
 	vertical-align: middle;
+	position: relative;
+	height: 23px;
 }
 
 .ui-btn-icon {
@@ -41,16 +44,18 @@ body {
 }
 
 .ui-btn:not(:disabled):hover {
-	background: var(--ui-btn-hover-bg);
-	border-color: var(--ui-btn-hover-border-color, var(--ui-btn-border));
-	box-shadow: var(--ui-btn-hover-shadow, none);
+	background: var(--ui-btn-hover-bg, var(--ui-btn-bg));
+	border-color: var(--ui-btn-hover-border-color, var(--ui-btn-border-color));
+	box-shadow: var(--ui-btn-hover-shadow, var(--ui-btn-shadow));
 }
 
 .ui-btn:not(:disabled):active {
-	background: var(--ui-btn-active-bg, var(--ui-btn-hover-bg));
-	box-shadow: var(--ui-btn-active-shadow);
-	border: var(--ui-btn-active-border, var(--ui-btn-border-definition, 1px solid var(--ui-btn-border)));
-	padding: var(--ui-btn-active-padding, var(--ui-btn-padding));
+	background: var(--ui-btn-active-bg, var(--ui-btn-bg));
+	box-shadow: var(--ui-btn-active-shadow, var(--ui-btn-shadow));
+	border: var(--ui-btn-active-border, var(--ui-btn-border));
+	border-color: var(--ui-btn-active-border-color, var(--ui-btn-border-color));
+	top: var(--ui-btn-active-top, 0);
+	left: var(--ui-btn-active-left, 0);
 }
 
 .ui-btn:disabled {
@@ -89,12 +94,16 @@ body {
 /* Panels - Base */
 .ui-panel-sunken {
 	border: var(--ui-panel-sunken-border, 1px solid var(--ui-shadow));
+	border-color: var(--ui-panel-sunken-border-color);
+	box-shadow: var(--ui-panel-sunken-shadow, none);
 	background: var(--ui-light);
 	color: var(--ui-text);
 }
 
 .ui-panel-raised {
 	border: var(--ui-panel-raised-border, 1px solid var(--ui-shadow));
+	border-color: var(--ui-panel-raised-border-color);
+	box-shadow: var(--ui-panel-raised-shadow, none);
 	background: var(--ui-face);
 	color: var(--ui-text);
 }
@@ -117,15 +126,14 @@ body {
 .ui-list {
 	width: 100%;
 	border-collapse: collapse;
-	background-color: var(--ui-light);
 }
 
 /* Table Header */
 .ui-list th {
 	background-color: var(--ui-th-bg);
 	background-image: var(--ui-th-bg-image);
-	border-right: var(--ui-th-border-right, 1px solid var(--ui-shadow));
-	border-bottom: var(--ui-th-border-bottom, 1px solid var(--ui-shadow));
+	border-right: var(--ui-th-border-right);
+	border-bottom: var(--ui-th-border-bottom);
 	border-top: var(--ui-th-border-top, none);
 	border-left: var(--ui-th-border-left, none);
 	padding: var(--ui-th-padding, 2px 5px);
@@ -151,6 +159,8 @@ body {
 	border-left: var(--ui-th-active-border-left, var(--ui-th-border-left));
 	border-right: var(--ui-th-active-border-right, var(--ui-th-border-right));
 	border-bottom: var(--ui-th-active-border-bottom, var(--ui-th-border-bottom));
+	background-color: var(--ui-th-active-bg, var(--ui-th-hover-bg));
+	background-image: var(--ui-th-active-image, var(--ui-th-hover-image));
 }
 
 .ui-list td {
@@ -179,6 +189,7 @@ body {
 input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
 select,
 textarea {
+	height: 23px;
 	border-style: var(--ui-input-border-style);
 	border-width: var(--ui-input-border-width);
 	border-color: var(--ui-input-border-color);
@@ -186,13 +197,13 @@ textarea {
 	color: var(--ui-text);
 	font-family: var(--ui-font);
 	font-size: 11px;
-	padding: var(--ui-input-padding, 2px);
+	padding: var(--ui-input-padding, 3px);
 	border-radius: var(--ui-input-radius, 0);
 	box-shadow: var(--ui-input-shadow, none);
 
 	&:focus {
 		outline: var(--ui-input-focus-outline, none);
-		border-color: var(--ui-input-focus-border-color);
+		border-color: var(--ui-input-focus-border-color, var(--ui-input-border-color));
 	}
 
 	&:disabled {
@@ -203,7 +214,7 @@ textarea {
 
 /* Generic Fieldset */
 fieldset {
-	border: var(--ui-fieldset-border, 1px solid var(--ui-shadow));
+	border: var(--ui-fieldset-border, revert);
 	border-radius: var(--ui-fieldset-radius, 0);
 }
 
@@ -217,7 +228,7 @@ legend {
 	border-top: var(--ui-status-bar-border-top, 1px solid var(--ui-shadow));
 	display: flex;
 	align-items: center;
-	padding: 1px 1px 1px 2px;
+	padding: 1px 3px 1px 2px;
 	gap: var(--ui-status-bar-gap, 2px);
 	font-family: var(--ui-font);
 	font-size: 11px;
@@ -259,6 +270,8 @@ legend {
 .ui-table-container {
 	overflow: auto;
 	background: var(--ui-light);
-	border: var(--ui-table-border, var(--ui-input-border-width) var(--ui-input-border-style) var(--ui-input-border-color));
+	border: var(--ui-table-border, var(--ui-input-border-width) var(--ui-input-border-style));
+	border-color: var(--ui-table-border-color, var(--ui-input-border-color));
+	box-shadow: var(--ui-table-shadow, none);
 	min-height: 0;
 }
