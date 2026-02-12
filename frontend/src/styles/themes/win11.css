@@ -11,16 +11,30 @@
 
 	/* Button styling */
 	--ui-btn-bg: #2d2d2d;
-	--ui-btn-border: #3d3d3d; /* subtle border */
+	--ui-btn-border: 1px solid;
+	--ui-btn-border-color: #3d3d3d; /* subtle border */
 	--ui-btn-hover-bg: #383838;
-	--ui-btn-hover-border: #4d4d4d;
+	--ui-btn-hover-border-color: #4d4d4d;
 	--ui-btn-radius: 4px;
 	--ui-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	--ui-btn-active-bg: #262626;
 	--ui-btn-active-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+	--ui-btn-active-border: 1px solid;
+	--ui-btn-active-border-color: #333333;
+	--ui-btn-active-top: 0;
+	--ui-btn-active-left: 0;
 
 	/* Header styling */
 	--ui-window-header-bg: #202020; /* Mica */
 	--ui-header-text: #ffffff;
+	--ui-window-header-border-bottom: 1px solid #333;
+	--ui-window-header-height: 32px;
+
+	/* Window styling */
+	--ui-window-bg: #202020;
+	--ui-window-border: 1px solid #333;
+	--ui-window-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+	--ui-window-radius: 8px;
 
 	/* Input styling */
 	--ui-input-bg: #2d2d2d;
@@ -29,6 +43,8 @@
 	--ui-input-border-color: #3d3d3d; /* Surface stroke */
 	--ui-input-padding: 4px 8px;
 	--ui-input-radius: 4px;
+	--ui-input-shadow: none;
+	--ui-input-focus-border-color: var(--ui-hl);
 
 	/* Table/Grid */
 	--ui-odd-row: #202020;
@@ -37,6 +53,9 @@
 	--ui-th-bg-image: none;
 	--ui-th-hover-bg: #383838;
 	--ui-th-hover-image: none;
+	--ui-th-border-right: 1px solid #333;
+	--ui-th-border-bottom: 1px solid #333;
+	--ui-table-border: 1px solid #333;
 
 	--ui-modal-radius: 8px;
 
@@ -49,40 +68,31 @@
 	--sidebar-item-hover: #333333;
 	--sidebar-item-active: #2d2d2d;
 	--sidebar-box-content-separator: rgba(255, 255, 255, 0.05);
+	--sidebar-box-border: 1px solid;
+	--sidebar-box-border-color: #333;
+	--sidebar-box-radius: 4px;
+	--sidebar-box-shadow: none;
 
 	/* Status Bar */
 	--status-bar-bg: #1a1a1a;
 	--status-bar-text: #ffffff;
 	--status-pane-border: 1px solid #333;
+	--ui-status-bar-border-top: 1px solid #333;
+	--ui-status-bar-box-shadow: none;
+	--ui-status-pane-box-shadow: none;
 
 	--ui-list-hover-bg: #333333;
 	--ui-text-accent: #60cdff;
 
-	color-scheme: dark;
-	background-color: #1a1a1a; /* Approximate Mica dark */
-
-	/* New Variables for Refactor */
-	--ui-window-bg: #202020;
-	--ui-window-border: 1px solid #333;
-	--ui-window-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-
-	--ui-window-header-border-bottom: 1px solid #333;
-	--ui-window-header-text-shadow: none;
-	--ui-window-header-height: auto; /* Padding handles it */
-	--ui-window-footer-border-top: 1px solid #333;
-
+	/* Close Button specific overrides (often simulated traffic lights or just clean svg) */
 	--ui-close-btn-bg: transparent;
 	--ui-close-btn-border: none;
 	--ui-close-btn-radius: 4px;
-	--ui-close-btn-width: 24px;
-	--ui-close-btn-height: 24px;
+	--ui-close-btn-width: 32px;
+	--ui-close-btn-height: 32px;
 	--ui-close-btn-shadow: none;
 	--ui-close-btn-hover-bg: #c42b1c;
 	--ui-close-btn-hover-color: white;
-	--ui-close-btn-hover-filter: none;
-
-	/* Sidebar Box Header */
-	--sidebar-box-header-shadow: none;
 
 	/* Fieldset */
 	--ui-fieldset-border: 1px solid #3d3d3d;
@@ -91,154 +101,29 @@
 
 	/* Panel Raised */
 	--ui-panel-raised-border: 1px solid #333;
+	--ui-panel-sunken-border: 1px solid #333;
+	--ui-panel-sunken-shadow: none;
 
-	/* Specific tweaks for Win11 feel */
+	color-scheme: dark;
+}
 
-	.ui-window {
-		border-radius: 8px;
-		overflow: hidden;
-	}
+/* Specific component refinements */
 
-	.ui-window-header {
-		padding: 8px 12px;
-		font-weight: 600;
-		font-size: 13px;
-	}
+[data-theme='win11'] .ui-window {
+	border-radius: var(--ui-window-radius);
+	overflow: hidden; /* Ensure content respects radius */
+	box-shadow: var(--ui-window-shadow);
+	border: var(--ui-window-border);
+}
 
-	.ui-window-footer {
-		padding: 12px;
-	}
+[data-theme='win11'] .ui-btn {
+	transition:
+		background-color 0.1s,
+		border-color 0.1s,
+		box-shadow 0.1s;
+}
 
-	/* Close button - Win11 style (no gradient, subtle hover) */
-	.ui-close-btn {
-		transition: background 0.1s;
-	}
-
-	/* Buttons */
-	.ui-btn {
-		transition:
-			background-color 0.1s,
-			border-color 0.1s;
-		font-weight: 500;
-
-		&:hover {
-			background-color: #383838;
-			border-color: #4d4d4d;
-		}
-
-		&:active {
-			background-color: #333333;
-			color: rgba(255, 255, 255, 0.7);
-		}
-	}
-
-	/* Inputs - requires override due to special border bottom trick */
-	input[type='text'],
-	input[type='number'],
-	select,
-	textarea {
-		border: 1px solid transparent;
-		border-bottom: 1px solid #8d8d8d;
-		transition:
-			border-color 0.1s,
-			background-color 0.1s;
-	}
-
-	input:focus,
-	select:focus,
-	textarea:focus {
-		background: #202020;
-		border-color: #60cdff;
-		border-bottom-color: #60cdff;
-		outline: none;
-	}
-
-	/* Checkboxes - approximation */
-	input[type='checkbox'] {
-		appearance: none;
-		width: 16px;
-		height: 16px;
-		background: #2d2d2d;
-		border: 1px solid #8d8d8d;
-		border-radius: 4px;
-		position: relative;
-		vertical-align: middle;
-		margin-right: 6px;
-
-		&:checked {
-			background: #60cdff;
-			border-color: #60cdff;
-
-			&::after {
-				content: '';
-				position: absolute;
-				left: 4px;
-				top: 0px;
-				width: 4px;
-				height: 10px;
-				border: solid black;
-				border-width: 0 2px 2px 0;
-				transform: rotate(45deg);
-			}
-		}
-	}
-
-	/* Sidebar Specifics */
-	.sidebar-box-header {
-		/* Win11 expanders are subtle */
-		background: transparent;
-		color: #fff;
-		font-weight: 600;
-		border: none;
-		padding: 8px 12px;
-	}
-
-	.sidebar-box-content {
-		border-left: 2px solid #333;
-		margin-left: 12px;
-		padding-left: 8px;
-	}
-
-	.sidebar-item {
-		border-radius: 4px;
-		margin-bottom: 2px;
-		padding: 6px 10px;
-	}
-
-	/* Panels */
-	.ui-panel-raised {
-		background: #242424;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-	}
-
-	fieldset {
-		padding: 12px;
-	}
-
-	legend {
-		padding: 0 6px;
-		font-weight: 600;
-	}
-
-	/* Scrollbars */
-	::-webkit-scrollbar {
-		width: 12px;
-		height: 12px;
-	}
-
-	::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	::-webkit-scrollbar-thumb {
-		background: #555;
-		border-radius: 6px;
-		border: 3px solid transparent;
-		background-clip: content-box;
-
-		&:hover {
-			background-color: #777;
-		}
-	}
+[data-theme='win11'] .sidebar-box {
+	border-radius: var(--sidebar-box-radius);
+	overflow: hidden;
 }
