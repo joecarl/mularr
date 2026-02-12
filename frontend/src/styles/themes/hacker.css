@@ -80,6 +80,15 @@
 	--sidebar-item-hover: #003300;
 	--sidebar-item-active: #00ff00;
 
+	/* Sidebar Text Overrides */
+	--sidebar-text-primary: #00ff00;
+	--sidebar-text-secondary: #00ff00;
+	--sidebar-text-dim: #00cc00;
+	--sidebar-text-muted: #00aa00;
+	--sidebar-text-label: #00ff00;
+	--sidebar-text-value: #00ff00;
+	--sidebar-border-light: #00ff00;
+
 	/* Status Bar */
 	--status-bar-bg: #000000;
 	--status-bar-text: #00ff00;
@@ -113,52 +122,44 @@
 	--ui-panel-sunken-shadow: none;
 
 	color-scheme: dark;
-}
 
-/* Specific component refinements */
+	/* Specific component refinements */
 
-[data-theme='hacker'] .ui-btn {
-	text-transform: uppercase;
-	letter-spacing: 1px;
-}
+	.ui-btn {
+		text-transform: uppercase;
+		letter-spacing: 1px;
 
-/* Invert colors on active for that terminal cursor look */
-[data-theme='hacker'] .ui-btn:not(:disabled):active {
-	background-color: var(--ui-text);
-	color: var(--ui-face);
-	box-shadow: inset 0 0 10px #000;
-}
+		/* Invert colors on active for that terminal cursor look */
+		background-color: var(--ui-btn-bg); /* Reset from generic */
 
-[data-theme='hacker'] .sidebar .nav-link:hover {
-	background-color: var(--sidebar-item-hover);
-	color: var(--ui-text);
-	box-shadow: 0 0 5px #00ff00;
-}
+		&:not(:disabled):active {
+			background-color: var(--ui-text);
+			color: var(--ui-face);
+			box-shadow: inset 0 0 10px #000;
+		}
+	}
 
-[data-theme='hacker'] .sidebar .nav-link.active-link {
-	background-color: var(--ui-hl);
-	color: var(--ui-hl-text);
-	box-shadow: 0 0 10px #00ff00;
-	font-weight: bold;
-}
+	.sidebar {
+		.nav-link {
+			/* Force color override here as well if needed, though variable handles it */
+			/* box-shadow for hover effect */
+			&:hover {
+				background-color: var(--sidebar-item-hover);
+				color: var(--ui-text);
+				box-shadow: 0 0 5px #00ff00;
+			}
 
-[data-theme='hacker'] .app-logo {
-	color: var(--ui-text) !important;
-	text-shadow: 0 0 5px #00ff00;
-}
+			&.active-link {
+				background-color: var(--ui-hl);
+				color: var(--ui-hl-text);
+				box-shadow: 0 0 10px #00ff00;
+				font-weight: bold;
+			}
+		}
 
-/* Hacker Theme Overrides for Sidebar Text */
-[data-theme='hacker'] {
-	--sidebar-text-primary: #00ff00;
-	--sidebar-text-secondary: #00ff00;
-	--sidebar-text-dim: #00cc00;
-	--sidebar-text-muted: #00aa00;
-}
-
-[data-theme='hacker'] .sidebar .nav-links .nav-link {
-	color: #00ff00;
-}
-
-[data-theme='hacker'] .sidebar .app-logo {
-	color: #00ff00;
+		/* Logo glow */
+		.app-logo {
+			text-shadow: 0 0 5px #00ff00;
+		}
+	}
 }

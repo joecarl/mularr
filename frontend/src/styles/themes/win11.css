@@ -60,7 +60,7 @@
 	--ui-modal-radius: 8px;
 
 	/* Sidebar */
-	--sidebar-bg: #202020; /* Same as window bg for seamless look, or #1a1a1a for contrast */
+	--sidebar-bg: #202020; /* Same as window bg for seamless look */
 	--sidebar-header-bg: transparent;
 	--sidebar-box-bg: transparent; /* Remove boxy look */
 	--sidebar-box-header-bg: transparent;
@@ -73,6 +73,15 @@
 	--sidebar-box-radius: 0;
 	--sidebar-box-shadow: none;
 
+	/* Sidebar Text Overrides (Fixing contrast) */
+	--sidebar-text-primary: #ffffff;
+	--sidebar-text-secondary: #60cdff;
+	--sidebar-text-dim: #cccccc;
+	--sidebar-text-muted: #aaaaaa;
+	--sidebar-text-label: #bbbbbb;
+	--sidebar-text-value: #ffffff;
+	--sidebar-border-light: rgba(255, 255, 255, 0.1);
+
 	/* Status Bar */
 	--status-bar-bg: #1a1a1a;
 	--status-bar-text: #ffffff;
@@ -84,7 +93,7 @@
 	--ui-list-hover-bg: #333333;
 	--ui-text-accent: #60cdff;
 
-	/* Close Button specific overrides (often simulated traffic lights or just clean svg) */
+	/* Close Button specific overrides */
 	--ui-close-btn-bg: transparent;
 	--ui-close-btn-border: none;
 	--ui-close-btn-radius: 4px;
@@ -107,118 +116,85 @@
 	--ui-panel-sunken-shadow: none;
 
 	color-scheme: dark;
-}
 
-/* Specific component refinements */
+	/* Specific component refinements nested inside the theme */
 
-[data-theme='win11'] .ui-window {
-	border-radius: var(--ui-window-radius);
-	overflow: hidden; /* Ensure content respects radius */
-	box-shadow: var(--ui-window-shadow);
-	border: var(--ui-window-border);
-}
+	.ui-window {
+		border-radius: var(--ui-window-radius);
+		overflow: hidden; /* Ensure content respects radius */
+		box-shadow: var(--ui-window-shadow);
+		border: var(--ui-window-border);
+	}
 
-/* Make sidebar items look like Win11 pills */
-[data-theme='win11'] .sidebar .nav-links .nav-link {
-	border-radius: 4px;
-	margin: 2px 0;
-	padding: 6px 8px; /* Slightly more padding for touch/modern feel */
-	transition: background-color 0.1s ease;
-	color: var(--ui-text);
-}
+	.ui-btn {
+		transition:
+			background-color 0.1s,
+			border-color 0.1s,
+			box-shadow 0.1s;
+	}
 
-/* Remove underlines from sidebar links in Win11 */
-[data-theme='win11'] .sidebar .nav-links .nav-link:hover .nav-label {
-	text-decoration: none;
-}
+	.sidebar {
+		/* Make sidebar items look like Win11 pills */
+		.nav-links .nav-link {
+			border-radius: 4px;
+			margin: 2px 0;
+			padding: 6px 8px;
+			transition: background-color 0.1s ease;
+			/* No need for color here, using variables */
 
-/* Active indicator for Win11 - Side pill style */
-[data-theme='win11'] .sidebar .nav-links .nav-link.active-link {
-	background-color: var(--sidebar-item-active);
-	position: relative;
-	font-weight: 600;
-}
+			/* Remove underlines from sidebar links in Win11 */
+			&:hover .nav-label {
+				text-decoration: none;
+			}
 
-[data-theme='win11'] .sidebar .nav-links .nav-link.active-link::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 8px;
-	bottom: 8px;
-	width: 3px;
-	background-color: var(--ui-hl);
-	border-radius: 2px;
-}
+			/* Active indicator for Win11 - Side pill style */
+			&.active-link {
+				background-color: var(--sidebar-item-active);
+				position: relative;
+				font-weight: 600;
 
-/* Sidebar headers */
-[data-theme='win11'] .sidebar .sidebar-box-header {
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	opacity: 0.7;
-	padding-left: 8px;
-	margin-top: 10px;
-	margin-bottom: 4px;
-	color: var(--ui-text);
-}
+				&::before {
+					content: '';
+					position: absolute;
+					left: 0;
+					top: 8px;
+					bottom: 8px;
+					width: 3px;
+					background-color: var(--ui-hl);
+					border-radius: 2px;
+				}
+			}
+		}
 
-/* Container cards for metadata in sidebar */
-[data-theme='win11'] .sidebar .sidebar-box-info-card,
-[data-theme='win11'] .sidebar .network-container,
-[data-theme='win11'] .sidebar .connection-box,
-[data-theme='win11'] .sidebar .stats-container {
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.05);
-	border-radius: 4px;
-	padding: 8px;
-	margin: 0 4px 8px 4px;
-}
+		/* Sidebar headers */
+		.sidebar-box-header {
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			opacity: 0.7;
+			padding-left: 8px;
+			margin-top: 10px;
+			margin-bottom: 4px;
+			color: var(--ui-text);
+		}
 
-/* Typography tweaks for sidebar info */
-[data-theme='win11'] .sidebar .network-item-label,
-[data-theme='win11'] .sidebar .stat-label,
-[data-theme='win11'] .vpn-port-label {
-	color: #cccccc;
-}
+		/* Container cards for metadata in sidebar */
+		.sidebar-box-info-card,
+		.network-container,
+		.connection-box,
+		.stats-container {
+			background: rgba(255, 255, 255, 0.04);
+			border: 1px solid rgba(255, 255, 255, 0.05);
+			border-radius: 4px;
+			padding: 8px;
+			margin: 0 4px 8px 4px;
+		}
 
-[data-theme='win11'] .sidebar .network-item-value,
-[data-theme='win11'] .sidebar .stat-value,
-[data-theme='win11'] .vpn-port-value {
-	color: #ffffff;
-	font-weight: 600;
-}
-
-[data-theme='win11'] .sidebar .app-logo {
-	color: var(--ui-text) !important;
-}
-
-[data-theme='win11'] .ui-btn {
-	transition:
-		background-color 0.1s,
-		border-color 0.1s,
-		box-shadow 0.1s;
-}
-
-[data-theme='win11'] .sidebar-box {
-	border-radius: var(--sidebar-box-radius);
-	overflow: visible; /* Prevent clipping of hover effects */
-	background: transparent !important;
-	border: none !important;
-	box-shadow: none !important;
-}
-
-/* Win11 Theme Overrides for Sidebar Text */
-[data-theme='win11'] {
-	--sidebar-text-primary: #ffffff;
-	--sidebar-text-secondary: #60cdff;
-	--sidebar-text-dim: #cccccc;
-	--sidebar-text-muted: #aaaaaa;
-}
-
-[data-theme='win11'] .sidebar .nav-links .nav-link {
-	color: #ffffff; /* Override specific #003c74 from Sidebar.css nested rule */
-}
-
-[data-theme='win11'] .sidebar .app-logo {
-	color: #ffffff;
+		/* Typography tweaks for sidebar info explicitly if needed */
+		.network-item-value,
+		.stat-value,
+		.vpn-port-value {
+			font-weight: 600;
+		}
+	}
 }
