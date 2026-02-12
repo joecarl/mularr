@@ -6,26 +6,29 @@
 		</span>
 	</div>
 
-	<div class="net-box">
-		<div class="net-box-header">
+	<div class="sidebar-box sidebar-box-primary">
+		<div class="sidebar-box-header">
 			aMule
 		</div>
-		<nav class="nav-links" data-cb="navLinks">
-			<a href="/shared" class="nav-item" data-cb="navSharedDummy">
-				<span data-cb="navIconEmoji" class="nav-icon-emoji">📂</span>
-				<img data-cb="navIcon" class="nav-icon">
-				<span data-cb="navLabel" class="nav-label">
-					Shared Files
-				</span>
-			</a>
-		</nav>
+		<div class="sidebar-box-content">
+
+			<nav class="nav-links" data-cb="navLinks">
+				<a href="/shared" class="nav-item" data-cb="navSharedDummy">
+					<span data-cb="navIconEmoji" class="nav-icon-emoji">📂</span>
+					<img data-cb="navIcon" class="nav-icon">
+					<span data-cb="navLabel" class="nav-label">
+						Shared Files
+					</span>
+				</a>
+			</nav>
+		</div>
 	</div>
 
 	<div style="flex: 1"></div>
 
-	<div class="net-box">
-		<div class="net-box-header">🛜 Network</div>
-		<div class="network-container" data-cb="systemContainer">
+	<div class="sidebar-box">
+		<div class="sidebar-box-header">🛜 Network</div>
+		<div class="network-container sidebar-box-content" data-cb="systemContainer">
 			Loading system...
 			<div data-cb="infoItem" class="network-item">
 				<div data-cb="infoIcon" class="network-item-icon"></div>
@@ -35,7 +38,7 @@
 				</div>
 			</div>
 
-			<div data-cb="vpnInfo" class="vpn-info-card">
+			<div data-cb="vpnInfo" class="vpn-info-card sidebar-box-info-card">
 				<div class="vpn-info-header">
 					<div class="vpn-info-title">
 						<span class="vpn-info-icon">🔒</span>
@@ -51,9 +54,9 @@
 		</div>
 	</div>
 
-	<div class="net-box">
-		<div class="net-box-header">🌍 Connection</div>
-		<div class="connection-box" data-cb="connectionContainer">
+	<div class="sidebar-box">
+		<div class="sidebar-box-header">🌍 Connection</div>
+		<div class="connection-box sidebar-box-content" data-cb="connectionContainer">
 			<div data-cb="connectionDetails" style="padding: 8px; display: flex; flex-direction: column; gap: 4px;">
 				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
 					<span data-cb="connStatusText"
@@ -61,8 +64,7 @@
 					<span data-cb="highIdBadge" class="sidebar-badge"></span>
 				</div>
 
-				<div
-					style="background: #f0f4fb; border: 1px solid #d1e0f6; border-radius: 3px; padding: 5px; margin-bottom: 2px;">
+				<div class="sidebar-box-info-card">
 					<div style="font-size: 11px; font-weight: bold; color: #003c74;" data-cb="serverName"></div>
 					<div style="font-size: 10px; color: #4b6289;" data-cb="serverIpPort"></div>
 					<div style="font-size: 9px; color: #666; margin-top: 2px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
@@ -74,7 +76,9 @@
 						<span style="color: #666;">ED2K ID:</span>
 						<span data-cb="ed2kIdVal" style="font-weight: bold; font-family: monospace;"></span>
 					</div>
-					<div style="width: 100%; border-bottom: 1px solid #d1e0f6; margin: 5px 0;"></div>
+					<div
+						style="width: 100%; border-bottom: 1px solid var(--sidebar-box-content-separator); margin: 5px 0;">
+					</div>
 					<div style="display: flex; flex-direction: column;">
 						<span style="color: #666;">Kad ID:</span>
 						<span data-cb="kadIdVal"
@@ -85,9 +89,9 @@
 		</div>
 	</div>
 
-	<div class="net-box">
-		<div class="net-box-header">🫀 Status</div>
-		<div class="stats-container" data-cb="statsContainer">
+	<div class="sidebar-box">
+		<div class="sidebar-box-header">🫀 Status</div>
+		<div class="stats-container sidebar-box-content" data-cb="statsContainer">
 			Loading stats...
 			<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
 			<div data-cb="statRow" class="stat-row">

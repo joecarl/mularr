@@ -60,14 +60,14 @@ export const Sidebar = component(() => {
 		{ to: '/search', icon: '/assets/icons/Search.ico', label: 'Search' },
 		{ to: '/shared', icon: '/assets/icons/SharedFiles.ico', label: 'Shared' },
 		{ to: '/categories', emoji: '🏷️', label: 'Categories' },
-		{ to: '/webhooks', emoji: '🪝', label: 'Webhooks' },
+		{ to: '/webhooks', emoji: '🪝', label: 'Webhooks', style: { filter: 'hue-rotate(195deg)' } },
 		{ to: '/settings', icon: '/assets/icons/Preferences.ico', label: 'Settings' },
 	];
 
 	// Como linksData es un array que no va a cambiar, podemos crear una
 	// lista de componentes Link sin necesidad de usar componentList,
 	const links = linksData.map((link) => {
-		const icon = link.icon ? tpl.navIcon({ src: link.icon }) : tpl.navIconEmoji({ inner: link.emoji });
+		const icon = link.icon ? tpl.navIcon({ src: link.icon, style: link.style }) : tpl.navIconEmoji({ inner: link.emoji, style: link.style });
 		const label = tpl.navLabel({ inner: link.label });
 
 		return Link({

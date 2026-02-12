@@ -36,11 +36,15 @@
 
 	--sidebar-bg: #7a96df;
 	--sidebar-header-bg: linear-gradient(to right, white, transparent);
-	--sidebar-box-bg: #ffffff;
-	--sidebar-box-header-bg: linear-gradient(to right, #f0f4ff, #c6d3f7);
+	/* --sidebar-box-bg: #ffffff; */
+	--sidebar-box-bg: #d6dff7;
+	/* --sidebar-box-header-bg: linear-gradient(to right, #f0f4ff, #c6d3f7); */
+	--sidebar-box-header-bg: linear-gradient(to right, #ffffff 60%, #c9d5f8);
 	--sidebar-box-header-text: #215dc6;
-	--sidebar-item-hover: #eef3fb;
+	/* --sidebar-item-hover: #eef3fb; */
+	--sidebar-item-hover: #c6d3f7;
 	--sidebar-item-active: #c6d3f7;
+	--sidebar-box-content-separator: rgba(0, 0, 0, 0.05);
 
 	--status-bar-bg: #ece9d8;
 	--status-bar-text: #000000;
@@ -48,6 +52,32 @@
 
 	--ui-list-hover-bg: #eef3fb;
 	--ui-text-accent: #0000ff;
+
+	.sidebar-box-header {
+		box-shadow: 0 -3px 4px 0px black;
+		z-index: 10;
+		position: relative;
+	}
+	.sidebar-box-content {
+		border: 0 solid white;
+		border-width: 0 1px 1px 1px;
+		border-right: 1px solid #e7ecff;
+	}
+	.sidebar-box-info-card {
+		background: #ffffff9e;
+		border: 1px solid #ffffffbd;
+		border-radius: 4px;
+		padding: 6px;
+		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.05);
+	}
+
+	.sidebar-box-primary {
+		--sidebar-box-bg: #eff3ff;
+		.sidebar-box-header {
+			background: #2058c8;
+			color: white;
+		}
+	}
 
 	/* Nested Component Overrides for XP */
 	.ui-btn:not(:disabled):hover {

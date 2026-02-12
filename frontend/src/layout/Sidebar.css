@@ -1,5 +1,5 @@
 .sidebar {
-	width: 200px;
+	width: 205px;
 	background-color: var(--sidebar-bg);
 	padding: 10px;
 	display: flex;
@@ -33,13 +33,13 @@
 		text-transform: uppercase;
 	}
 
-	.net-box {
+	.sidebar-box {
 		background: var(--sidebar-box-bg);
 		border-radius: 3px;
 		overflow: hidden;
 
-		/* Nested header inside net-box */
-		.net-box-header {
+		/* Nested header inside sidebar-box */
+		.sidebar-box-header {
 			background: var(--sidebar-box-header-bg);
 			padding: 5px;
 			font-weight: bold;
@@ -99,7 +99,7 @@
 
 			.network-item {
 				padding: 4px 0;
-				border-top: 1px solid rgba(0, 0, 0, 0.05);
+				border-top: 1px solid var(--sidebar-box-content-separator);
 				display: flex;
 				gap: 4px;
 
@@ -132,12 +132,6 @@
 			}
 
 			.vpn-info-card {
-				background: #e1ecff;
-				border: 1px solid #cce3ff;
-				border-radius: 4px;
-				padding: 6px;
-				box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.05);
-
 				.vpn-info-header {
 					display: flex;
 					align-items: center;
@@ -238,13 +232,6 @@
 		background: var(--sidebar-box-bg);
 		border-bottom: 1px solid var(--sidebar-item-active);
 		color: var(--ui-text);
-
-		[data-cb] {
-			font-family: 'Courier New', Courier, monospace;
-			background: #f8f9fa;
-			padding: 0 2px;
-			border-radius: 2px;
-		}
 	}
 
 	.connection-status {
@@ -303,14 +290,14 @@
 }
 
 [data-theme='classic'] .sidebar {
-	.net-box {
+	.sidebar-box {
 		border-radius: 0;
 		border: 2px outset #fff;
 		border-right-color: #404040;
 		border-bottom-color: #404040;
 		background: #d4d0c8;
 
-		.net-box-header {
+		.sidebar-box-header {
 			border-radius: 0;
 			margin: 2px;
 		}
@@ -345,10 +332,6 @@
 	.connection-box {
 		color: #000;
 		background: #d4d0c8;
-		[data-cb] {
-			background: #fff;
-			border: 1px inset #d4d0c8;
-		}
 	}
 
 	.connection-status {
@@ -363,7 +346,7 @@
 }
 
 [data-theme='hacker'] .sidebar {
-	.net-box {
+	.sidebar-box {
 		border-radius: 0;
 		border: 1px solid #00ff00;
 
@@ -393,11 +376,6 @@
 
 	.connection-box {
 		background: #000;
-		[data-cb] {
-			background: #000;
-			color: #00ff00;
-			border: 1px solid #00ff00;
-		}
 	}
 
 	.connection-status {
