@@ -252,6 +252,13 @@
 			}
 		}
 
+		.connection-box {
+			padding: 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
 		.stats-container {
 			padding: 8px;
 			font-size: 11px;

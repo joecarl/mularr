@@ -81,13 +81,7 @@
 	--sidebar-item-active: #00ff00;
 
 	/* Sidebar Text Overrides */
-	--sidebar-text-primary: #00ff00;
-	--sidebar-text-secondary: #00ff00;
-	--sidebar-text-dim: #00cc00;
-	--sidebar-text-muted: #00aa00;
-	--sidebar-text-label: #00ff00;
-	--sidebar-text-value: #00ff00;
-	--sidebar-border-light: #00ff00;
+	/* Moved to .sidebar block */
 
 	/* Status Bar */
 	--status-bar-bg: #000000;
@@ -140,6 +134,15 @@
 	}
 
 	.sidebar {
+		/* Override Sidebar.css defaults with higher specificity */
+		--sidebar-text-primary: #00ff00;
+		--sidebar-text-secondary: #00ff00;
+		--sidebar-text-dim: #00cc00;
+		--sidebar-text-muted: #00aa00;
+		--sidebar-text-label: #00ff00;
+		--sidebar-text-value: #00ff00;
+		--sidebar-border-light: #00ff00;
+
 		.nav-link {
 			/* Force color override here as well if needed, though variable handles it */
 			/* box-shadow for hover effect */

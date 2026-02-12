@@ -74,13 +74,7 @@
 	--sidebar-box-shadow: none;
 
 	/* Sidebar Text Overrides (Fixing contrast) */
-	--sidebar-text-primary: #ffffff;
-	--sidebar-text-secondary: #60cdff;
-	--sidebar-text-dim: #cccccc;
-	--sidebar-text-muted: #aaaaaa;
-	--sidebar-text-label: #bbbbbb;
-	--sidebar-text-value: #ffffff;
-	--sidebar-border-light: rgba(255, 255, 255, 0.1);
+	/* Moved inside .sidebar {} block for correct specificity */
 
 	/* Status Bar */
 	--status-bar-bg: #1a1a1a;
@@ -134,6 +128,15 @@
 	}
 
 	.sidebar {
+		/* Override Sidebar.css defaults with higher specificity */
+		--sidebar-text-primary: #ffffff;
+		--sidebar-text-secondary: #60cdff;
+		--sidebar-text-dim: #cccccc;
+		--sidebar-text-muted: #aaaaaa;
+		--sidebar-text-label: #bbbbbb;
+		--sidebar-text-value: #ffffff;
+		--sidebar-border-light: rgba(255, 255, 255, 0.1);
+
 		/* Make sidebar items look like Win11 pills */
 		.nav-links .nav-link {
 			border-radius: 4px;
@@ -179,7 +182,7 @@
 		}
 
 		/* Container cards for metadata in sidebar */
-		.sidebar-box-info-card,
+
 		.network-container,
 		.connection-box,
 		.stats-container {
@@ -189,6 +192,13 @@
 			padding: 8px;
 			margin: 0 4px 8px 4px;
 		}
+
+		--sidebar-info-card-bg: rgba(255, 255, 255, 0.04);
+		--sidebar-info-card-border: 1px solid;
+		--sidebar-info-card-border-color: rgba(255, 255, 255, 0.05);
+		--sidebar-info-card-radius: 4px;
+		--sidebar-info-card-padding: 8px;
+		--sidebar-info-card-shadow: none;
 
 		/* Typography tweaks for sidebar info explicitly if needed */
 		.network-item-value,

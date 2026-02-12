@@ -79,44 +79,42 @@ export const Sidebar = component(() => {
 
 	return tpl.fragment({
 		navLinks: { inner: links },
-		connectionContainer: {
-			inner: () => {
-				const s = statsService.stats.get();
-				if (!s || !s.connectedServer) {
-					return tpl.connectionDetails({
-						nodes: {
-							connStatusText: { inner: 'Disconnected' },
-							highIdBadge: { style: { display: 'none' } },
-							serverName: { inner: 'Not connected' },
-							serverIpPort: { inner: '-' },
-							serverDesc: { inner: 'Please connect to a server' },
-							ed2kIdVal: { inner: '-' },
-							kadIdVal: { inner: '-' },
-						},
-					});
-				}
-
-				const isHigh = !!s.isHighID;
-
-				return tpl.connectionDetails({
+		connectionContainer: () => {
+			const s = statsService.stats.get();
+			if (!s || !s.connectedServer) {
+				return tpl.connectionContainer({
 					nodes: {
-						connStatusText: { inner: s.connectionState || 'Connected' },
-						highIdBadge: {
-							inner: isHigh ? 'High ID' : 'Low ID',
-							style: {
-								background: isHigh ? '#4caf50' : '#f44336',
-								color: 'white',
-								border: isHigh ? '1px solid #388e3c' : '1px solid #d32f2f',
-							},
-						},
-						serverName: { inner: s.connectedServer.name || 'Unknown Server' },
-						serverIpPort: { inner: `${s.connectedServer.ip}:${s.connectedServer.port}` },
-						serverDesc: { inner: s.connectedServer.description || 'No description available' },
-						ed2kIdVal: { inner: String(s.ed2kId || s.id || '-') },
-						kadIdVal: { inner: s.kadId || '-' },
+						connStatusText: { inner: 'Disconnected' },
+						highIdBadge: { style: { display: 'none' } },
+						serverName: { inner: 'Not connected' },
+						serverIpPort: { inner: '-' },
+						serverDesc: { inner: 'Please connect to a server' },
+						ed2kIdVal: { inner: '-' },
+						kadIdVal: { inner: '-' },
 					},
 				});
-			},
+			}
+
+			const isHigh = !!s.isHighID;
+
+			return tpl.connectionContainer({
+				nodes: {
+					connStatusText: { inner: s.connectionState || 'Connected' },
+					highIdBadge: {
+						inner: isHigh ? 'High ID' : 'Low ID',
+						style: {
+							background: isHigh ? '#4caf50' : '#f44336',
+							color: 'white',
+							border: isHigh ? '1px solid #388e3c' : '1px solid #d32f2f',
+						},
+					},
+					serverName: { inner: s.connectedServer.name || 'Unknown Server' },
+					serverIpPort: { inner: `${s.connectedServer.ip}:${s.connectedServer.port}` },
+					serverDesc: { inner: s.connectedServer.description || 'No description available' },
+					ed2kIdVal: { inner: String(s.ed2kId || s.id || '-') },
+					kadIdVal: { inner: s.kadId || '-' },
+				},
+			});
 		},
 		systemContainer: {
 			inner: () => {
