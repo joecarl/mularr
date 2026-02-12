@@ -13,10 +13,11 @@ body {
 
 /* Generic Windows Controls */
 .ui-btn {
+	--ui-btn-padding: 3px 12px;
 	background: var(--ui-btn-bg);
-	border: 1px solid var(--ui-btn-border);
+	border: var(--ui-btn-border-definition, 1px solid var(--ui-btn-border));
 	border-radius: var(--ui-btn-radius);
-	padding: 3px 12px;
+	padding: var(--ui-btn-padding);
 	font-size: 11px;
 	font-family: var(--ui-font);
 	cursor: pointer;
@@ -33,9 +34,32 @@ body {
 }
 
 .ui-btn-icon {
+	--ui-btn-padding: 2px 4px;
 	min-width: auto;
-	padding: 2px 4px;
+	padding: var(--ui-btn-icon-padding, var(--ui-btn-padding));
 	font-size: 12px;
+}
+
+.ui-btn:not(:disabled):hover {
+	background: var(--ui-btn-hover-bg);
+	border-color: var(--ui-btn-hover-border-color, var(--ui-btn-border));
+	box-shadow: var(--ui-btn-hover-shadow, none);
+}
+
+.ui-btn:not(:disabled):active {
+	background: var(--ui-btn-active-bg, var(--ui-btn-hover-bg));
+	box-shadow: var(--ui-btn-active-shadow);
+	border: var(--ui-btn-active-border, var(--ui-btn-border-definition, 1px solid var(--ui-btn-border)));
+	padding: var(--ui-btn-active-padding, var(--ui-btn-padding));
+}
+
+.ui-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+	background: var(--ui-face);
+	border-color: var(--ui-shadow);
+	box-shadow: none;
+	color: var(--ui-shadow);
 }
 
 /* Icon classes for background images */
@@ -60,26 +84,6 @@ body {
 }
 .icon-delete {
 	background-image: url('/assets/icons/Delete.ico');
-}
-
-.ui-btn:not(:disabled):hover {
-	background: var(--ui-btn-hover-bg);
-	border-color: var(--ui-btn-hover-border-color, var(--ui-btn-border));
-	box-shadow: var(--ui-btn-hover-shadow, none);
-}
-
-.ui-btn:not(:disabled):active {
-	background: var(--ui-btn-hover-bg);
-	box-shadow: var(--ui-btn-active-shadow);
-}
-
-.ui-btn:disabled {
-	opacity: 0.5;
-	cursor: default;
-	background: var(--ui-face);
-	border-color: var(--ui-shadow);
-	box-shadow: none;
-	color: var(--ui-shadow);
 }
 
 /* Panels - Base */
@@ -120,15 +124,17 @@ body {
 .ui-list th {
 	background-color: var(--ui-th-bg);
 	background-image: var(--ui-th-bg-image);
-	border-right: 1px solid var(--ui-shadow);
-	border-bottom: 1px solid var(--ui-shadow);
-	padding: 2px 5px;
+	border-right: var(--ui-th-border-right, 1px solid var(--ui-shadow));
+	border-bottom: var(--ui-th-border-bottom, 1px solid var(--ui-shadow));
+	border-top: var(--ui-th-border-top, none);
+	border-left: var(--ui-th-border-left, none);
+	padding: var(--ui-th-padding, 2px 5px);
 	text-align: left;
-	font-weight: normal;
+	font-weight: var(--ui-th-font-weight, normal);
 	position: sticky;
 	z-index: 99;
 	top: 0;
-	box-shadow: 1px 1px 0 var(--ui-light) inset;
+	box-shadow: var(--ui-th-box-shadow, 1px 1px 0 var(--ui-light) inset);
 	color: var(--ui-text);
 	font-family: var(--ui-font);
 	cursor: default;
@@ -137,6 +143,14 @@ body {
 .ui-list th:hover {
 	background-color: var(--ui-th-hover-bg);
 	background-image: var(--ui-th-hover-image);
+}
+
+.ui-list th:active {
+	padding: var(--ui-th-active-padding, var(--ui-th-padding));
+	border-top: var(--ui-th-active-border-top, var(--ui-th-border-top));
+	border-left: var(--ui-th-active-border-left, var(--ui-th-border-left));
+	border-right: var(--ui-th-active-border-right, var(--ui-th-border-right));
+	border-bottom: var(--ui-th-active-border-bottom, var(--ui-th-border-bottom));
 }
 
 .ui-list td {
@@ -162,9 +176,7 @@ body {
 }
 
 /* Common inputs */
-input[type='text'],
-input[type='password'],
-input[type='number'],
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
 select,
 textarea {
 	border-style: var(--ui-input-border-style);
@@ -177,12 +189,16 @@ textarea {
 	padding: var(--ui-input-padding, 2px);
 	border-radius: var(--ui-input-radius, 0);
 	box-shadow: var(--ui-input-shadow, none);
-}
-input:disabled,
-select:disabled,
-textarea:disabled {
-	background-color: var(--ui-face);
-	color: var(--ui-shadow);
+
+	&:focus {
+		outline: var(--ui-input-focus-outline, none);
+		border-color: var(--ui-input-focus-border-color);
+	}
+
+	&:disabled {
+		background-color: var(--ui-face);
+		color: var(--ui-shadow);
+	}
 }
 
 /* Generic Fieldset */

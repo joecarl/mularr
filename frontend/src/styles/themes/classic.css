@@ -8,31 +8,56 @@
 	--ui-light: #ffffff;
 	--ui-font: 'MS Sans Serif', 'Microsoft Sans Serif', 'Tahoma', sans-serif;
 
+	/* Button styling */
 	--ui-btn-bg: #d4d0c8;
-	--ui-btn-border: #808080;
+	--ui-btn-border: #808080; /* Fallback */
+	--ui-btn-border-definition: 2px outset #ffffff;
 	--ui-btn-hover-bg: #d4d0c8;
-	--ui-btn-hover-border: #808080;
+	--ui-btn-hover-border-color: #ffffff; /* Unused with outset */
 	--ui-btn-radius: 0;
-	--ui-btn-shadow: 1px 1px 0 #000;
+	--ui-btn-shadow: none;
 	--ui-btn-active-shadow: none;
 
-	--ui-window-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
+	/* Button Active State with "Pushed" look */
+	--ui-btn-active-border: 2px inset #ffffff;
+	--ui-btn-active-padding: 4px 11px 2px 13px; /* Shift text for pressed effect */
+
+	/* Header styling */
+	--ui-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
 	--ui-header-text: #ffffff;
 
+	/* Input styling */
 	--ui-input-bg: #ffffff;
 	--ui-input-border-style: inset;
 	--ui-input-border-width: 2px;
 	--ui-input-border-color: #d4d0c8;
 
+	/* Table/Grid */
 	--ui-odd-row: #ffffff;
 	--ui-even-row: #ffffff;
 	--ui-th-bg: #d4d0c8;
 	--ui-th-bg-image: none;
 	--ui-th-hover-bg: #d4d0c8;
 	--ui-th-hover-image: none;
+	--ui-th-box-shadow: none;
+	--ui-th-font-weight: normal;
+
+	/* Classic 3D Table Header Borders */
+	--ui-th-border-top: 1px solid #ffffff;
+	--ui-th-border-left: 1px solid #ffffff;
+	--ui-th-border-right: 1px solid #404040;
+	--ui-th-border-bottom: 1px solid #404040;
+
+	/* Table Header Active (Pressed) */
+	--ui-th-active-padding: 3px 4px 1px 6px; /* Shift text */
+	--ui-th-active-border-top: 1px solid #404040;
+	--ui-th-active-border-left: 1px solid #404040;
+	--ui-th-active-border-right: 1px solid #ffffff;
+	--ui-th-active-border-bottom: 1px solid #ffffff;
 
 	--ui-modal-radius: 0;
 
+	/* Sidebar */
 	--sidebar-bg: #aca899;
 	--sidebar-header-bg: transparent;
 	--sidebar-box-bg: #d4d0c8;
@@ -41,186 +66,91 @@
 	--sidebar-item-hover: #0a246a;
 	--sidebar-item-active: #0a246a;
 
+	/* Sidebar Components */
+	--sidebar-box-content-separator: rgba(0, 0, 0, 0.1);
+	--sidebar-box-content-border: 2px outset #ffffff;
+	--sidebar-box-content-border-right: 2px outset #ffffff; /* Override base */
+
+	/* Sidebar Boxes need outset border */
+	--sidebar-info-card-border: 2px inset #ffffff; /* Except cards maybe? */
+	/* Actually classic sidebar boxes have 3D borders if we invoke sidebar-box override */
+
+	/* Status Bar */
 	--status-bar-bg: #d4d0c8;
 	--status-bar-text: #000000;
+	--ui-status-bar-border-top: 1px solid #808080;
+	--ui-status-bar-gap: 2px;
+
+	/* Status Panes (Inset 3D) */
+	--ui-status-pane-border: 1px solid;
+	--status-pane-border-right: 1px solid #fff; /* Handled by generic? No, need color list logic */
+	/* Replicating border-color: #808080 white white #808080; via override or creative vars */
+
 	--ui-list-hover-bg: transparent;
 	--ui-text-accent: #000080;
 
-	/* Added Variables for Refactor */
-	--ui-panel-sunken-border: 2px solid;
-	/* Cannot easily do 4-color border with single variable unless I change the rule to just accept the whole value, which I did. */
-	/* Actually I can't set border-color: A B C D via border: prop easily if I want to keep split. 
-	   ui-panel-sunken uses "border: var(..., 1px solid ...)" 
-	   So I can say "2px solid #808080" but I want different colors.
-	   Wait, in ui-gui.css I changed it to:
-	   border: var(--ui-panel-sunken-border, 1px solid var(--ui-shadow));
-	   If I set --ui-panel-sunken-border: 2px solid transparent, I can still override border-color separately? No, it overrides the whole property.
-	   So I will keep the override for these complex borders.
-	*/
+	/* Panels & Containers */
+	/* Classic requires specific coloring for 3D effects that simple border-style: inset/outset doesn't fully capture (usually needs 4 colors) */
 
-	--ui-status-bar-border-top: 1px solid #808080;
-	--ui-status-pane-box-shadow: none;
-	--ui-status-pane-margin-right: 2px;
-
+	/* Window / Modal */
 	--ui-window-bg: #d4d0c8;
 	--ui-window-border: 2px outset #d4d0c8;
 	--ui-window-shadow: 2px 2px 0 #000;
 	--ui-window-header-text-shadow: none;
-	--ui-window-header-border-radius: 0; /* Not variable-ized well enough maybe? */
+	--ui-window-header-border-radius: 0;
+	--ui-window-header-height: auto;
+	--ui-window-footer-border-top: none; /* Usually implied by window structure */
 
 	--ui-close-btn-bg: #d4d0c8;
-	--ui-close-btn-border: 2px outset #fff;
+	--ui-close-btn-border: 2px outset #ffffff;
 	--ui-close-btn-radius: 0;
+	--ui-close-btn-width: 16px;
+	--ui-close-btn-height: 14px;
 	--ui-close-btn-shadow: none;
+	--ui-close-btn-hover-bg: #d4d0c8;
 	--ui-close-btn-hover-color: #000;
 	--ui-close-btn-hover-filter: none;
 
-	/* Sidebar */
-	--sidebar-box-header-bg: #0a246a;
-
-	/* Nested Component Overrides for Classic */
-	.ui-btn {
-		border: 2px outset #ffffff;
-		border-top-color: #ffffff;
-		border-left-color: #ffffff;
-		border-right-color: #404040;
-		border-bottom-color: #404040;
-		background: #d4d0c8;
-		box-shadow: none;
-		border-radius: 0;
-
-		&:not(:disabled):active {
-			border: 2px inset #ffffff;
-			border-top-color: #404040;
-			border-left-color: #404040;
-			border-right-color: #ffffff;
-			border-bottom-color: #ffffff;
-			padding: 4px 11px 2px 13px;
-			box-shadow: none;
-		}
-	}
+	/* Overrides where variables fall short (Complex 3D Borders) */
 
 	.ui-panel-sunken {
 		border: 2px solid;
-		border-color: var(--ui-shadow) var(--ui-light) var(--ui-light) var(--ui-shadow);
+		border-color: #808080 #ffffff #ffffff #808080;
 	}
 
 	.ui-panel-raised {
 		border: 2px solid;
-		border-color: var(--ui-light) var(--ui-dark-shadow) var(--ui-dark-shadow) var(--ui-light);
+		border-color: #ffffff #404040 #404040 #ffffff;
 	}
 
 	.ui-table-container {
-		border-color: var(--ui-shadow) var(--ui-light) var(--ui-light) var(--ui-shadow);
-		border-width: 2px;
+		border: 2px solid;
+		border-color: #808080 #ffffff #ffffff #808080;
 	}
 
-	.ui-list {
-		th {
-			border-top: 1px solid #fff;
-			border-left: 1px solid #fff;
-			border-right: 1px solid #404040;
-			border-bottom: 1px solid #404040;
-			box-shadow: none;
-			background-image: none;
-			background-color: #d4d0c8;
-			font-weight: normal;
-
-			&:active {
-				border-top: 1px solid #404040;
-				border-left: 1px solid #404040;
-				border-right: 1px solid #fff;
-				border-bottom: 1px solid #fff;
-				padding: 3px 4px 1px 6px;
-			}
-		}
-
-		tr.selected {
-			outline: 1px dotted var(--ui-hl-text);
-		}
-	}
-
-	/* Status Bar Overrides - partially variable-ized but need border colors */
 	.ui-status-pane {
 		border: 1px solid;
 		border-color: #808080 white white #808080;
 	}
 
-	/* Modal Classic Overrides */
-	.ui-window {
-		.ui-window-header {
-			border-radius: 0;
-			/* variable for radius on header? ui-modal.css uses: 
-			   border-radius: 2px 2px 0 0; 
-			   I should add a variable for that.
-			*/
-		}
-
-		.ui-close-btn {
-			color: #000;
-			font-family: sans-serif;
-			font-size: 10px;
-
-			&:active {
-				border: 2px inset #fff;
-				padding: 2px 0 0 2px;
-			}
-		}
+	.sidebar-box {
+		border: 2px outset #ffffff;
+		border-right-color: #404040;
+		border-bottom-color: #404040;
 	}
 
-	.sidebar {
-		.sidebar-box {
-			border-radius: 0;
-			border: 2px outset #fff;
-			border-right-color: #404040;
-			border-bottom-color: #404040;
-			background: #d4d0c8;
+	/* Connection Status Box in Sidebar */
+	.connection-status {
+		border: 2px inset #ffffff;
+		border-radius: 0;
+	}
 
-			.sidebar-box-header {
-				border-radius: 0;
-				margin: 2px;
-			}
-			.nav-links {
-				background: #d4d0c8;
-				.nav-link {
-					color: #000;
-					&:hover {
-						color: white;
-						text-decoration: none;
-						background-color: #0a246a; /* Hardcoded classic hl */
-					}
-				}
-			}
-			.stats-container {
-				color: #000;
-				background: #d4d0c8;
-				hr {
-					border-top: 1px solid #808080;
-					border-bottom: 1px solid #fff;
-				}
-				.stat-unit {
-					color: #404040;
-				}
-			}
-		}
-
-		.sidebar-header .app-logo {
-			color: #000;
-		}
-
-		.connection-box {
-			color: #000;
-			background: #d4d0c8;
-		}
-
-		.connection-status {
-			border: 2px inset #fff;
-			background: #d4d0c8;
-			border-radius: 0;
-		}
-
-		.sidebar-footer {
-			color: #000;
-		}
+	/* Nav Links special hover */
+	.nav-link:hover {
+		color: white !important;
+		background-color: #0a246a !important;
+		/* !important needed to override variable usage if specific specificity isn't enough, 
+		   but wait: nav-link uses background-color: var(--sidebar-item-hover); 
+		   So setting var is enough for bg, but color needs var. */
 	}
 }

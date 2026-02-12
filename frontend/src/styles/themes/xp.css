@@ -130,7 +130,7 @@
 	}
 
 	/* Restore specific XP input styling */
-	input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
+	/* input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
 	select,
 	textarea {
 		border: 1px solid #7f9db9 !important;
@@ -142,5 +142,36 @@
 			outline: 1px solid #ffad3365;
 			border-color: #7f9db9 !important;
 		}
+	} */
+
+	/*
+	border-style: var(--ui-input-border-style);
+	border-width: var(--ui-input-border-width);
+	border-color: var(--ui-input-border-color);
+	background-color: var(--ui-input-bg);
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: 11px;
+	padding: var(--ui-input-padding, 2px);
+	border-radius: var(--ui-input-radius, 0);
+	box-shadow: var(--ui-input-shadow, none);
+
+	&:focus {
+		outline: var(--ui-input-focus-outline, none);
+		border-color: var(--ui-input-focus-border-color);
 	}
+
+	&:disabled {
+		background-color: var(--ui-face);
+		color: var(--ui-shadow);
+	}
+	*/
+	--ui-input-border-style: solid;
+	--ui-input-border-width: 1px;
+	--ui-input-border-color: #7f9db9;
+	--ui-input-padding: 3px 4px;
+	--ui-input-radius: 0;
+	--ui-input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+	--ui-input-focus-outline: 1px solid #ffad3365;
+	--ui-input-focus-border-color: #7f9db9;
 }
