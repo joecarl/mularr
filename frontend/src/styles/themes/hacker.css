@@ -135,9 +135,30 @@
 	box-shadow: 0 0 5px #00ff00;
 }
 
-[data-theme='hacker'] .sidebar .nav-link.active {
+[data-theme='hacker'] .sidebar .nav-link.active-link {
 	background-color: var(--ui-hl);
 	color: var(--ui-hl-text);
 	box-shadow: 0 0 10px #00ff00;
 	font-weight: bold;
+}
+
+[data-theme='hacker'] .app-logo {
+	color: var(--ui-text) !important;
+	text-shadow: 0 0 5px #00ff00;
+}
+
+/* Hacker Theme Overrides for Sidebar Text */
+[data-theme='hacker'] {
+	--sidebar-text-primary: #00ff00;
+	--sidebar-text-secondary: #00ff00;
+	--sidebar-text-dim: #00cc00;
+	--sidebar-text-muted: #00aa00;
+}
+
+[data-theme='hacker'] .sidebar .nav-links .nav-link {
+	color: #00ff00;
+}
+
+[data-theme='hacker'] .sidebar .app-logo {
+	color: #00ff00;
 }

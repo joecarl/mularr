@@ -255,3 +255,59 @@
 		font-size: 0.85rem;
 	}
 }
+
+/* Refactor styles extracted from inline HTML */
+/* Default values mimic the original inline styles (Classic/XP feel) */
+/* Themes like Win11/Hacker should override these via CSS variables */
+
+:root {
+	--sidebar-text-primary: #003c74;
+	--sidebar-text-secondary: #215dc6;
+	--sidebar-text-dim: #4b6289;
+	--sidebar-text-muted: #666;
+}
+
+.connection-status-text {
+	font-size: 11px;
+	font-weight: bold;
+	color: var(--sidebar-text-secondary);
+}
+
+.server-name {
+	font-size: 11px;
+	font-weight: bold;
+	color: var(--sidebar-text-primary);
+}
+
+.server-ip-port {
+	font-size: 10px;
+	color: var(--sidebar-text-dim);
+}
+
+.server-desc {
+	font-size: 9px;
+	color: var(--sidebar-text-muted);
+	margin-top: 2px;
+	font-style: italic;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.text-muted {
+	color: var(--sidebar-text-muted);
+}
+
+.wb-break-all {
+	word-break: break-all;
+}
+
+.font-mono {
+	font-family: monospace;
+}
+
+.font-bold {
+	font-weight: bold;
+}

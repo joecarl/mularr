@@ -60,17 +60,17 @@
 	--ui-modal-radius: 8px;
 
 	/* Sidebar */
-	--sidebar-bg: #1a1a1a;
+	--sidebar-bg: #202020; /* Same as window bg for seamless look, or #1a1a1a for contrast */
 	--sidebar-header-bg: transparent;
-	--sidebar-box-bg: #242424; /* Layer on top of mica */
+	--sidebar-box-bg: transparent; /* Remove boxy look */
 	--sidebar-box-header-bg: transparent;
 	--sidebar-box-header-text: #ffffff;
-	--sidebar-item-hover: #333333;
-	--sidebar-item-active: #2d2d2d;
-	--sidebar-box-content-separator: rgba(255, 255, 255, 0.05);
-	--sidebar-box-border: 1px solid;
-	--sidebar-box-border-color: #333;
-	--sidebar-box-radius: 4px;
+	--sidebar-item-hover: rgba(255, 255, 255, 0.05);
+	--sidebar-item-active: rgba(255, 255, 255, 0.08); /* Subtle active state */
+	--sidebar-box-content-separator: rgba(255, 255, 255, 0.1);
+	--sidebar-box-border: none; /* No borders for boxes */
+	--sidebar-box-border-color: transparent;
+	--sidebar-box-radius: 0;
 	--sidebar-box-shadow: none;
 
 	/* Status Bar */
@@ -118,6 +118,80 @@
 	border: var(--ui-window-border);
 }
 
+/* Make sidebar items look like Win11 pills */
+[data-theme='win11'] .sidebar .nav-links .nav-link {
+	border-radius: 4px;
+	margin: 2px 0;
+	padding: 6px 8px; /* Slightly more padding for touch/modern feel */
+	transition: background-color 0.1s ease;
+	color: var(--ui-text);
+}
+
+/* Remove underlines from sidebar links in Win11 */
+[data-theme='win11'] .sidebar .nav-links .nav-link:hover .nav-label {
+	text-decoration: none;
+}
+
+/* Active indicator for Win11 - Side pill style */
+[data-theme='win11'] .sidebar .nav-links .nav-link.active-link {
+	background-color: var(--sidebar-item-active);
+	position: relative;
+	font-weight: 600;
+}
+
+[data-theme='win11'] .sidebar .nav-links .nav-link.active-link::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 8px;
+	bottom: 8px;
+	width: 3px;
+	background-color: var(--ui-hl);
+	border-radius: 2px;
+}
+
+/* Sidebar headers */
+[data-theme='win11'] .sidebar .sidebar-box-header {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	opacity: 0.7;
+	padding-left: 8px;
+	margin-top: 10px;
+	margin-bottom: 4px;
+	color: var(--ui-text);
+}
+
+/* Container cards for metadata in sidebar */
+[data-theme='win11'] .sidebar .sidebar-box-info-card,
+[data-theme='win11'] .sidebar .network-container,
+[data-theme='win11'] .sidebar .connection-box,
+[data-theme='win11'] .sidebar .stats-container {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 4px;
+	padding: 8px;
+	margin: 0 4px 8px 4px;
+}
+
+/* Typography tweaks for sidebar info */
+[data-theme='win11'] .sidebar .network-item-label,
+[data-theme='win11'] .sidebar .stat-label,
+[data-theme='win11'] .vpn-port-label {
+	color: #cccccc;
+}
+
+[data-theme='win11'] .sidebar .network-item-value,
+[data-theme='win11'] .sidebar .stat-value,
+[data-theme='win11'] .vpn-port-value {
+	color: #ffffff;
+	font-weight: 600;
+}
+
+[data-theme='win11'] .sidebar .app-logo {
+	color: var(--ui-text) !important;
+}
+
 [data-theme='win11'] .ui-btn {
 	transition:
 		background-color 0.1s,
@@ -127,5 +201,24 @@
 
 [data-theme='win11'] .sidebar-box {
 	border-radius: var(--sidebar-box-radius);
-	overflow: hidden;
+	overflow: visible; /* Prevent clipping of hover effects */
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Win11 Theme Overrides for Sidebar Text */
+[data-theme='win11'] {
+	--sidebar-text-primary: #ffffff;
+	--sidebar-text-secondary: #60cdff;
+	--sidebar-text-dim: #cccccc;
+	--sidebar-text-muted: #aaaaaa;
+}
+
+[data-theme='win11'] .sidebar .nav-links .nav-link {
+	color: #ffffff; /* Override specific #003c74 from Sidebar.css nested rule */
+}
+
+[data-theme='win11'] .sidebar .app-logo {
+	color: #ffffff;
 }
