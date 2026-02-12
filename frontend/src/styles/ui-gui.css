@@ -64,6 +64,8 @@ body {
 
 .ui-btn:not(:disabled):hover {
 	background: var(--ui-btn-hover-bg);
+	border-color: var(--ui-btn-hover-border-color, var(--ui-btn-border));
+	box-shadow: var(--ui-btn-hover-shadow, none);
 }
 
 .ui-btn:not(:disabled):active {
@@ -82,13 +84,13 @@ body {
 
 /* Panels - Base */
 .ui-panel-sunken {
-	border: 1px solid var(--ui-shadow);
+	border: var(--ui-panel-sunken-border, 1px solid var(--ui-shadow));
 	background: var(--ui-light);
 	color: var(--ui-text);
 }
 
 .ui-panel-raised {
-	border: 1px solid var(--ui-shadow);
+	border: var(--ui-panel-raised-border, 1px solid var(--ui-shadow));
 	background: var(--ui-face);
 	color: var(--ui-text);
 }
@@ -172,7 +174,9 @@ textarea {
 	color: var(--ui-text);
 	font-family: var(--ui-font);
 	font-size: 11px;
-	padding: 2px;
+	padding: var(--ui-input-padding, 2px);
+	border-radius: var(--ui-input-radius, 0);
+	box-shadow: var(--ui-input-shadow, none);
 }
 input:disabled,
 select:disabled,
@@ -181,30 +185,43 @@ textarea:disabled {
 	color: var(--ui-shadow);
 }
 
-/* Status Bar Generic */
+/* Generic Fieldset */
+fieldset {
+	border: var(--ui-fieldset-border, 1px solid var(--ui-shadow));
+	border-radius: var(--ui-fieldset-radius, 0);
+}
+
+legend {
+	color: var(--ui-legend-color, var(--ui-text));
+}
+
 .ui-status-bar {
 	height: 23px;
 	background-color: var(--status-bar-bg);
-	border-top: 1px solid var(--ui-shadow);
+	border-top: var(--ui-status-bar-border-top, 1px solid var(--ui-shadow));
 	display: flex;
 	align-items: center;
 	padding: 1px 1px 1px 2px;
-	gap: 2px;
+	gap: var(--ui-status-bar-gap, 2px);
 	font-family: var(--ui-font);
 	font-size: 11px;
 	cursor: default;
 	color: var(--status-bar-text);
 	flex-shrink: 0;
+	box-shadow: var(--ui-status-bar-box-shadow, none);
 }
 
 .ui-status-pane {
 	height: 18px;
 	border: var(--status-pane-border);
+	border-right: var(--status-pane-border-right);
 	display: flex;
 	align-items: center;
 	padding: 0 4px;
 	overflow: hidden;
 	white-space: nowrap;
+	box-shadow: var(--ui-status-pane-box-shadow, none);
+	margin-right: var(--ui-status-pane-margin-right, 0);
 }
 
 /* Fix: Hover effect on rows - only for unselected rows */
@@ -226,6 +243,6 @@ textarea:disabled {
 .ui-table-container {
 	overflow: auto;
 	background: var(--ui-light);
-	border: var(--ui-input-border-width) var(--ui-input-border-style) var(--ui-input-border-color);
+	border: var(--ui-table-border, var(--ui-input-border-width) var(--ui-input-border-style) var(--ui-input-border-color));
 	min-height: 0;
 }

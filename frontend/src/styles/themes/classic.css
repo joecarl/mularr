@@ -16,7 +16,7 @@
 	--ui-btn-shadow: 1px 1px 0 #000;
 	--ui-btn-active-shadow: none;
 
-	--ui-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
+	--ui-window-header-bg: linear-gradient(to right, #0a246a, #a6caf0);
 	--ui-header-text: #ffffff;
 
 	--ui-input-bg: #ffffff;
@@ -43,9 +43,40 @@
 
 	--status-bar-bg: #d4d0c8;
 	--status-bar-text: #000000;
-
 	--ui-list-hover-bg: transparent;
 	--ui-text-accent: #000080;
+
+	/* Added Variables for Refactor */
+	--ui-panel-sunken-border: 2px solid;
+	/* Cannot easily do 4-color border with single variable unless I change the rule to just accept the whole value, which I did. */
+	/* Actually I can't set border-color: A B C D via border: prop easily if I want to keep split. 
+	   ui-panel-sunken uses "border: var(..., 1px solid ...)" 
+	   So I can say "2px solid #808080" but I want different colors.
+	   Wait, in ui-gui.css I changed it to:
+	   border: var(--ui-panel-sunken-border, 1px solid var(--ui-shadow));
+	   If I set --ui-panel-sunken-border: 2px solid transparent, I can still override border-color separately? No, it overrides the whole property.
+	   So I will keep the override for these complex borders.
+	*/
+
+	--ui-status-bar-border-top: 1px solid #808080;
+	--ui-status-pane-box-shadow: none;
+	--ui-status-pane-margin-right: 2px;
+
+	--ui-window-bg: #d4d0c8;
+	--ui-window-border: 2px outset #d4d0c8;
+	--ui-window-shadow: 2px 2px 0 #000;
+	--ui-window-header-text-shadow: none;
+	--ui-window-header-border-radius: 0; /* Not variable-ized well enough maybe? */
+
+	--ui-close-btn-bg: #d4d0c8;
+	--ui-close-btn-border: 2px outset #fff;
+	--ui-close-btn-radius: 0;
+	--ui-close-btn-shadow: none;
+	--ui-close-btn-hover-color: #000;
+	--ui-close-btn-hover-filter: none;
+
+	/* Sidebar */
+	--sidebar-box-header-bg: #0a246a;
 
 	/* Nested Component Overrides for Classic */
 	.ui-btn {
@@ -109,34 +140,24 @@
 		}
 	}
 
-	.ui-status-bar {
-		border-top: 1px solid #808080;
-		background: #d4d0c8;
-	}
-
+	/* Status Bar Overrides - partially variable-ized but need border colors */
 	.ui-status-pane {
 		border: 1px solid;
 		border-color: #808080 white white #808080;
-		box-shadow: none;
-		margin-right: 2px;
 	}
 
 	/* Modal Classic Overrides */
 	.ui-window {
-		border: 2px outset #d4d0c8;
-		box-shadow: 2px 2px 0 #000;
-
 		.ui-window-header {
-			text-shadow: none;
 			border-radius: 0;
+			/* variable for radius on header? ui-modal.css uses: 
+			   border-radius: 2px 2px 0 0; 
+			   I should add a variable for that.
+			*/
 		}
 
 		.ui-close-btn {
-			background: #d4d0c8;
 			color: #000;
-			border: 2px outset #fff;
-			border-radius: 0;
-			box-shadow: none;
 			font-family: sans-serif;
 			font-size: 10px;
 
@@ -144,6 +165,62 @@
 				border: 2px inset #fff;
 				padding: 2px 0 0 2px;
 			}
+		}
+	}
+
+	.sidebar {
+		.sidebar-box {
+			border-radius: 0;
+			border: 2px outset #fff;
+			border-right-color: #404040;
+			border-bottom-color: #404040;
+			background: #d4d0c8;
+
+			.sidebar-box-header {
+				border-radius: 0;
+				margin: 2px;
+			}
+			.nav-links {
+				background: #d4d0c8;
+				.nav-link {
+					color: #000;
+					&:hover {
+						color: white;
+						text-decoration: none;
+						background-color: #0a246a; /* Hardcoded classic hl */
+					}
+				}
+			}
+			.stats-container {
+				color: #000;
+				background: #d4d0c8;
+				hr {
+					border-top: 1px solid #808080;
+					border-bottom: 1px solid #fff;
+				}
+				.stat-unit {
+					color: #404040;
+				}
+			}
+		}
+
+		.sidebar-header .app-logo {
+			color: #000;
+		}
+
+		.connection-box {
+			color: #000;
+			background: #d4d0c8;
+		}
+
+		.connection-status {
+			border: 2px inset #fff;
+			background: #d4d0c8;
+			border-radius: 0;
+		}
+
+		.sidebar-footer {
+			color: #000;
 		}
 	}
 }

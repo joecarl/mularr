@@ -13,17 +13,23 @@
 	--ui-btn-border: #003c74;
 	--ui-btn-hover-bg: linear-gradient(to bottom, #fafafa, #f0f0f0);
 	--ui-btn-hover-border: #0058e6;
+	--ui-btn-hover-border-color: #0058e6;
 	--ui-btn-radius: 3px;
 	--ui-btn-shadow: inset 1px 1px 1px #fff;
 	--ui-btn-active-shadow: inset 1px 1px 2px #aaa;
+	--ui-btn-hover-shadow: 0 0 2px #ffad33;
 
-	--ui-header-bg: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0058e6 90%, #0030a6 100%);
+	/* --ui-window-header-bg: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0058e6 90%, #0030a6 100%); */
+	--ui-window-header-bg: linear-gradient(to bottom, #0058e6 0%, #3a93ff 8%, #0058e6 40%, #0058e6 70%, #0030a6 100%);
 	--ui-header-text: #ffffff;
 
 	--ui-input-bg: #ffffff;
 	--ui-input-border-style: solid;
 	--ui-input-border-width: 1px;
 	--ui-input-border-color: #7f9db9;
+	--ui-input-padding: 3px 4px;
+	--ui-input-radius: 0;
+	--ui-input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
 
 	--ui-odd-row: #ffffff;
 	--ui-even-row: #ffffff;
@@ -34,42 +40,74 @@
 
 	--ui-modal-radius: 5px 5px 0 0;
 
-	--sidebar-bg: #7a96df;
+	--sidebar-bg: linear-gradient(to bottom, #7a96df 0%, #7a96df 100%);
 	--sidebar-header-bg: linear-gradient(to right, white, transparent);
-	/* --sidebar-box-bg: #ffffff; */
 	--sidebar-box-bg: #d6dff7;
-	/* --sidebar-box-header-bg: linear-gradient(to right, #f0f4ff, #c6d3f7); */
 	--sidebar-box-header-bg: linear-gradient(to right, #ffffff 60%, #c9d5f8);
 	--sidebar-box-header-text: #215dc6;
-	/* --sidebar-item-hover: #eef3fb; */
 	--sidebar-item-hover: #c6d3f7;
 	--sidebar-item-active: #c6d3f7;
 	--sidebar-box-content-separator: rgba(0, 0, 0, 0.05);
 
+	/* Sidebar Extra Vars */
+	--sidebar-box-header-shadow: 0 -3px 4px 0px black;
+	--sidebar-box-header-z-index: 10;
+	--sidebar-box-header-position: relative;
+	--sidebar-box-content-border: 0 solid white;
+	--sidebar-box-content-border-right: 1px solid #e7ecff;
+
+	--sidebar-info-card-bg: #ffffff9e;
+	--sidebar-info-card-border: 1px solid #ffffffbd;
+	--sidebar-info-card-radius: 4px;
+	--sidebar-info-card-padding: 6px;
+	--sidebar-info-card-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.05);
+
 	--status-bar-bg: #ece9d8;
 	--status-bar-text: #000000;
-	--status-pane-border: 0;
+	--status-pane-border: none;
+	--status-pane-border-right: 1px solid #aca899;
+	--ui-status-bar-border-top: 1px solid #d4d0c8;
+	--ui-status-bar-box-shadow: 0 -1px 0 var(--ui-shadow);
+	--ui-status-bar-gap: 0;
+	--ui-status-pane-box-shadow: 1px 0 0 white;
+	--ui-status-pane-margin-right: 2px;
 
 	--ui-list-hover-bg: #eef3fb;
 	--ui-text-accent: #0000ff;
 
-	.sidebar-box-header {
-		box-shadow: 0 -3px 4px 0px black;
-		z-index: 10;
-		position: relative;
-	}
-	.sidebar-box-content {
-		border: 0 solid white;
-		border-width: 0 1px 1px 1px;
-		border-right: 1px solid #e7ecff;
-	}
-	.sidebar-box-info-card {
-		background: #ffffff9e;
-		border: 1px solid #ffffffbd;
-		border-radius: 4px;
-		padding: 6px;
-		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.05);
-	}
+	/* Panel & Table Vars */
+	/* --ui-panel-raised-border handled in override below due to 4-color syntax */
+	--ui-panel-sunken-border: 1px solid #7f9db9;
+	--ui-table-border: 1px solid #7f9db9;
+
+	/* Generic Fieldset */
+	--ui-fieldset-border: 1px solid #d4d0c8;
+	--ui-fieldset-radius: 4px;
+	--ui-legend-color: #0b71d0;
+
+	/* Window / Modal Vars */
+	--ui-window-bg: #0054e3;
+	--ui-window-border: 1px solid #0030a6;
+	--ui-window-padding: 0;
+	--ui-window-gap: 0;
+	--ui-window-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 2px 2px 10px rgba(0, 0, 0, 0.4);
+
+	--ui-window-header-height: 25px;
+	--ui-window-header-border: none;
+	--ui-window-header-margin-bottom: 0;
+	--ui-window-header-text-shadow: 1px 1px 1px #0f3fab;
+	/* XP uses a vertical gradient for window headers, distinct from generic headers */
+	--ui-window-header-padding: 0 5px 0px 5px;
+
+	--ui-window-content-border: 1px solid #0030a6;
+	--ui-window-content-margin: 0;
+
+	--ui-window-footer-border-top: none;
+
+	--ui-close-btn-bg: linear-gradient(135deg, #fb7256 0%, #f65230 50%, #d83d23 100%);
+	--ui-close-btn-border: 1px solid #ffffff;
+	--ui-close-btn-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3), inset 1px 1px 1px rgba(255, 255, 255, 0.3);
+	--ui-close-btn-hover-filter: brightness(1.1);
 
 	.sidebar-box-primary {
 		--sidebar-box-bg: #eff3ff;
@@ -79,32 +117,19 @@
 		}
 	}
 
-	/* Nested Component Overrides for XP */
-	.ui-btn:not(:disabled):hover {
-		border-color: var(--ui-btn-hover-border);
-		box-shadow: 0 0 2px #ffad33;
-	}
-
-	.ui-btn:not(:disabled):active {
-		box-shadow: var(--ui-btn-active-shadow);
-	}
+	/* Specific Overrides (Reduced) */
 
 	.ui-panel-raised {
 		border-radius: 2px;
 		border-color: var(--ui-light) var(--ui-shadow) var(--ui-shadow) var(--ui-light);
-		/* #d4d0c8 #8d8a85 #8d8a85 #d4d0c8; */
 	}
 
-	.ui-panel-sunken {
-		border: 1px solid #7f9db9;
-		background: var(--ui-light);
+	.ui-status-pane:last-child {
+		border-right: none;
+		box-shadow: none;
 	}
 
-	.ui-table-container {
-		border: 1px solid #7f9db9;
-	}
-
-	/* Inputs más específicos para XP (excluyendo los que no son cajas de texto) */
+	/* Restore specific XP input styling */
 	input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
 	select,
 	textarea {
@@ -117,83 +142,5 @@
 			outline: 1px solid #ffad3365;
 			border-color: #7f9db9 !important;
 		}
-	}
-
-	.ui-status-bar {
-		border-top: 1px solid #d4d0c8;
-		box-shadow: 0 -1px 0 var(--ui-shadow);
-		gap: 0;
-	}
-
-	.ui-status-pane {
-		border: none;
-		border-right: 1px solid #aca899;
-		box-shadow: 1px 0 0 white;
-		margin-right: 2px;
-		&:last-child {
-			border-right: none;
-			box-shadow: none;
-		}
-	}
-
-	fieldset {
-		legend {
-			color: #0b71d0;
-		}
-		border: 1px solid #d4d0c8;
-		border-radius: 4px;
-	}
-
-	/* Windows XP Modal specific */
-	.ui-window {
-		border: 1px solid #0030a6;
-		border-radius: 8px 8px 0 0;
-		box-shadow:
-			inset 0 1px 0 rgba(255, 255, 255, 0.4),
-			2px 2px 10px rgba(0, 0, 0, 0.4);
-		overflow: hidden;
-		background: #0054e3; /* Color del marco */
-		padding: 0px; /* El marco de XP rodea el contenido */
-		gap: 0;
-	}
-
-	.ui-window-header {
-		height: 25px;
-		background: linear-gradient(to bottom, #0058e6 0%, #3a93ff 8%, #0058e6 40%, #0058e6 70%, #0030a6 100%);
-		border: none;
-		text-shadow: 1px 1px 1px #0f3fab;
-		padding: 0 5px 0px 5px;
-		margin-bottom: 0;
-	}
-
-	.ui-window-content {
-		background: var(--ui-face);
-		border: 1px solid #0030a6;
-		margin: 0;
-		flex: 1;
-	}
-
-	.ui-window-footer {
-		background: var(--ui-face);
-		border: 1px solid #0030a6;
-		border-top: none;
-		margin: 0;
-		padding: 8px;
-	}
-
-	.ui-close-btn {
-		background: linear-gradient(135deg, #fb7256 0%, #f65230 50%, #d83d23 100%);
-		border: 1px solid #ffffff;
-		box-shadow:
-			1px 1px 1px rgba(0, 0, 0, 0.3),
-			inset 1px 1px 1px rgba(255, 255, 255, 0.3);
-		border-radius: 3px;
-		width: 21px;
-		height: 21px;
-		text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
-	}
-
-	.ui-close-btn:hover {
-		filter: brightness(1.1);
 	}
 }

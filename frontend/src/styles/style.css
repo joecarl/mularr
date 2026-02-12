@@ -4,6 +4,7 @@
 @import './themes/xp.css';
 @import './themes/classic.css';
 @import './themes/hacker.css';
+@import './themes/win11.css';
 
 :root {
 	--primary-color: #7618f0;

@@ -47,12 +47,19 @@
 			cursor: default;
 			border-top-left-radius: 3px;
 			border-top-right-radius: 3px;
+			box-shadow: var(--sidebar-box-header-shadow, none);
+			z-index: var(--sidebar-box-header-z-index, auto);
+			position: var(--sidebar-box-header-position, static);
+		}
+
+		.sidebar-box-content {
+			border: var(--sidebar-box-content-border, none);
+			border-right: var(--sidebar-box-content-border-right, initial);
 		}
 
 		.nav-links {
 			display: flex;
 			flex-direction: column;
-			background: var(--sidebar-box-bg);
 			padding: 5px;
 
 			.nav-link {
@@ -90,6 +97,14 @@
 					font-weight: bold;
 				}
 			}
+		}
+
+		.sidebar-box-info-card {
+			background: var(--sidebar-info-card-bg, transparent);
+			border: var(--sidebar-info-card-border, none);
+			border-radius: var(--sidebar-info-card-radius, 0);
+			padding: var(--sidebar-info-card-padding, 0);
+			box-shadow: var(--sidebar-info-card-shadow, none);
 		}
 
 		.network-container {
@@ -187,7 +202,6 @@
 		}
 
 		.stats-container {
-			background: var(--sidebar-box-bg);
 			padding: 8px;
 			font-size: 11px;
 			color: #003c74;
@@ -228,12 +242,6 @@
 		}
 	}
 
-	.connection-box {
-		background: var(--sidebar-box-bg);
-		border-bottom: 1px solid var(--sidebar-item-active);
-		color: var(--ui-text);
-	}
-
 	.connection-status {
 		background: white;
 		padding: 5px;
@@ -268,124 +276,5 @@
 	}
 	.sidebar-version {
 		font-size: 0.85rem;
-	}
-}
-
-/* Theme Overrides via Root Nesting or Scoped? 
-   CSS Nesting doesn't support @parent selector exactly like SCSS yet in all cases, 
-   but we can use :root[data-theme="..."] .sidebar { ... } 
-   Or inside .sidebar { :root[data-theme="..."] & { ... } } <-- this is valid modern CSS
-*/
-
-/* Default gradient override */
-:root:not([data-theme='classic']):not([data-theme='hacker']) .sidebar {
-	background: linear-gradient(to bottom, #7a96df 0%, #7a96df 100%);
-}
-
-.sidebar {
-	/* Classic Theme Overrides */
-	@media (min-width: 0px) {
-		/* Hack to ensure specificity or just use the selector */
-	}
-}
-
-[data-theme='classic'] .sidebar {
-	.sidebar-box {
-		border-radius: 0;
-		border: 2px outset #fff;
-		border-right-color: #404040;
-		border-bottom-color: #404040;
-		background: #d4d0c8;
-
-		.sidebar-box-header {
-			border-radius: 0;
-			margin: 2px;
-		}
-		.nav-links {
-			background: #d4d0c8;
-			.nav-link {
-				color: #000;
-				&:hover {
-					color: white;
-					text-decoration: none;
-					background-color: #0a246a; /* Hardcoded classic hl */
-				}
-			}
-		}
-		.stats-container {
-			color: #000;
-			background: #d4d0c8;
-			hr {
-				border-top: 1px solid #808080;
-				border-bottom: 1px solid #fff;
-			}
-			.stat-unit {
-				color: #404040;
-			}
-		}
-	}
-
-	.sidebar-header .app-logo {
-		color: #000;
-	}
-
-	.connection-box {
-		color: #000;
-		background: #d4d0c8;
-	}
-
-	.connection-status {
-		border: 2px inset #fff;
-		background: #d4d0c8;
-		border-radius: 0;
-	}
-
-	.sidebar-footer {
-		color: #000;
-	}
-}
-
-[data-theme='hacker'] .sidebar {
-	.sidebar-box {
-		border-radius: 0;
-		border: 1px solid #00ff00;
-
-		.nav-links .nav-link {
-			color: #00ff00;
-			&:hover {
-				color: #00ff00;
-				text-decoration: none;
-				background-color: #004400;
-			}
-		}
-		.stats-container {
-			color: #00ff00;
-			background: #000;
-			hr {
-				border-top: 1px dashed #00ff00;
-			}
-			.stat-unit {
-				color: #00aa00;
-			}
-		}
-	}
-
-	.sidebar-header .app-logo {
-		color: #00ff00;
-	}
-
-	.connection-box {
-		background: #000;
-	}
-
-	.connection-status {
-		background: #000;
-		color: #00ff00;
-		border: 1px solid #00ff00;
-		border-radius: 0;
-	}
-
-	.sidebar-footer {
-		color: #00ff00;
 	}
 }
