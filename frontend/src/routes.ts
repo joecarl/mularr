@@ -5,7 +5,7 @@ import { SearchView } from './features/search/SearchView';
 import { SharedView } from './features/shared/SharedView';
 import { SettingsView } from './features/settings/SettingsView';
 import { CategoriesView } from './features/categories/CategoriesView';
-import { ValidatorsView } from './features/validators/ValidatorsView';
+import { WebhooksView } from './features/webhooks/WebhooksView';
 
 export const routes: Route[] = [
 	{ path: '/', component: ServersView },
@@ -13,7 +13,7 @@ export const routes: Route[] = [
 	{ path: '/transfers', component: TransfersView },
 	{ path: '/search', component: SearchView },
 	{ path: '/shared', component: SharedView },
-	{ path: '/validators', component: ValidatorsView },
+	{ path: '/webhooks', component: WebhooksView },
 	{ path: '/categories', component: CategoriesView },
 	{ path: '/settings', component: SettingsView },
 ];

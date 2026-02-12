@@ -1,8 +1,10 @@
-export interface Validator {
+export type WebhookType = 'Validator' | 'Advanced search';
+
+export interface Webhook {
 	id: number;
 	name: string;
 	url: string;
-	type: string;
+	type: WebhookType;
 	enabled: number;
 }
 

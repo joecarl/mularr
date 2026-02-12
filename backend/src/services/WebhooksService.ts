@@ -1,23 +1,23 @@
 import db from '../db';
-import { Validator, ValidationResult } from '../types/ValidatorTypes';
+import { Webhook, ValidationResult } from '../types/WebhookTypes';
 
-export class ValidatorsService {
-	// CRUD Validators
-	getAllValidators(): Validator[] {
-		return db.prepare('SELECT * FROM validators').all() as Validator[];
+export class WebhooksService {
+	// CRUD Webhooks
+	getAllWebhooks(): Webhook[] {
+		return db.prepare('SELECT * FROM validators').all() as Webhook[];
 	}
 
-	addValidator(validator: Omit<Validator, 'id'>) {
+	addWebhook(webhook: Omit<Webhook, 'id'>) {
 		const stmt = db.prepare('INSERT INTO validators (name, url, type, enabled) VALUES (?, ?, ?, ?)');
-		return stmt.run(validator.name, validator.url, validator.type, validator.enabled);
+		return stmt.run(webhook.name, webhook.url, webhook.type, webhook.enabled);
 	}
 
-	deleteValidator(id: number) {
+	deleteWebhook(id: number) {
 		db.prepare('DELETE FROM validators WHERE id = ?').run(id);
 		db.prepare('DELETE FROM file_validations WHERE validator_id = ?').run(id);
 	}
 
-	toggleValidator(id: number, enabled: boolean) {
+	toggleWebhook(id: number, enabled: boolean) {
 		db.prepare('UPDATE validators SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, id);
 	}
 
@@ -26,8 +26,8 @@ export class ValidatorsService {
 	 * Returns true if the file is considered safe/valid to be exposed as 100% completed.
 	 */
 	getValidationStatus(fileHash: string): boolean {
-		// Get all enabled validators
-		const validators = this.getAllValidators().filter((v) => v.enabled);
+		// Get all enabled validators, strictly of type 'Validator'
+		const validators = this.getAllWebhooks().filter((v) => v.enabled && v.type === 'Validator');
 		if (validators.length === 0) return true; // No validators = no restrictions
 
 		// Check results
@@ -46,10 +46,11 @@ export class ValidatorsService {
 	}
 
 	async processFile(fileHash: string, filePath: string) {
-		const validators = this.getAllValidators().filter((v) => v.enabled);
+		// Only process Type 'Validator'
+		const validators = this.getAllWebhooks().filter((v) => v.enabled && v.type === 'Validator');
 		if (validators.length === 0) return;
 
-		console.log(`[ValidatorsService] Processing file ${fileHash} (${filePath})`);
+		console.log(`[WebhooksService] Processing file ${fileHash} (${filePath})`);
 
 		for (const v of validators) {
 			// Check if already validated (optional, but good optimize)
@@ -77,7 +78,7 @@ export class ValidatorsService {
 				// Assume response: { valid: boolean, details: string }
 				const status = data.valid ? 'passed' : 'failed';
 				this.upsertValidation(fileHash, v.id, status, data.details || 'Validation completed');
-				console.log(`[ValidatorsService] Validator ${v.name} result for ${fileHash}: ${status}`);
+				console.log(`[WebhooksService] Validator ${v.name} result for ${fileHash}: ${status}`);
 			} catch (error: any) {
 				console.error(`Validator ${v.name} failed:`, error);
 				this.upsertValidation(fileHash, v.id, 'failed', error.message);

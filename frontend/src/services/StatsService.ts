@@ -29,6 +29,9 @@ export class StatsService {
 		}
 		this.prevRequestFinished = false;
 		try {
+			const test = await this.apiService.getUpdate();
+			console.log('Update check:', test);
+
 			const data = await this.apiService.getStatus();
 			this.stats.set(data);
 		} catch (e) {

@@ -1,45 +1,45 @@
 import { component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { ValidatorsApiService, Validator } from '../../services/ValidatorsApiService';
+import { WebhooksApiService, Webhook, WebhookType } from '../../services/WebhooksApiService';
 import { DialogService } from '../../services/DialogService';
-import tpl from './ValidatorsView.html';
-import './ValidatorsView.css';
+import tpl from './WebhooksView.html';
+import './WebhooksView.css';
 
-export const ValidatorsView = component(() => {
-	const api = services.get(ValidatorsApiService);
+export const WebhooksView = component(() => {
+	const api = services.get(WebhooksApiService);
 	const dialogService = services.get(DialogService);
-	const validators = signal<Validator[]>([]);
+	const webhooks = signal<Webhook[]>([]);
 	const showDialog = signal(false);
 
 	const refresh = async () => {
 		try {
-			const list = await api.getValidators();
-			validators.set(list);
+			const list = await api.getWebhooks();
+			webhooks.set(list);
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to load validators', 'Error');
+			await dialogService.alert('Failed to load webhooks', 'Error');
 		}
 	};
 
 	const handleDelete = async (id: number) => {
-		if (await dialogService.confirm('Are you sure you want to delete this validator?', 'Delete Validator')) {
+		if (await dialogService.confirm('Are you sure you want to delete this webhook?', 'Delete Webhook')) {
 			try {
-				await api.deleteValidator(id);
+				await api.deleteWebhook(id);
 				refresh();
 			} catch (e) {
 				console.error(e);
-				await dialogService.alert('Failed to delete validator', 'Error');
+				await dialogService.alert('Failed to delete webhook', 'Error');
 			}
 		}
 	};
 
 	const handleToggle = async (id: number, current: boolean) => {
 		try {
-			await api.toggleValidator(id, !current);
+			await api.toggleWebhook(id, !current);
 			refresh();
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to toggle validator status', 'Error');
+			await dialogService.alert('Failed to toggle webhook status', 'Error');
 		}
 	};
 
@@ -50,17 +50,17 @@ export const ValidatorsView = component(() => {
 		const v = {
 			name: formData.get('name') as string,
 			url: formData.get('url') as string,
-			type: formData.get('type') as string,
+			type: formData.get('type') as WebhookType,
 			enabled: formData.get('enabled') ? 1 : 0,
 		};
 		try {
-			await api.addValidator(v);
+			await api.addWebhook(v);
 			showDialog.set(false);
 			form.reset();
 			refresh();
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to add validator', 'Error');
+			await dialogService.alert('Failed to add webhook', 'Error');
 		}
 	};
 
@@ -72,13 +72,13 @@ export const ValidatorsView = component(() => {
 
 		listBody: {
 			inner: () => {
-				const list = validators.get();
+				const list = webhooks.get();
 				if (list.length === 0) {
 					return tpl.noItemsRow({});
 				}
 
 				return list.map((v) =>
-					tpl.validatorRow({
+					tpl.webhookRow({
 						nodes: {
 							idCol: { inner: String(v.id) },
 							nameCol: { inner: v.name },

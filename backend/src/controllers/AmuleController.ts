@@ -117,6 +117,15 @@ export class AmuleController {
 		}
 	};
 
+	getUpdate = async (req: Request, res: Response) => {
+		try {
+			const update = await this.amuleService.getUpdate();
+			res.json(update);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	download = async (req: Request, res: Response) => {
 		try {
 			const { link } = req.body;

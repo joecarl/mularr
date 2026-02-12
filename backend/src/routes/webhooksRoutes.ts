@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { ValidatorsController } from '../controllers/ValidatorsController';
+import { WebhooksController } from '../controllers/WebhooksController';
 
-export const validatorsRoutes = () => {
+export const webhooksRoutes = () => {
 	const router = Router();
-	const controller = new ValidatorsController();
+	const controller = new WebhooksController();
 
 	router.get('/', controller.list);
 	router.post('/', controller.add);

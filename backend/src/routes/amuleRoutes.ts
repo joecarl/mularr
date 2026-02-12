@@ -17,6 +17,7 @@ export const amuleRoutes = () => {
 	router.get('/search/results', controller.getSearchResults);
 	router.get('/search/status', controller.getSearchStatus);
 	router.get('/upload-queue', controller.getUploadQueue);
+	router.get('/update', controller.getUpdate);
 	router.post('/download', controller.download);
 	router.post('/download/command', controller.downloadCommand);
 	router.get('/categories', controller.getCategories);

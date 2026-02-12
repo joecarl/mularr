@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
 import { AmuleService } from '../services/AmuleService';
-import { ValidatorsService } from '../services/ValidatorsService';
+import { WebhooksService } from '../services/WebhooksService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
 import { AmuleCategory } from 'amule-ec-client';
 
@@ -16,7 +16,7 @@ const getCatByName = (ctgs: AmuleCategory[], name: string) => {
  */
 export class QbittorrentController {
 	private readonly amuleService = container.get(AmuleService);
-	private readonly validatorsService = container.get(ValidatorsService);
+	private readonly webhooksService = container.get(WebhooksService);
 
 	// qBittorrent API: POST /api/v2/auth/login
 	login = async (req: Request, res: Response) => {
@@ -131,9 +131,9 @@ export class QbittorrentController {
 				// If not valid, report state = 'checkingUP'.
 				if (t.hash && contentPath && t.statusId && t.statusId >= 9) {
 					// Trigger validation (non-blocking) - fire and forget
-					this.validatorsService.processFile(t.hash, contentPath).catch((err) => console.error(err));
+					this.webhooksService.processFile(t.hash, contentPath).catch((err) => console.error(err));
 
-					const isValid = this.validatorsService.getValidationStatus(t.hash);
+					const isValid = this.webhooksService.getValidationStatus(t.hash);
 					if (!isValid) {
 						state = 'checkingUP';
 					}

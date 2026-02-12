@@ -563,6 +563,16 @@ export class AmuleService {
 		}
 	}
 
+	async getUpdate() {
+		try {
+			const update = await this.client.getUpdate();
+			return update;
+		} catch (e) {
+			console.error('Get Update Error:', e);
+			throw e;
+		}
+	}
+
 	// ------------------------------
 	// Categories CRUD
 	// ------------------------------
@@ -598,7 +608,7 @@ export class AmuleService {
 			await this.client.createCategory(category);
 			const ctgs = await this.getCategories();
 			// Get ctg with highest ID - should be the one we just created
-			const created = ctgs.reduce((prev, current) => (prev.id > current.id ? prev : current));
+			const created = ctgs.reduce((prev, current) => (prev.id! > current.id! ? prev : current));
 			if (created.name !== category.name) {
 				throw new Error('Failed to verify created category');
 			}

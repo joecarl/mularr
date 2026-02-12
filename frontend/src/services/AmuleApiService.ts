@@ -226,6 +226,14 @@ export interface SearchStatusResponse {
 	progress: number;
 }
 
+export interface UpdateResponse {
+	sharedFiles: AmuleFile[];
+	//downloadQueue: AmuledTransferringFile[];
+	clients: AmuleUpDownClient[];
+	//servers: AmuleServer[];
+	//friends: AmuleFriend[];
+}
+
 export interface SuccessResponse {
 	success: boolean;
 }
@@ -332,5 +340,9 @@ export class AmuleApiService extends BaseApiService {
 		return this.request<SuccessResponse>('/daemon/restart', {
 			method: 'POST',
 		});
+	}
+
+	async getUpdate(): Promise<UpdateResponse> {
+		return this.request<UpdateResponse>('/update');
 	}
 }
