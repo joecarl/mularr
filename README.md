@@ -1,12 +1,12 @@
 # Mularr
 
-**Mularr** is a powerful integration for **aMule** that provides a modern web interface and bridges the gap between classic P2P and modern automation tools. It offers **qBittorrent-compatible APIs** and **Torznab indexers**, making it easy to use aMule with your favorite \*arr apps like Sonarr and Radarr.
+**Mularr** is a powerful integration for **aMule** that provides a functional web interface with a retro touch and bridges the gap between classic P2P and modern automation tools. It offers **qBittorrent-compatible APIs** and **Torznab indexers**, making it easy to use aMule with your favorite \*arr apps like Sonarr and Radarr.
 
 ---
 
 ## ✨ Key Features
 
-- 🌐 **Modern Web interface**: A sleek, responsive UI built with Vite and [Chispa](https://github.com/joecarl/chispa).
+- 🌐 **Retro-Style Web Interface**: A responsive UI with a nostalgic feel (Windows XP style). Includes multiple themes like Classic, Windows 11 (Experimental), and more. Built with [Chispa](https://github.com/joecarl/chispa).
 - 🔗 **\*Arr Integration**: Native support for Sonarr/Radarr via qBittorrent API compatibility.
 - 🔍 **Torznab Support**: Integrated indexer for easy searching.
 - 📦 **Docker Ready**: Easy deployment using Docker and Docker Compose.
@@ -22,16 +22,16 @@ The easiest way to get Mularr running is using Docker Compose:
 
 ```yml
 services:
-  mularr:
-    image: ghcr.io/joecarl/mularr
-    container_name: mularr
-    restart: unless-stopped
-    ports:
-      - '8940:8940'
-    volumes:
-      - ./data:/app/data
+    mularr:
+        image: ghcr.io/joecarl/mularr
+        container_name: mularr
+        restart: unless-stopped
+        ports:
+            - '8940:8940'
+        volumes:
+            - ./data:/app/data
 
-  # Have a look at docker-compose.example.yml for extended documentation
+    # Have a look at docker-compose.example.yml for extended documentation
 ```
 
 Run it with:
