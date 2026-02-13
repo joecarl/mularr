@@ -65,3 +65,11 @@ export function formatRemaining(remainingBytes?: number, speedBytesPerSec?: numb
 
 	return `${timeStr} (${sizeText})`;
 }
+
+export function toString(val: any): string {
+	if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+	if (typeof val === 'object' && val !== null) {
+		return JSON.stringify(val);
+	}
+	return String(val);
+}
