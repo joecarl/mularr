@@ -1,123 +1,157 @@
 # Mularr
 
-**Mularr** integrates aMule with a web interface and provides \*arr-style (Sonarr/Radarr) and qBittorrent compatible APIs to simplify download management.
+**Mularr** is a powerful integration for **aMule** that provides a modern web interface and bridges the gap between classic P2P and modern automation tools. It offers **qBittorrent-compatible APIs** and **Torznab indexers**, making it easy to use aMule with your favorite \*arr apps like Sonarr and Radarr.
 
 ---
 
-## 🚀 Key features
+## ✨ Key Features
 
-- Manage downloads via aMule.
-- qBittorrent API compatibility for Sonarr/Radarr (`/api/as-qbittorrent/api/v2`).
-- Torznab indexer for Sonarr/Radarr integration (`/api/as-torznab-indexer`).
-- Frontend built with **Vite**, **TypeScript** and [**Chispa**](https://github.com/joecarl/chispa) (the best UI framework ever invented; see [documentation](https://github.com/joecarl/chispa/blob/main/DOCUMENTATION.md) and [examples](https://github.com/joecarl/chispa/tree/main/test/example)).
-- Local persistence using **SQLite** (`better-sqlite3`).
-
----
-
-## 🛠️ Technologies
-
-- Frontend: **Vite + TypeScript + Chispa**
-- Backend: **Node.js + Express + TypeScript**
-- DB: **SQLite** (via `better-sqlite3`)
-- HTTP client: **Axios**
+- 🌐 **Modern Web interface**: A sleek, responsive UI built with Vite and [Chispa](https://github.com/joecarl/chispa).
+- 🔗 **\*Arr Integration**: Native support for Sonarr/Radarr via qBittorrent API compatibility.
+- 🔍 **Torznab Support**: Integrated indexer for easy searching.
+- 📦 **Docker Ready**: Easy deployment using Docker and Docker Compose.
+- 📱 **Telegram Notifications**: Get notified of your downloads directly on Telegram.
+- 🛡️ **VPN Ready**: Built-in support for Gluetun health checks.
+- 🗄️ **Lightweight**: High performance with Node.js and SQLite.
 
 ---
 
-## 📂 Repository structure
+## 🚀 Quick Start with Docker
 
-- `backend/` – server, API and business logic.
-- `frontend/` – web application (Vite + Chispa).
+The easiest way to get Mularr running is using Docker Compose:
 
-> ⚠️ Do not run `npm install` in the repository root: install dependencies separately in `backend` and `frontend`.
+```yml
+services:
+  mularr:
+    image: ghcr.io/joecarl/mularr
+    container_name: mularr
+    restart: unless-stopped
+    ports:
+      - '8940:8940'
+    volumes:
+      - ./data:/app/data
+
+  # Have a look at docker-compose.example.yml for extended documentation
+```
+
+Run it with:
+
+```bash
+docker-compose up -d
+```
+
+Access the UI at `http://localhost:8940`.
 
 ---
 
-## ⚙️ Important environment variables
+## 📸 Screenshots
 
-| Variable             | Description                                        | Default / Notes                         |
-| -------------------- | -------------------------------------------------- | --------------------------------------- |
-| `PORT`               | Port the backend listens on                        | `8940`                                  |
-| `DATABASE_PATH`      | Path to the SQLite database file                   | `./database.sqlite` (default)           |
-| `AMULE_CONFIG_DIR`   | Directory for aMule configuration                  | Optional                                |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token (optional)                      | Enables notifications when present      |
-| `TELEGRAM_CHAT_ID`   | Chat ID to send messages to                        | Required if `TELEGRAM_BOT_TOKEN` is set |
-| `TELEGRAM_TOPIC_ID`  | (Optional) Telegram thread/topic to group messages | Integer                                 |
-| `GLUETUN_API`        | Gluetun API base URL                               | `http://localhost:8000/v1`              |
-| `GLUETUN_ENABLED`    | Flag to enable Gluetun checks                      | `false` (set to `true` to enable)       |
+<p align="center">
+  <img src="https://games.copinstar.com/img/mularr/mularr01.png" alt="Transfers">
+  <img src="https://games.copinstar.com/img/mularr/mularr02.png" alt="Settings">
+</p>
 
 ---
 
-## 🏁 Running in development
+## 🛠️ Tech Stack
 
-### Backend
+| Component       | Technology                                                            |
+| :-------------- | :-------------------------------------------------------------------- |
+| **Frontend**    | [Chispa](https://github.com/joecarl/chispa) + TypeScript + Vite       |
+| **Backend**     | Node.js + Express + TypeScript                                        |
+| **Database**    | SQLite ([better-sqlite3](https://github.com/WiseLibs/better-sqlite3)) |
+| **Integration** | aMule (amuled + amulecmd)                                             |
 
-1. Open a terminal and run:
+---
+
+## ⚙️ Configuration (Environment Variables)
+
+| Variable             | Description                  | Default                    |
+| :------------------- | :--------------------------- | :------------------------- |
+| `PORT`               | Backend listening port       | `8940`                     |
+| `DATABASE_PATH`      | Path to the SQLite file      | `./database.sqlite`        |
+| `AMULE_CONFIG_DIR`   | Directory for aMule config   | _Optional_                 |
+| `TELEGRAM_BOT_TOKEN` | Bot token for notifications  | _Optional_                 |
+| `TELEGRAM_CHAT_ID`   | Telegram chat ID             | _Required for TG_          |
+| `TELEGRAM_TOPIC_ID`  | Telegram thread/topic ID     | _Optional_                 |
+| `GLUETUN_ENABLED`    | Enable Gluetun health checks | `false`                    |
+| `GLUETUN_API`        | Gluetun API endpoint         | `http://localhost:8000/v1` |
+
+---
+
+## 👨‍💻 Development Setup
+
+If you want to contribute or run Mularr from source, follow these steps:
+
+### 1. Repository Structure
+
+- `backend/` – Express server and business logic.
+- `frontend/` – Web application using Chispa.
+
+> [!WARNING]
+> Do **not** run `npm install` in the root folder. Install dependencies separately in `backend/` and `frontend/`.
+
+### 2. Backend Setup
 
 ```bash
 cd backend
 npm install
-npm run dev   # runs the server in watch mode (tsx)
+npm run dev
 ```
 
-The server starts at `http://localhost:8940` (or the port configured in `PORT`).
+The server will start at `http://localhost:8940`.
 
-> Note: the SQLite database file is created automatically at the path configured in `DATABASE_PATH`.
-
-### Frontend
-
-1. Open a terminal and run:
+### 3. Frontend Setup
 
 ```bash
 cd frontend
 npm install
-npm run dev   # Vite, accessible from 0.0.0.0 for container usage
+npm run dev
 ```
 
-The frontend runs on the port Vite assigns (default 5173) and consumes the backend API; configure URLs as needed.
-
-> Requirement: the frontend `postinstall` runs `chispa-cli --compile-html`. Make sure `chispa-cli` is available when running `npm install`.
+Access the development server (Vite) at the provided URL (usually `http://localhost:5173`).
 
 ---
 
-## 📦 Build and deployment (production)
+## 📦 Production Build
 
-The included Dockerfile builds the `frontend` and copies `dist` into `backend/public` so the backend serves the SPA:
-
-From the repository root:
+The included `Dockerfile` handles everything for you. It builds the frontend and bundles it with the backend for a single-image deployment.
 
 ```bash
 docker build -t mularr .
 ```
 
-The image exposes port `8940` by default. The `/app/data` folder is used to store the database and persistent configuration.
-
 ---
 
-## 🌐 Relevant endpoints
+## 🌐 API & Integration
 
-- `GET /api/system` – system endpoints (see `backend/src/controllers/SystemController.ts`).
-- `GET/POST /api/amule/*` – aMule interactions (info, search, downloads, servers, categories, etc.).
-- `GET/POST /api/as-qbittorrent/api/v2/*` – qBittorrent compatibility (authentication, torrents, categories).
-- `GET /api/as-torznab-indexer` – Torznab indexer endpoint for Sonarr/Radarr.
+Mularr provides several endpoints for external integrations:
 
-Check the routes in `backend/src/routes` for the full list.
-
----
-
-## 💡 Development notes
-
-- The `downloads` table is created automatically when the backend starts (see `backend/src/db.ts`).
-- To compile TypeScript: `cd backend && npm run build`.
-- On Alpine (Docker), build tools are required for `better-sqlite3`; the `Dockerfile` already includes the necessary packages.
-
----
-
-## 🧪 Tests and quality
-
-There are no automated tests included at the moment. PRs adding tests and CI are welcome.
+- **qBittorrent API**: `/api/as-qbittorrent/api/v2/*` (Use this in Sonarr/Radarr).
+- **Torznab Indexer**: `/api/as-torznab-indexer`.
+- **System API**: `/api/system`.
+- **aMule API**: `/api/amule/*`.
 
 ---
 
 ## 🤝 Contributing
 
-Open issues or pull requests; follow good commit practices and keep compatibility with documented routes and environment variables.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<p align="center">
+  Made with ❤️ for the P2P Community
+</p>

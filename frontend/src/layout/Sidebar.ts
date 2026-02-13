@@ -10,10 +10,18 @@ import './Sidebar.css';
 // Usa plantillas con `data-cb` en `Sidebar.html` y constrúyelas desde aquí con `tpl.<dataCbName>(...)`.
 // Evita `document.createElement` y la manipulación manual del DOM; revisa `CHISPA_GUIDE.md` y `CHISPA_BEST_PRACTICES.md`.
 
+interface LinkData {
+	to: string;
+	icon?: string;
+	emoji?: string;
+	label: string;
+	style?: Record<string, string>;
+}
+
 export const Sidebar = component(() => {
 	const statsService = services.get(StatsService);
 
-	const linksData = [
+	const linksData: LinkData[] = [
 		{ to: '/servers', icon: '/assets/icons/Server.ico', label: 'Servers' },
 		{ to: '/transfers', icon: '/assets/icons/Transfer.ico', label: 'Transfers' },
 		{ to: '/search', icon: '/assets/icons/Search.ico', label: 'Search' },
