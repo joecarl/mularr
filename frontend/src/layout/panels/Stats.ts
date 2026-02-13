@@ -53,7 +53,7 @@ const StatsRows = componentList<RenderedStat>(
 	(s) => s.def.key
 );
 
-export const Stats = () => {
+export const StatsContainer = () => {
 	const statsService = services.get(StatsService);
 
 	const computedStats = computed(() => {
@@ -74,10 +74,7 @@ export const Stats = () => {
 
 	const loading = computed(() => computedStats.get().length === 0);
 
-	return () => (loading.get() ? 'Loading...' : StatsRows(computedStats));
-
-	// // Fallback if empty (preserve previous raw text behavior)
-	// if (result.length === 0 && s.raw) {
-	// 	return s.raw.split('\n').flatMap((line, i) => (i > 0 ? [tpl.statsBr({}), line] : [line]));
-	// }
+	return tpl.statsContainer({
+		inner: () => (loading.get() ? 'Loading...' : StatsRows(computedStats)),
+	});
 };

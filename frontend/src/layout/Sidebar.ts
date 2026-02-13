@@ -1,8 +1,8 @@
 import { component, computed, Link, pathMatches } from 'chispa';
 import { services } from '../services/container/ServiceContainer';
 import { StatsService } from '../services/StatsService';
-import { Stats } from './panels/Stats';
-import { Network } from './panels/Network';
+import { StatsContainer } from './panels/Stats';
+import { NetworkContainer } from './panels/Network';
 import tpl from './Sidebar.html';
 import './Sidebar.css';
 
@@ -89,9 +89,7 @@ export const Sidebar = component(() => {
 				},
 			});
 		},
-		networkContainer: Network(),
-		statsContainer: {
-			inner: Stats(),
-		},
+		networkContainer: NetworkContainer(),
+		statsContainer: StatsContainer(),
 	});
 });

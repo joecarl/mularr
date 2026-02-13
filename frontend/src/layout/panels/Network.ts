@@ -10,29 +10,6 @@ interface InfoItemProps {
 	value: string;
 }
 
-export const Network = () => {
-	const systemApiService = services.get(SystemApiService);
-	const systemInfo = signal<SystemInfo | null>(null);
-
-	smartPoll(async () => {
-		try {
-			const info = await systemApiService.getSystemInfo();
-			systemInfo.set(info);
-		} catch (e) {
-			console.error(e);
-		}
-	}, 60000 * 5);
-
-	const infoAvailable = computed(() => !!systemInfo.get());
-
-	// Initial fetch & loop (every 5 minutes)
-	return () => {
-		const info = infoAvailable.get();
-		if (!info) return tpl.networkContainer({ inner: 'Loading...' });
-		return Net({ systemInfo });
-	};
-};
-
 interface NetworkProps {
 	systemInfo: Signal<SystemInfo | null>;
 }
@@ -107,3 +84,26 @@ const Net = component<NetworkProps>(({ systemInfo }) => {
 		},
 	});
 });
+
+export const NetworkContainer = () => {
+	const systemApiService = services.get(SystemApiService);
+	const systemInfo = signal<SystemInfo | null>(null);
+
+	smartPoll(async () => {
+		try {
+			const info = await systemApiService.getSystemInfo();
+			systemInfo.set(info);
+		} catch (e) {
+			console.error(e);
+		}
+	}, 60000 * 5);
+
+	const infoAvailable = computed(() => !!systemInfo.get());
+
+	// Initial fetch & loop (every 5 minutes)
+	return () => {
+		const info = infoAvailable.get();
+		if (!info) return tpl.networkContainer({ inner: 'Loading...' });
+		return Net({ systemInfo });
+	};
+};
