@@ -1,45 +1,45 @@
 import { component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { WebhooksApiService, Webhook, WebhookType } from '../../services/WebhooksApiService';
+import { ExtensionsApiService, Extension, ExtensionType } from '../../services/ExtensionsApiService';
 import { DialogService } from '../../services/DialogService';
-import tpl from './WebhooksView.html';
-import './WebhooksView.css';
+import tpl from './ExtensionsView.html';
+import './ExtensionsView.css';
 
-export const WebhooksView = component(() => {
-	const api = services.get(WebhooksApiService);
+export const ExtensionsView = component(() => {
+	const api = services.get(ExtensionsApiService);
 	const dialogService = services.get(DialogService);
-	const webhooks = signal<Webhook[]>([]);
+	const extensions = signal<Extension[]>([]);
 	const showDialog = signal(false);
 
 	const refresh = async () => {
 		try {
-			const list = await api.getWebhooks();
-			webhooks.set(list);
+			const list = await api.getExtensions();
+			extensions.set(list);
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to load webhooks', 'Error');
+			await dialogService.alert('Failed to load extensions', 'Error');
 		}
 	};
 
 	const handleDelete = async (id: number) => {
-		if (await dialogService.confirm('Are you sure you want to delete this webhook?', 'Delete Webhook')) {
+		if (await dialogService.confirm('Are you sure you want to delete this extension?', 'Delete Extension')) {
 			try {
-				await api.deleteWebhook(id);
+				await api.deleteExtension(id);
 				refresh();
 			} catch (e) {
 				console.error(e);
-				await dialogService.alert('Failed to delete webhook', 'Error');
+				await dialogService.alert('Failed to delete extension', 'Error');
 			}
 		}
 	};
 
 	const handleToggle = async (id: number, current: boolean) => {
 		try {
-			await api.toggleWebhook(id, !current);
+			await api.toggleExtension(id, !current);
 			refresh();
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to toggle webhook status', 'Error');
+			await dialogService.alert('Failed to toggle extension status', 'Error');
 		}
 	};
 
@@ -50,17 +50,17 @@ export const WebhooksView = component(() => {
 		const v = {
 			name: formData.get('name') as string,
 			url: formData.get('url') as string,
-			type: formData.get('type') as WebhookType,
+			type: formData.get('type') as ExtensionType,
 			enabled: formData.get('enabled') ? 1 : 0,
 		};
 		try {
-			await api.addWebhook(v);
+			await api.addExtension(v);
 			showDialog.set(false);
 			form.reset();
 			refresh();
 		} catch (e) {
 			console.error(e);
-			await dialogService.alert('Failed to add webhook', 'Error');
+			await dialogService.alert('Failed to add extension', 'Error');
 		}
 	};
 
@@ -72,13 +72,13 @@ export const WebhooksView = component(() => {
 
 		listBody: {
 			inner: () => {
-				const list = webhooks.get();
+				const list = extensions.get();
 				if (list.length === 0) {
 					return tpl.noItemsRow({});
 				}
 
 				return list.map((v) =>
-					tpl.webhookRow({
+					tpl.extensionRow({
 						nodes: {
 							idCol: { inner: String(v.id) },
 							nameCol: { inner: v.name },

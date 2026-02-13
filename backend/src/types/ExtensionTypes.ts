@@ -1,16 +1,16 @@
-export type WebhookType = 'Validator' | 'Advanced search';
+export type ExtensionType = 'validator' | 'enhanced_search' | 'webhook';
 
-export interface Webhook {
+export interface Extension {
 	id: number;
 	name: string;
 	url: string;
-	type: WebhookType;
+	type: ExtensionType;
 	enabled: number;
 }
 
 export interface ValidationResult {
 	file_hash: string;
-	validator_id: number;
+	extension_id: number;
 	status: 'pending' | 'passed' | 'failed';
 	details?: string;
 	last_check: number;

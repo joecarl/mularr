@@ -19,7 +19,7 @@ export const Sidebar = component(() => {
 		{ to: '/search', icon: '/assets/icons/Search.ico', label: 'Search' },
 		{ to: '/shared', icon: '/assets/icons/SharedFiles.ico', label: 'Shared' },
 		{ to: '/categories', emoji: '🏷️', label: 'Categories' },
-		{ to: '/webhooks', emoji: '🪝', label: 'Webhooks', style: { filter: 'hue-rotate(195deg)' } },
+		{ to: '/extensions', emoji: '🧩', label: 'Extensions' },
 		{ to: '/settings', icon: '/assets/icons/Preferences.ico', label: 'Settings' },
 	];
 

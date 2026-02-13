@@ -1,10 +1,10 @@
-<div class="webhooks-view">
+<div class="extensions-view">
 	<div class="ui-panel-raised ui-feature-topbar">
-		<span style="font-weight: bold; margin-left: 5px;">Webhooks</span>
+		<span style="font-weight: bold; margin-left: 5px;">Extensions</span>
 		<div style="flex: 1;"></div>
 		<div style="display: flex; gap: 5px;">
 			<button class="ui-btn" data-cb="btnRefresh">Refresh</button>
-			<button class="ui-btn" data-cb="btnAdd">Add Webhook</button>
+			<button class="ui-btn" data-cb="btnAdd">Add Extension</button>
 		</div>
 	</div>
 
@@ -22,7 +22,7 @@
 			</thead>
 			<tbody data-cb="listBody">
 				<!-- Template row handled by code -->
-				<tr data-cb="webhookRow">
+				<tr data-cb="extensionRow">
 					<td data-cb="idCol" style="text-align: center;"></td>
 					<td data-cb="nameCol"></td>
 					<td data-cb="urlCol"></td>
@@ -40,7 +40,7 @@
 
 				<tr data-cb="noItemsRow">
 					<td colspan="6" style="text-align: center; padding: 10px; font-style: italic;">
-						No webhooks configured.
+						No extensions configured.
 					</td>
 				</tr>
 			</tbody>
@@ -51,7 +51,7 @@
 	<div class="modal-overlay" data-cb="dlgAdd" style="display: none;">
 		<div class="ui-window" style="width: 400px;">
 			<div class="ui-window-header">
-				<div class="ui-window-title">Add Webhook</div>
+				<div class="ui-window-title">Add Extension</div>
 				<div class="ui-window-controls">
 					<button class="ui-close-btn" data-cb="btnCloseDlg">×</button>
 				</div>
@@ -69,8 +69,9 @@
 					<div class="form-group" style="margin-bottom: 10px;">
 						<label style="display: block; margin-bottom: 3px;">Type:</label>
 						<select name="type" style="width: 100%;">
-							<option value="Validator">Validator</option>
-							<option value="Advanced search">Advanced search</option>
+							<option value="validator">Validator</option>
+							<option value="enhanced_search">Enhanced search</option>
+							<option value="webhook">Webhook</option>
 						</select>
 					</div>
 					<div class="form-group" style="margin-bottom: 15px;">

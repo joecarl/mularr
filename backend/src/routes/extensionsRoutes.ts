@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { WebhooksController } from '../controllers/WebhooksController';
+import { ExtensionsController } from '../controllers/ExtensionsController';
 
-export const webhooksRoutes = () => {
+export const extensionsRoutes = () => {
 	const router = Router();
-	const controller = new WebhooksController();
+	const controller = new ExtensionsController();
 
 	router.get('/', controller.list);
 	router.post('/', controller.add);

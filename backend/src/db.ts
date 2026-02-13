@@ -15,7 +15,7 @@ db.exec(`
     is_completed INTEGER DEFAULT 0
   );
 
-  CREATE TABLE IF NOT EXISTS validators (
+  CREATE TABLE IF NOT EXISTS extensions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
@@ -25,11 +25,11 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS file_validations (
     file_hash TEXT,
-    validator_id INTEGER,
+    extension_id INTEGER,
     status TEXT DEFAULT 'pending',
     details TEXT,
     last_check DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (file_hash, validator_id)
+    PRIMARY KEY (file_hash, extension_id)
   );
 `);
 

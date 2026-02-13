@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
-import { WebhooksService } from '../services/WebhooksService';
+import { ExtensionsService } from '../services/ExtensionsService';
 
-export class WebhooksController {
-	private readonly service: WebhooksService;
+export class ExtensionsController {
+	private readonly service: ExtensionsService;
 
 	constructor() {
-		this.service = container.get(WebhooksService);
+		this.service = container.get(ExtensionsService);
 	}
 
 	list = (req: Request, res: Response) => {
 		try {
-			const webhooks = this.service.getAllWebhooks();
-			res.json(webhooks);
+			const extensions = this.service.getAllExtensions();
+			res.json(extensions);
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}
@@ -21,7 +21,7 @@ export class WebhooksController {
 	add = (req: Request, res: Response) => {
 		try {
 			const { name, url, type, enabled } = req.body;
-			this.service.addWebhook({ name, url, type, enabled: enabled ? 1 : 0 });
+			this.service.addExtension({ name, url, type, enabled: enabled ? 1 : 0 });
 			res.json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
@@ -31,7 +31,7 @@ export class WebhooksController {
 	delete = (req: Request, res: Response) => {
 		try {
 			const { id } = req.params;
-			this.service.deleteWebhook(Number(id));
+			this.service.deleteExtension(Number(id));
 			res.json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
@@ -42,7 +42,7 @@ export class WebhooksController {
 		try {
 			const { id } = req.params;
 			const { enabled } = req.body;
-			this.service.toggleWebhook(Number(id), enabled);
+			this.service.toggleExtension(Number(id), enabled);
 			res.json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });

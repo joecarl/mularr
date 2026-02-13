@@ -10,12 +10,12 @@ import { GluetunService } from './services/GluetunService';
 import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
-import { WebhooksService } from './services/WebhooksService';
+import { ExtensionsService } from './services/ExtensionsService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
 import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
 import { indexerRoutes } from './routes/indexerRoutes';
-import { webhooksRoutes } from './routes/webhooksRoutes';
+import { extensionsRoutes } from './routes/extensionsRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
@@ -41,9 +41,9 @@ container.register(GluetunService, gluetunService);
 const systemService = new SystemService();
 container.register(SystemService, systemService);
 
-// Initialize Webhooks Service
-const webhooksService = new WebhooksService();
-container.register(WebhooksService, webhooksService);
+// Initialize Extensions Service
+const extensionsService = new ExtensionsService();
+container.register(ExtensionsService, extensionsService);
 
 // Initialize Telegram Service (Optional)
 if (process.env.TELEGRAM_BOT_TOKEN) {
@@ -61,7 +61,7 @@ monitoringService.start();
 
 app.use('/api/system', systemRoutes());
 app.use('/api/amule', amuleRoutes());
-app.use('/api/webhooks', webhooksRoutes());
+app.use('/api/extensions', extensionsRoutes());
 app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr
 app.use('/api/as-torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
 
