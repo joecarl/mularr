@@ -89,9 +89,7 @@ export const Sidebar = component(() => {
 				},
 			});
 		},
-		networkContainer: {
-			inner: Network(),
-		},
+		networkContainer: Network(),
 		statsContainer: {
 			inner: Stats(),
 		},
