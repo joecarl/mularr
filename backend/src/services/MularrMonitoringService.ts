@@ -6,6 +6,8 @@ import { TelegramService } from './TelegramService';
 export class MularrMonitoringService {
 	private readonly checkInterval: number = 10 * 1000; // 10 seconds
 	private intervalId: NodeJS.Timeout | null = null;
+	private gluetunFailures: number = 0;
+	private readonly maxGluetunFailures: number = 3;
 
 	private readonly amuledService = container.get(AmuledService);
 	private readonly gluetunService = container.get(GluetunService);
@@ -48,6 +50,7 @@ export class MularrMonitoringService {
 			if (this.gluetunService.isEnabled) {
 				const status = await this.gluetunService.getVpnStatus();
 				if (status && status.status === 'running') {
+					this.gluetunFailures = 0; // Reset counter
 					const port = await this.gluetunService.getPortForwarded();
 					if (port) {
 						const changed = await this.amuledService.updateCoreConfig(port);
@@ -56,8 +59,18 @@ export class MularrMonitoringService {
 							restartReason = `🔄 Gluetun port changed to ${port}`;
 						}
 					}
-				} else if (status) {
-					console.warn(`Gluetun VPN is not running. Status: ${status.status}`);
+				} else {
+					this.gluetunFailures++;
+					const statusStr = status ? status.status : 'unreachable';
+					console.warn(`⚠️ Gluetun health check failed (${this.gluetunFailures}/${this.maxGluetunFailures}). Status: ${statusStr}`);
+
+					if (this.gluetunFailures >= this.maxGluetunFailures) {
+						console.error(`🚨 Gluetun health check failed ${this.maxGluetunFailures} consecutive times. Suicide triggered.`);
+						await this.notify(`🚨 Gluetun health check failed ${this.maxGluetunFailures} consecutive times (Status: ${statusStr}). Restarting container...`);
+						// Give a small delay for the notification to be sent
+						setTimeout(() => process.exit(1), 2000);
+						return; // Stop further checks
+					}
 				}
 			}
 
