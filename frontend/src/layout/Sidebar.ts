@@ -18,7 +18,11 @@ interface LinkData {
 	style?: Record<string, string>;
 }
 
-export const Sidebar = component(() => {
+export interface SidebarProps {
+	onLinkClick?: () => void;
+}
+
+export const Sidebar = component<SidebarProps>((props) => {
 	const statsService = services.get(StatsService);
 
 	const linksData: LinkData[] = [
@@ -41,6 +45,9 @@ export const Sidebar = component(() => {
 			to: link.to,
 			inner: [icon, label],
 			classes: { 'nav-link': true, 'active-link': pathMatches(link.to) },
+			onclick: () => {
+				if (props && props.onLinkClick) props.onLinkClick();
+			},
 		});
 	});
 

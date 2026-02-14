@@ -7,7 +7,7 @@
 		<table class="ui-list">
 			<thead>
 				<tr>
-					<th style="width: 200px;">Server Name</th>
+					<th style="width: 200px;" class="is-mobile-primary">Server Name</th>
 					<th style="width: 150px;">IP</th>
 					<th style="width: 200px;">Description</th>
 					<th style="width: 50px; text-align: right;">Ping</th>
@@ -24,7 +24,17 @@
 			</thead>
 			<tbody data-cb="serverListContainer">
 				<tr data-cb="serverRow">
-					<td data-cb="nameCol"></td>
+					<td data-cb="nameCol" class="is-mobile-primary">
+						<span data-cb="nameText"></span>
+						<div class="mobile-info-block" data-cb="mobileInfo">
+							<div class="mobile-info-row">
+								<span data-cb="mobIp"></span> • <span data-cb="mobUsers"></span> users
+							</div>
+							<div class="mobile-info-row">
+								<span data-cb="mobFiles"></span> files
+							</div>
+						</div>
+					</td>
 					<td data-cb="ipCol"></td>
 					<td data-cb="descCol"></td>
 					<td data-cb="pingCol" style="text-align: right;"></td>

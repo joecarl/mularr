@@ -81,7 +81,25 @@ export const ExtensionsView = component(() => {
 					tpl.extensionRow({
 						nodes: {
 							idCol: { inner: String(v.id) },
-							nameCol: { inner: v.name },
+							nameCol: {
+								nodes: {
+									nameText: { inner: v.name },
+									mobileInfo: {
+										nodes: {
+											mobUrl: { inner: v.url },
+											mobEnabled: {
+												inner: v.enabled ? 'Enabled' : 'Disabled',
+												style: { color: v.enabled ? '#46d369' : '#ff4d4d', fontWeight: 'bold' },
+											},
+											mobBtnToggle: {
+												onclick: () => handleToggle(v.id, !!v.enabled),
+												inner: v.enabled ? 'Disable' : 'Enable',
+											},
+											mobBtnDelete: { onclick: () => handleDelete(v.id) },
+										},
+									},
+								},
+							},
 							urlCol: { inner: v.url },
 							typeCol: { inner: v.type },
 							enabledCol: { inner: v.enabled ? 'Yes' : 'No' },

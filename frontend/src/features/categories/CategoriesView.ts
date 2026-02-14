@@ -111,7 +111,23 @@ export const CategoriesView = component(() => {
 				return list.map((cat) =>
 					tpl.categoryRow({
 						nodes: {
-							catName: { inner: cat.name },
+							catName: {
+								nodes: {
+									catNameText: { inner: cat.name },
+									mobileInfo: {
+										nodes: {
+											mobPath: { inner: cat.path || 'No path' },
+											mobColorPreview: { style: { backgroundColor: cat.color > 0 ? numberToColor(cat.color) : 'transparent' } },
+											mobEditBtn: {
+												onclick: () => openModal(cat),
+											},
+											mobDeleteBtn: {
+												onclick: () => handleDelete(cat.id),
+											},
+										},
+									},
+								},
+							},
 							catPath: { inner: cat.path || '-' },
 							catColor: {
 								style: {

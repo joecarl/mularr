@@ -73,7 +73,18 @@ export const ServersView = component(() => {
 						classes: { 'connected-server-row': !!isConnected },
 						ondblclick: () => connectToServer(s),
 						nodes: {
-							nameCol: { inner: s.name ?? '' },
+							nameCol: {
+								nodes: {
+									nameText: { inner: s.name ?? '' },
+									mobileInfo: {
+										nodes: {
+											mobIp: { inner: `${s.ip}:${s.port}` },
+											mobUsers: { inner: users.text },
+											mobFiles: { inner: files.text },
+										},
+									},
+								},
+							},
 							ipCol: { inner: `${s.ip}:${s.port}` },
 							descCol: { inner: s.description ?? '' },
 							pingCol: { inner: s.ping ?? '' },

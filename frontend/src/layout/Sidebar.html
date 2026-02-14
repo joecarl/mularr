@@ -85,22 +85,24 @@
 
 	<div class="sidebar-box">
 		<div class="sidebar-box-header">🫀 Status</div>
-		<div class="stats-container sidebar-box-content" data-cb="statsContainer">
-			Loading stats...
-			<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
-			<div data-cb="statRow" class="stat-row">
-				<span data-cb="statLabel" class="stat-label"></span>
-				<span class="stat-value-group">
-					<span data-cb="statValue" class="stat-value"></span>
-					<span data-cb="statUnit" class="stat-unit"></span>
-				</span>
+		<div class="stats-container sidebar-box-content">
+			<div class="sidebar-box-info-card" data-cb="statsContainer">
+				Loading stats...
+				<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
+				<div data-cb="statRow" class="stat-row">
+					<span data-cb="statLabel" class="stat-label"></span>
+					<span class="stat-value-group">
+						<span data-cb="statValue" class="stat-value"></span>
+						<span data-cb="statUnit" class="stat-unit"></span>
+					</span>
+				</div>
+				<hr data-cb="statsSep" />
+				<br data-cb="statsBr" />
 			</div>
-			<hr data-cb="statsSep" />
-			<br data-cb="statsBr" />
 		</div>
 	</div>
 
 	<div class="sidebar-footer">
-		<div class="sidebar-version">v0.7.0</div>
+		<div class="sidebar-version">v0.8.0</div>
 	</div>
 </aside>

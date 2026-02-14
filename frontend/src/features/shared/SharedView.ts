@@ -18,9 +18,20 @@ const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<strin
 			classes: { selected: isSelected },
 			onclick: () => selectedHash.set(t.get().hash || null),
 			nodes: {
-				nameCol: {},
-				sharedNameText: { inner: () => t.get().name || 'Unknown' },
-				sharedIcon: { inner: () => getFileIcon(t.get().name || '') },
+				nameCol: {
+					nodes: {
+						sharedNameText: { inner: () => t.get().name || 'Unknown' },
+						sharedIcon: { inner: () => getFileIcon(t.get().name || '') },
+						mobileInfo: {
+							nodes: {
+								mobSize: { inner: () => fbytes(t.get().size) },
+								mobRating: { inner: () => t.get().getRating ?? 0 },
+								mobXfer: { inner: () => fbytes(t.get().getXferred ?? 0) },
+								mobReq: { inner: () => t.get().getRequests ?? 0 },
+							},
+						},
+					},
+				},
 				sizeCol: { inner: () => fbytes(t.get().size) },
 				ratingCol: { inner: () => t.get().getRating ?? 0 },
 				requestsCol: { inner: () => (t.get().getRequests ?? 0) + ' (' + (t.get().getAllRequests ?? 0) + ')' },

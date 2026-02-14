@@ -6,6 +6,7 @@
 	.settings-panel {
 		padding: 10px;
 		flex: 1;
+		overflow-y: auto;
 	}
 
 	.settings-grid {

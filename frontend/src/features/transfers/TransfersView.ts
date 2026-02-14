@@ -47,6 +47,25 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 					nodes: {
 						fileNameText: { inner: () => t.get().name || 'Unknown' },
 						fileIcon: { inner: () => getFileIcon(t.get().name || '') },
+						mobileInfo: {
+							nodes: {
+								mobSize: { inner: () => fbytes(t.get().size) },
+								mobStatus: {
+									inner: () => {
+										const tfer = t.get();
+										if (tfer.stopped) return 'Stopped';
+										if (tfer.isCompleted) return 'Completed';
+										return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
+									},
+								},
+								mobSpeed: {
+									inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : ''),
+									style: { display: () => ((t.get().speed ?? 0) > 0 ? 'inline' : 'none') },
+								},
+								mobProgress: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
+								mobProgressBar: { style: { width: () => `${(t.get().progress || 0) * 100}%` } },
+							},
+						},
 					},
 				},
 				sizeCol: { inner: () => fbytes(t.get().size) },

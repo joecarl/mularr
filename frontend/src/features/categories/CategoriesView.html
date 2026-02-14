@@ -9,7 +9,7 @@
 		<table class="ui-list">
 			<thead>
 				<tr>
-					<th style="width: 200px;">Name</th>
+					<th style="width: 200px;" class="is-mobile-primary">Name</th>
 					<th>Save Path</th>
 					<th style="width: 100px;">Color</th>
 					<th style="width: 80px;">Priority</th>
@@ -19,7 +19,29 @@
 			</thead>
 			<tbody data-cb="categoriesTable">
 				<tr data-cb="categoryRow">
-					<td data-cb="catName"></td>
+					<td data-cb="catName" class="is-mobile-primary">
+						<span data-cb="catNameText"></span>
+						<div class="mobile-info-block" data-cb="mobileInfo">
+							<div class="mobile-info-row" style="font-family: monospace;">
+								<span data-cb="mobPath"></span>
+							</div>
+							<div class="mobile-info-row" style="margin-top: 5px; gap: 10px;">
+								<div style="display: flex; align-items: center; gap: 5px;">
+									<span style="font-size: 0.9em;">Color:</span>
+									<div data-cb="mobColorPreview"
+										style="width: 14px; height: 14px; border: 1px solid rgba(0,0,0,0.5); border-radius: 2px;">
+									</div>
+								</div>
+								<div style="flex: 1;"></div>
+								<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
+									data-cb="mobEditBtn">Edit</button>
+								<button class="ui-btn" style="min-width: 24px; width: 24px; height: 20px; padding: 0;"
+									data-cb="mobDeleteBtn">
+									<span class="icon-img icon-delete"></span>
+								</button>
+							</div>
+						</div>
+					</td>
 					<td data-cb="catPath"></td>
 					<td data-cb="catColor"></td>
 					<td data-cb="catPriority"></td>

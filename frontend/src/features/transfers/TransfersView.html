@@ -35,7 +35,7 @@
 			<table class="ui-list">
 				<thead>
 					<tr>
-						<th data-cb="thName" style="cursor: pointer">Filename</th>
+						<th data-cb="thName" style="cursor: pointer" class="is-mobile-primary">Filename</th>
 						<th data-cb="thCategory" style="cursor: pointer">Category</th>
 						<th data-cb="thSize" style="cursor: pointer; text-align: right;">Size</th>
 						<th data-cb="thCompleted" style="cursor: pointer; text-align: right;">Completed</th>
@@ -51,10 +51,30 @@
 				</thead>
 				<tbody data-cb="transferListContainer">
 					<tr data-cb="transferRow" style="cursor: default;">
-						<td data-cb="nameCol"
+						<td data-cb="nameCol" class="is-mobile-primary"
 							style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">
-							<span data-cb="fileIcon" style="margin-right: 5px;"></span>
-							<span data-cb="fileNameText">Filename</span>
+							<div style="display: flex; align-items: center;">
+								<span data-cb="fileIcon" style="margin-right: 5px;"></span>
+								<span data-cb="fileNameText">Filename</span>
+							</div>
+
+							<!-- Mobile Info Block -->
+							<div data-cb="mobileInfo" class="mobile-info-block">
+								<div class="mobile-info-row">
+									<span data-cb="mobSize">Size</span> •
+									<span data-cb="mobStatus" style="font-weight: bold;">Status</span>
+								</div>
+								<div class="mobile-info-row">
+									<span data-cb="mobSpeed" style="color: #46d369;">Speed</span>
+									<span style="flex: 1;"></span>
+									<span data-cb="mobProgress">0%</span>
+								</div>
+								<!-- Mini Progress Bar for Mobile -->
+								<div style="height: 3px; background: #333; margin-top: 2px; width: 100%;">
+									<div data-cb="mobProgressBar" style="height: 100%; background: #00ea55; width: 0%;">
+									</div>
+								</div>
+							</div>
 						</td>
 						<td data-cb="categoryCol">Cat</td>
 						<td data-cb="sizeCol" style="text-align: right;">Size</td>

@@ -1,4 +1,9 @@
-<div class="app-layout">
+<div class="app-layout" data-cb="layoutRoot">
+	<div class="mobile-topbar">
+		<button class="ui-btn" data-cb="menuToggle" style="font-size: 16px; padding: 4px 10px;">☰</button>
+		<span style="font-weight: bold; margin-left: 10px; color: var(--text-color);">Mularr</span>
+	</div>
+	<div class="sidebar-overlay" data-cb="sidebarOverlay"></div>
 	<aside data-cb="sidebarContainer"></aside>
 	<main class="main-content">
 		<div class="view-container" data-cb="routerView"></div>

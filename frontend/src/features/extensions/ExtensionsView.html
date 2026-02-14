@@ -13,7 +13,7 @@
 			<thead>
 				<tr>
 					<th style="width: 40px; text-align: center;">ID</th>
-					<th style="width: 150px;">Name</th>
+					<th style="width: 150px;" class="is-mobile-primary">Name</th>
 					<th>URL</th>
 					<th style="width: 100px;">Type</th>
 					<th style="width: 60px; text-align: center;">Enabled</th>
@@ -24,7 +24,24 @@
 				<!-- Template row handled by code -->
 				<tr data-cb="extensionRow">
 					<td data-cb="idCol" style="text-align: center;"></td>
-					<td data-cb="nameCol"></td>
+					<td data-cb="nameCol" class="is-mobile-primary">
+						<span data-cb="nameText"></span>
+						<div class="mobile-info-block" data-cb="mobileInfo">
+							<div class="mobile-info-row">
+								<span data-cb="mobUrl"
+									style="font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+							</div>
+							<div class="mobile-info-row" style="margin-top: 5px; gap: 10px;">
+								<span data-cb="mobEnabled"></span>
+								<div style="flex: 1;"></div>
+								<button class="ui-btn" style="min-width: 40px; padding: 2px 5px;"
+									data-cb="mobBtnToggle">Toggle</button>
+								<button class="ui-btn" style="padding: 2px 5px;" data-cb="mobBtnDelete">
+									<span class="icon-img icon-delete"></span>
+								</button>
+							</div>
+						</div>
+					</td>
 					<td data-cb="urlCol"></td>
 					<td data-cb="typeCol"></td>
 					<td data-cb="enabledCol" style="text-align: center;"></td>

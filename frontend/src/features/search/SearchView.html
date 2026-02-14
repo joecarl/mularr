@@ -21,7 +21,7 @@
 		<table class="ui-list">
 			<thead>
 				<tr>
-					<th data-cb="thName" style="cursor: pointer">Name</th>
+					<th data-cb="thName" style="cursor: pointer" class="is-mobile-primary">Name</th>
 					<th data-cb="thSize" style="cursor: pointer; text-align: right;">Size</th>
 					<th data-cb="thSources" style="cursor: pointer; text-align: right;">Availability</th>
 					<th data-cb="thCompleted" style="cursor: pointer; text-align: right;">Complete</th>
@@ -31,10 +31,23 @@
 			</thead>
 			<tbody data-cb="resultsContainer">
 				<tr data-cb="resultRow">
-					<td data-cb="nameCol"
+					<td data-cb="nameCol" class="is-mobile-primary"
 						style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-						<span data-cb="fileIcon" style="margin-right: 5px; font-size: 14px;"></span>
-						<span data-cb="fileNameText"></span>
+						<div style="display: flex; align-items: center;">
+							<span data-cb="fileIcon" style="margin-right: 5px; font-size: 14px;"></span>
+							<span data-cb="fileNameText"></span>
+						</div>
+
+						<!-- Mobile Info Block -->
+						<div data-cb="mobileInfo" class="mobile-info-block" style="margin-top: 5px;">
+							<div class="mobile-info-row" style="justify-content: space-between;">
+								<span data-cb="mobSize">Size</span>
+								<span data-cb="mobSources" style="color: #46d369;">Sources</span>
+							</div>
+							<div class="mobile-info-row" style="margin-top: 5px;">
+								<button class="ui-btn" data-cb="mobDownloadBtn" style="width: 100%;">Get File</button>
+							</div>
+						</div>
 					</td>
 					<td data-cb="sizeCol" style="text-align: right;"></td>
 					<td data-cb="sourcesCol" style="text-align: right;"></td>

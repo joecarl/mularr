@@ -14,6 +14,7 @@ export const App = component<IAppProps>(({ routes }) => {
 	const apiService = services.get(AmuleApiService);
 	const statsService = services.get(StatsService);
 	const amuleInfo = signal<AmuleInfo | null>(null);
+	const isSidebarOpen = signal(false);
 
 	const loadAmuleInfo = async () => {
 		try {
@@ -27,8 +28,19 @@ export const App = component<IAppProps>(({ routes }) => {
 	loadAmuleInfo();
 
 	return tpl.fragment({
+		layoutRoot: {
+			classes: { 'sidebar-open': () => isSidebarOpen.get() },
+		},
+		menuToggle: {
+			onclick: () => isSidebarOpen.set(!isSidebarOpen.get()),
+		},
+		sidebarOverlay: {
+			onclick: () => isSidebarOpen.set(false),
+		},
+		sidebarContainer: Sidebar({
+			onLinkClick: () => isSidebarOpen.set(false),
+		}),
 		dialogHost: DialogHost({}),
-		sidebarContainer: Sidebar({}),
 		routerView: {
 			inner: Router({
 				routes,

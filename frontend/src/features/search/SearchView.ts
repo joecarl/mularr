@@ -188,6 +188,13 @@ export const SearchView = component(() => {
 							nameCol: { title: res.name },
 							fileIcon: { inner: getFileIcon(res.name) },
 							fileNameText: { inner: res.name },
+							mobileInfo: {
+								nodes: {
+									mobSize: { inner: fbytes(res.size) },
+									mobSources: { inner: res.sources ? `${res.sources}` : '0' },
+									mobDownloadBtn: { onclick: () => download(res.hash), disabled: addingDownload },
+								},
+							},
 							typeCol: { inner: res.type || '' },
 							sizeCol: { inner: fbytes(res.size) },
 							sourcesCol: { inner: res.sources || '0' },

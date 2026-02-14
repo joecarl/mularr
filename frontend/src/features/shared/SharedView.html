@@ -15,7 +15,7 @@
 			<table class="ui-list">
 				<thead>
 					<tr>
-						<th>Filename</th>
+						<th class="is-mobile-primary">Filename</th>
 						<th style="text-align: right;">Size</th>
 						<th style="text-align: right;">Rating</th>
 						<th style="text-align: right;">Requests</th>
@@ -25,9 +25,17 @@
 				</thead>
 				<tbody data-cb="sharedListContainer">
 					<tr data-cb="sharedRow">
-						<td data-cb="nameCol">
+						<td data-cb="nameCol" class="is-mobile-primary">
 							<span data-cb="sharedIcon" style="margin-right: 5px;"></span>
 							<span data-cb="sharedNameText"></span>
+							<div class="mobile-info-block" data-cb="mobileInfo">
+								<div class="mobile-info-row">
+									<span data-cb="mobSize"></span> • Rating: <span data-cb="mobRating"></span>
+								</div>
+								<div class="mobile-info-row">
+									Xfer: <span data-cb="mobXfer"></span> • Req: <span data-cb="mobReq"></span>
+								</div>
+							</div>
 						</td>
 						<td data-cb="sizeCol" style="text-align: right;"></td>
 						<td data-cb="ratingCol" style="text-align: right;"></td>
