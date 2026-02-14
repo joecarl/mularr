@@ -1,4 +1,4 @@
-import { component, computed, effect, signal } from 'chispa';
+import { component, componentList, computed, effect, Signal, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
@@ -6,6 +6,60 @@ import { formatAmount } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './ServersView.html';
 import './ServersView.css';
+
+interface ServersViewProps {
+	// Optional callback for when a server row is double-clicked
+	onConnectToServer?: (server: Server) => void;
+	connectedServer: Signal<Server | null>;
+}
+const ServersRows = componentList<Server, ServersViewProps>(
+	(sv, i, l, props) => {
+		const { connectedServer, onConnectToServer } = props!;
+
+		const isConnected = computed(() => {
+			const cs = connectedServer.get();
+			const s = sv.get();
+			return !!cs && s.ip === cs.ip && s.port === cs.port;
+		});
+
+		const server = sv.get.bind(sv);
+		const users = computed(() => formatAmount(server().users ?? 0));
+		const maxUsers = computed(() => formatAmount(server().maxUsers ?? 0));
+		const files = computed(() => formatAmount(server().files ?? 0));
+
+		return tpl.serverRow({
+			classes: { 'connected-server-row': isConnected },
+			ondblclick: () => onConnectToServer && onConnectToServer(server()),
+			nodes: {
+				nameCol: {
+					nodes: {
+						nameText: { inner: () => server().name ?? '' },
+						mobileInfo: {
+							nodes: {
+								mobIp: { inner: () => `${server().ip}:${server().port}` },
+								mobUsers: { inner: () => users.get().text },
+								mobFiles: { inner: () => files.get().text },
+							},
+						},
+					},
+				},
+				ipCol: { inner: () => `${server().ip}:${server().port}` },
+				descCol: { inner: () => server().description ?? '' },
+				pingCol: { inner: () => server().ping ?? '' },
+				usersCol: { inner: () => users.get().text + ' ' + users.get().unit },
+				maxUsersCol: { inner: () => maxUsers.get().text + ' ' + maxUsers.get().unit },
+				filesCol: { inner: () => files.get().text + ' ' + files.get().unit },
+				prefCol: { inner: () => server().priority ?? '' },
+				failedCol: { inner: () => server().failedCount ?? '' },
+				staticCol: { inner: () => (server().isStatic ? 'Yes' : 'No') },
+				softLimitCol: { inner: () => server().softFileLimit ?? '' },
+				lowIDCol: { inner: () => (server().lowID ? 'Yes' : 'No') },
+				obfuscatedCol: { inner: () => (server().obfuscated ? 'Yes' : 'No') },
+			},
+		});
+	},
+	(s) => s.ip + ':' + s.port
+);
 
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
@@ -55,51 +109,14 @@ export const ServersView = component(() => {
 		}
 	});
 
+	const someServers = computed(() => servers.get().length > 0);
+
 	return tpl.fragment({
 		serverListContainer: {
 			inner: () => {
-				const list = servers.get();
-				const connected = connectedServer.get();
-				if (list.length === 0) return tpl.serverRow({ nodes: { nameCol: { inner: 'No servers found.' } } });
-
-				return list.map((s) => {
-					const isConnected = connected && s.ip === connected.ip && s.port === connected.port;
-
-					const users = formatAmount(s.users ?? 0);
-					const maxUsers = formatAmount(s.maxUsers ?? 0);
-					const files = formatAmount(s.files ?? 0);
-
-					return tpl.serverRow({
-						classes: { 'connected-server-row': !!isConnected },
-						ondblclick: () => connectToServer(s),
-						nodes: {
-							nameCol: {
-								nodes: {
-									nameText: { inner: s.name ?? '' },
-									mobileInfo: {
-										nodes: {
-											mobIp: { inner: `${s.ip}:${s.port}` },
-											mobUsers: { inner: users.text },
-											mobFiles: { inner: files.text },
-										},
-									},
-								},
-							},
-							ipCol: { inner: `${s.ip}:${s.port}` },
-							descCol: { inner: s.description ?? '' },
-							pingCol: { inner: s.ping ?? '' },
-							usersCol: { inner: users.text + ' ' + users.unit },
-							maxUsersCol: { inner: maxUsers.text + ' ' + maxUsers.unit },
-							filesCol: { inner: files.text + ' ' + files.unit },
-							prefCol: { inner: s.priority ?? '' },
-							failedCol: { inner: s.failedCount ?? '' },
-							staticCol: { inner: s.isStatic ? 'Yes' : 'No' },
-							softLimitCol: { inner: s.softFileLimit ?? '' },
-							lowIDCol: { inner: s.lowID ? 'Yes' : 'No' },
-							obfuscatedCol: { inner: s.obfuscated ? 'Yes' : 'No' },
-						},
-					});
-				});
+				const any = someServers.get();
+				if (!any) return tpl.serverRow({ nodes: { nameCol: { inner: 'No servers found.' } } });
+				return ServersRows(servers, { connectedServer, onConnectToServer: connectToServer });
 			},
 		},
 		logContainer: {
