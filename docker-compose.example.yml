@@ -3,6 +3,7 @@ services:
     image: ghcr.io/joecarl/mularr
     container_name: mularr
     restart: unless-stopped
+    user: '1000:1000' # Change this to match your user id and group id for proper file permissions on the host (optional, but recommended)
 
     # Use the network of the Gluetun container if needed
     # If using Gluetun, make sure to set GLUETUN_ENABLED=true so the public vpn forwarded port is automatically updated in amule config.
