@@ -14,7 +14,8 @@
 		"cors": "^2.8.5",
 		"dotenv": "^17.0.0",
 		"express": "^5.0.0",
-		"node-telegram-bot-api": "^0.67.0"
+		"node-telegram-bot-api": "^0.67.0",
+		"telegram": "^2.26.22"
 	},
 	"devDependencies": {
 		"@types/better-sqlite3": "^7.6.13",
