@@ -6,3 +6,4 @@ build/
 .chispa/
 database.sqlite
 *.bak
+dev-data/
