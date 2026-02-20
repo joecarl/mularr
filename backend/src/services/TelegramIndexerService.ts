@@ -1,11 +1,13 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import { Api, TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { Logger } from 'telegram/extensions';
-import { TelegramIndexerDB } from './db/TelegramIndexerDB';
 import { FloodWaitError } from 'telegram/errors/RPCErrorList';
-import mainDb, { dbPath } from '../db';
 import { Dialog } from 'telegram/tl/custom/dialog';
+import { container } from './container/ServiceContainer';
+import { TelegramIndexerDB } from './db/TelegramIndexerDB';
+import { MainDB } from './db/MainDB';
 
 // Define a simple logger interface or use console
 const logger = {
@@ -16,14 +18,30 @@ const logger = {
 
 export type AuthStatus = 'disconnected' | 'waiting_code' | 'waiting_password' | 'connected' | 'authenticating';
 
+export interface DownloadStatus {
+	hash: string;
+	fileName: string;
+	size: number;
+	downloaded: number;
+	speed: number;
+	status: 'downloading' | 'completed' | 'error' | 'stopped';
+	startTime: number;
+	lastUpdate?: number;
+	lastBytes?: number;
+}
+
 export class TelegramIndexerService {
+	private readonly mainDb = container.get(MainDB);
 	private client: TelegramClient | null = null;
 	private db: TelegramIndexerDB;
+	private activeDownloads: Map<string, DownloadStatus> = new Map();
+	private completedDownloads: Map<string, DownloadStatus> = new Map();
+	private downloadDir: string;
 
 	// Auth State
 	private authStatus: AuthStatus = 'disconnected';
-	private tempApiId: number | null = null;
-	private tempApiHash: string | null = null;
+	// private tempApiId: number | null = null;
+	// private tempApiHash: string | null = null;
 	private tempPhone: string | null = null;
 	private tempPhoneCodeHash: string | null = null;
 
@@ -33,9 +51,13 @@ export class TelegramIndexerService {
 
 	constructor() {
 		// Initialize DB
-		const dbDir = path.dirname(dbPath);
+		const dbDir = path.dirname(this.mainDb.dbPath);
 		const indexerDbPath = path.join(dbDir, 'indexer.db');
 		this.db = new TelegramIndexerDB(indexerDbPath);
+		this.downloadDir = path.join(path.dirname(this.mainDb.dbPath), 'telegram-downloads');
+		if (!fs.existsSync(this.downloadDir)) {
+			fs.mkdirSync(this.downloadDir, { recursive: true });
+		}
 	}
 
 	public async getAuthStatus() {
@@ -60,10 +82,10 @@ export class TelegramIndexerService {
 	}
 
 	private getExtensionConfig(): any {
-		const row = mainDb.prepare("SELECT config FROM extensions WHERE type = 'telegram_indexer' LIMIT 1").get() as { config: string } | undefined;
-		if (row && row.config) {
+		const ext = this.mainDb.getExtensionByType('telegram_indexer');
+		if (ext && ext.config) {
 			try {
-				return JSON.parse(row.config);
+				return JSON.parse(ext.config);
 			} catch (e) {
 				return {};
 			}
@@ -73,18 +95,24 @@ export class TelegramIndexerService {
 
 	private saveExtensionConfig(newConfig: any) {
 		// Ensure extension exists
-		let ext = mainDb.prepare("SELECT id FROM extensions WHERE type = 'telegram_indexer' LIMIT 1").get() as { id: number } | undefined;
+		let ext = this.mainDb.getExtensionByType('telegram_indexer');
 		if (!ext) {
-			mainDb
-				.prepare('INSERT INTO extensions (name, url, type, enabled, config) VALUES (?, ?, ?, ?, ?)')
-				.run('Telegram Integration', 'local', 'telegram_indexer', 1, '{}');
-			ext = mainDb.prepare("SELECT id FROM extensions WHERE type = 'telegram_indexer' LIMIT 1").get() as { id: number };
+			const id = this.mainDb.addExtension({
+				name: 'Telegram Integration',
+				url: 'local',
+				type: 'telegram_indexer',
+				enabled: 1,
+				config: '{}',
+			});
+			ext = this.mainDb.getExtensionById(Number(id));
 		}
+
+		if (!ext) return; // Should not happen
 
 		const currentConfig = this.getExtensionConfig();
 		const finalConfig = { ...currentConfig, ...newConfig };
 
-		mainDb.prepare('UPDATE extensions SET config = ? WHERE id = ?').run(JSON.stringify(finalConfig), ext.id);
+		this.mainDb.updateExtensionConfig(ext.id, JSON.stringify(finalConfig));
 	}
 
 	// -- Auth Flow Methods --
@@ -93,8 +121,8 @@ export class TelegramIndexerService {
 		if (this.authStatus === 'connected') throw new Error('Already connected');
 
 		this.authStatus = 'authenticating';
-		this.tempApiId = apiId;
-		this.tempApiHash = apiHash;
+		// this.tempApiId = apiId;
+		// this.tempApiHash = apiHash;
 		this.tempPhone = phoneNumber;
 
 		try {
@@ -398,6 +426,182 @@ export class TelegramIndexerService {
 
 	private async fetchWithFloodWait<T>(fn: () => Promise<T>): Promise<T> {
 		return this.executeWithRetry(fn);
+	}
+
+	public getDownloadStatus(hash: string): DownloadStatus | undefined {
+		if (this.activeDownloads.has(hash)) {
+			return this.activeDownloads.get(hash);
+		}
+		if (this.completedDownloads.has(hash)) {
+			return this.completedDownloads.get(hash);
+		}
+		const messages = this.db.searchFiles(hash.split(':')[2] || '');
+		if (messages.length > 0) {
+			const msg = messages.find((m) => `telegram:${m.chat_id}:${m.message_id}` === hash);
+			if (msg) {
+				return {
+					hash: hash,
+					fileName: msg.file_name || 'Unknown',
+					size: Number(msg.file_size) || 0,
+					downloaded: Number(msg.file_size) || 0,
+					speed: 0,
+					status: 'completed',
+					startTime: 0,
+				};
+			}
+		}
+		return undefined;
+	}
+
+	public async startDownload(chatId: string, messageId: number, hash: string): Promise<boolean> {
+		if (!this.client || this.authStatus !== 'connected') {
+			logger.error('Cannot start download: Client not connected');
+			return false;
+		}
+
+		if (this.activeDownloads.has(hash) || this.completedDownloads.has(hash)) {
+			return true;
+		}
+
+		try {
+			// Fetch message to get media
+			const messages = await this.client.getMessages(chatId, { ids: [messageId] });
+			if (!messages || messages.length === 0) {
+				logger.error(`Message not found for download: ${chatId}:${messageId}`);
+				return false;
+			}
+			const message = messages[0];
+			if (!message.media) {
+				logger.error(`Message has no media: ${chatId}:${messageId}`);
+				return false;
+			}
+
+			// Get filename
+			// @ts-ignore - attributes might not be strictly typed in some versions
+			let fileName = 'unknown_file';
+			// Try to find filename in attributes
+			if (message.file && message.file.name) {
+				fileName = message.file.name;
+			} else {
+				// Fallback
+				fileName = `telegram_${hash}`;
+			}
+
+			const fileSize = message.file?.size ? Number(message.file.size) : 0;
+
+			// Initialize status
+			const status: DownloadStatus = {
+				hash,
+				fileName,
+				size: fileSize,
+				downloaded: 0,
+				speed: 0,
+				status: 'downloading',
+				startTime: Date.now(),
+				lastUpdate: Date.now(),
+				lastBytes: 0,
+			};
+			this.activeDownloads.set(hash, status);
+
+			const outPath = path.join(this.downloadDir, fileName);
+			logger.info(`Starting download: ${fileName} -> ${outPath}`);
+
+			// Start download asynchronously
+			this.client
+				.downloadMedia(message, {
+					outputFile: outPath,
+					progressCallback: (downloaded, total) => {
+						const now = Date.now();
+						const downloadedNum = Number(downloaded);
+						const totalNum = Number(total);
+
+						const status = this.activeDownloads.get(hash);
+						if (status) {
+							// Calculate speed
+							if (status.lastUpdate && now - status.lastUpdate > 1000) {
+								const diffBytes = downloadedNum - (status.lastBytes || 0);
+								const diffTime = (now - status.lastUpdate) / 1000;
+								status.speed = diffBytes / diffTime;
+								status.lastUpdate = now;
+								status.lastBytes = downloadedNum;
+							}
+
+							status.downloaded = downloadedNum;
+							// status.size = totalNum; // Optional update
+						}
+					},
+				})
+				.then(() => {
+					logger.info(`Download completed: ${fileName}`);
+					const status = this.activeDownloads.get(hash);
+					if (status) {
+						status.status = 'completed';
+						status.downloaded = status.size;
+						status.speed = 0;
+						this.completedDownloads.set(hash, status);
+						this.activeDownloads.delete(hash);
+					}
+				})
+				.catch((err) => {
+					logger.error(`Download failed: ${fileName}`, err);
+					const status = this.activeDownloads.get(hash);
+					if (status) {
+						status.status = 'error';
+						status.speed = 0;
+						// Move to completed (as failed) or keep in active with error state?
+						// For now keep in active so UI sees error
+					}
+				});
+
+			return true;
+		} catch (err) {
+			logger.error('Error starting download:', err);
+			return false;
+		}
+	}
+
+	public cancelDownload(hash: string) {
+		if (this.activeDownloads.has(hash)) {
+			// There is no easy way to cancel a promise in JS/GramJS unless we destroy the client or use AbortController if supported
+			// GramJS doesn't seem to support AbortSignal in downloadMedia directly in standard docs, but let's check.
+			// For now, we just remove from active map so UI updates. The download might continue in background until completion or error.
+			// To truly cancel, we might need a workaround.
+			// Actually, removing from map stops progress updates.
+			const status = this.activeDownloads.get(hash);
+			if (status) {
+				status.status = 'stopped';
+				this.activeDownloads.delete(hash); // Or keep as stopped?
+				// Keeping as stopped allows UI to show "Stopped"
+				this.activeDownloads.set(hash, status);
+			}
+		}
+	}
+
+	public getFileInfo(chatId: string, messageId: number) {
+		return this.db.getMessage(chatId, messageId);
+	}
+
+	public search(query: string) {
+		const ext = this.mainDb.getExtensionByType('telegram_indexer');
+		if (!ext || !ext.enabled) {
+			return [];
+		}
+		const results = this.db.searchFiles(query);
+		return results
+			.filter((f) => f.file_size)
+			.map((msg) => ({
+				name: msg.file_name || 'Unknown',
+				size: msg.file_size || 0,
+				hash: `telegram:${msg.chat_id}:${msg.message_id}`,
+				provider: 'telegram',
+				chatId: msg.chat_id,
+				messageId: msg.message_id,
+				sources: 1,
+				completeSources: 1,
+				downloadStatus: 'Unknown',
+				type: msg.media_type || '',
+				link: `telegram:${msg.chat_id}:${msg.message_id}`,
+			}));
 	}
 
 	private async executeWithRetry<T>(fn: () => Promise<T>, retries = 5): Promise<T> {

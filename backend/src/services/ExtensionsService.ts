@@ -1,24 +1,28 @@
-import db from '../db';
-import { Extension, ValidationResult } from '../types/ExtensionTypes';
+import { MainDB, Extension, ValidationResult } from '../services/db/MainDB';
+import { container } from './container/ServiceContainer';
 
 export class ExtensionsService {
+	private db: MainDB;
+
+	constructor() {
+		this.db = container.get(MainDB);
+	}
+
 	// CRUD Extensions
 	getAllExtensions(): Extension[] {
-		return db.prepare('SELECT * FROM extensions').all() as Extension[];
+		return this.db.getAllExtensions();
 	}
 
 	addExtension(extension: Omit<Extension, 'id'>) {
-		const stmt = db.prepare('INSERT INTO extensions (name, url, type, enabled) VALUES (?, ?, ?, ?)');
-		return stmt.run(extension.name, extension.url, extension.type, extension.enabled);
+		return this.db.addExtension(extension);
 	}
 
 	deleteExtension(id: number) {
-		db.prepare('DELETE FROM extensions WHERE id = ?').run(id);
-		db.prepare('DELETE FROM file_validations WHERE extension_id = ?').run(id);
+		this.db.deleteExtension(id);
 	}
 
 	toggleExtension(id: number, enabled: boolean) {
-		db.prepare('UPDATE extensions SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, id);
+		this.db.toggleExtension(id, enabled);
 	}
 
 	// Validations
@@ -31,7 +35,7 @@ export class ExtensionsService {
 		if (extensions.length === 0) return true; // No validators = no restrictions
 
 		// Check results
-		const results = db.prepare('SELECT * FROM file_validations WHERE file_hash = ?').all(fileHash) as ValidationResult[];
+		const results = this.db.getValidationsForFile(fileHash);
 
 		// Every enabled validator must have a 'passed' result
 		for (const v of extensions) {
@@ -42,7 +46,7 @@ export class ExtensionsService {
 	}
 
 	getResultsForFile(fileHash: string): ValidationResult[] {
-		return db.prepare('SELECT * FROM file_validations WHERE file_hash = ?').all(fileHash) as ValidationResult[];
+		return this.db.getValidationsForFile(fileHash);
 	}
 
 	async processFile(fileHash: string, filePath: string) {
@@ -54,7 +58,7 @@ export class ExtensionsService {
 
 		for (const v of extensions) {
 			// Check if already validated (optional, but good optimize)
-			const existing = db.prepare('SELECT * FROM file_validations WHERE file_hash = ? AND extension_id = ?').get(fileHash, v.id) as ValidationResult;
+			const existing = this.db.getValidation(fileHash, v.id);
 			if (existing && existing.status === 'passed') continue;
 
 			// Trigger validation
@@ -87,14 +91,6 @@ export class ExtensionsService {
 	}
 
 	private upsertValidation(fileHash: string, extensionId: number, status: string, details: string) {
-		const stmt = db.prepare(`
-            INSERT INTO file_validations (file_hash, extension_id, status, details, last_check)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(file_hash, extension_id) DO UPDATE SET
-            status = excluded.status,
-            details = excluded.details,
-            last_check = CURRENT_TIMESTAMP
-        `);
-		stmt.run(fileHash, extensionId, status, details);
+		this.db.upsertValidation(fileHash, extensionId, status, details);
 	}
 }

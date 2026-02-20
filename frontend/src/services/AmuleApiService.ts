@@ -112,6 +112,7 @@ export interface Transfer extends AmuleFile {
 	categoryName?: string;
 	addedOn?: number;
 	isCompleted?: boolean;
+	provider?: string;
 }
 
 export interface AmuleUpDownClient {
@@ -214,6 +215,7 @@ export interface SearchResult {
 	sources?: string;
 	downloadStatus?: number;
 	completeSources?: string;
+	provider?: string;
 }
 
 export interface SearchResultsResponse {

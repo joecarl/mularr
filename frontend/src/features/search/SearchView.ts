@@ -1,10 +1,11 @@
 import { component, signal, bindControlledInput, bindControlledSelect, onUnmount, effect } from 'chispa';
-import { services } from '../../services/container/ServiceContainer';
-import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
-import { DialogService } from '../../services/DialogService';
-import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
+import { services } from '../../services/container/ServiceContainer';
+import { DialogService } from '../../services/DialogService';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
+import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
+import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
@@ -85,6 +86,10 @@ export const SearchView = component(() => {
 
 			if (progress >= 1 || progress === 0) {
 				stopPolling();
+				// Final load to ensure we have the latest results
+				setTimeout(() => {
+					loadResults();
+				}, 1500);
 			}
 		}, 1000);
 	};
@@ -129,6 +134,7 @@ export const SearchView = component(() => {
 
 	return tpl.fragment({
 		thName: { onclick: () => sort('name') },
+		thProvider: { onclick: () => sort('provider') },
 		thSize: { onclick: () => sort('size') },
 		thSources: { onclick: () => sort('sources') },
 		thCompleted: { onclick: () => sort('completeSources') },
@@ -194,6 +200,10 @@ export const SearchView = component(() => {
 									mobSources: { inner: res.sources ? `${res.sources}` : '0' },
 									mobDownloadBtn: { onclick: () => download(res.hash), disabled: addingDownload },
 								},
+							},
+							providerCol: {
+								inner: getProviderIcon(res.provider),
+								title: getProviderName(res.provider),
 							},
 							typeCol: { inner: res.type || '' },
 							sizeCol: { inner: fbytes(res.size) },

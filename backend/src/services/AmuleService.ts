@@ -1,8 +1,10 @@
 import { AmuleClient, AmuleFile, SearchType, type AmuleCategory } from 'amule-ec-client';
-import { AmulecmdService } from './AmulecmdService';
 import { exec } from 'child_process';
 import util from 'util';
-import db from '../db';
+import { container } from './container/ServiceContainer';
+import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
+import { AmulecmdService } from './AmulecmdService';
+import { TelegramIndexerService } from './TelegramIndexerService';
 
 function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): string {
 	const DEFAULT_VALUE = 'default';
@@ -20,15 +22,6 @@ interface FileRefData {
 	hash: string;
 	name?: string;
 	size?: number;
-}
-
-interface DownloadDbRecord {
-	hash: string;
-	name: string;
-	size: number;
-	category_name: string | null;
-	added_at: string;
-	is_completed: number;
 }
 
 interface Download {
@@ -50,6 +43,7 @@ interface Download {
 	timeLeft?: number;
 	categoryName?: string | null;
 	addedOn?: string | null;
+	provider?: string;
 }
 
 function getDataFromFileRef(hashOrLink: string): FileRefData | null {
@@ -79,14 +73,69 @@ function findByHash<T extends AmuleFile>(downloads: T[], hash: string): T | null
 	return downloads.find((d) => (d.fileHashHexString || '').toLowerCase() === lowerHash) || null;
 }
 
+function getTelegramTransfer(dbRecord: DownloadDbRecord): Download {
+	let statusText = dbRecord.is_completed ? 'Completed' : 'Stopped';
+	let progress = dbRecord.is_completed ? 1 : 0;
+	let completed = dbRecord.is_completed ? dbRecord.size : 0;
+	let speed = 0;
+	let timeLeft = 0;
+
+	try {
+		const indexer = container.get(TelegramIndexerService);
+		const dlStatus = indexer.getDownloadStatus(dbRecord.hash);
+		if (dlStatus) {
+			statusText = dlStatus.status === 'downloading' ? 'Downloading' : dlStatus.status === 'completed' ? 'Completed' : 'Error';
+			completed = dlStatus.downloaded;
+			progress = dlStatus.size > 0 ? dlStatus.downloaded / dlStatus.size : 0;
+			speed = dlStatus.speed || 0;
+
+			if (dlStatus.speed > 0) {
+				timeLeft = (dlStatus.size - dlStatus.downloaded) / dlStatus.speed;
+			}
+
+			if (dlStatus.status === 'completed' && !dbRecord.is_completed) {
+				const db = container.get(MainDB);
+				db.updateDownloadCompletion(dbRecord.hash, true);
+				dbRecord.is_completed = 1;
+			}
+		}
+	} catch (e) {
+		// Service might not be ready
+	}
+
+	return {
+		rawLine: `> ${dbRecord.name} [Telegram] ${statusText}`,
+		name: dbRecord.name,
+		size: dbRecord.size,
+		progress: progress,
+		status: statusText,
+		statusId: dbRecord.is_completed ? 9 : statusText === 'Downloading' ? 4 : 0,
+		stopped: statusText === 'Stopped',
+		hash: dbRecord.hash,
+		link: dbRecord.hash,
+		completed: completed,
+		speed: speed,
+		sources: 0,
+		priority: 0,
+		remaining: dbRecord.size - completed,
+		addedOn: dbRecord.added_at,
+		timeLeft: timeLeft,
+		categoryName: dbRecord.category_name,
+		isCompleted: !!dbRecord.is_completed,
+		provider: 'telegram',
+	} as Download;
+}
+
 export class AmuleService {
 	private readonly host = process.env.AMULE_HOST || 'localhost';
 	private readonly port = process.env.AMULE_PORT || '4712';
 	private readonly password = process.env.AMULE_PASSWORD || 'secret';
 	private readonly client = new AmuleClient({ host: this.host, port: parseInt(this.port), password: this.password });
 	private readonly amulecmdService: AmulecmdService | null = null;
+	private db: MainDB;
 
 	constructor() {
+		this.db = container.get(MainDB);
 		//this.client.connection.setDebug(true);
 		// Enable fallback logic for amulecmd unless disabled
 		if (process.env.AMULECMD_FALLBACK !== 'false') {
@@ -200,7 +249,7 @@ export class AmuleService {
 			const queue = await this.client.getDownloadQueue();
 			const categories = await this.getCategories();
 			//console.log('Download Queue from EC Client:', queue);
-			let dbRecords = db.prepare<[], DownloadDbRecord>('SELECT * FROM downloads').all();
+			let dbRecords = this.db.getAllDownloads();
 
 			let sharedFiles: AmuleFile[] | null = null;
 			const getSharedFiles = async () => {
@@ -212,6 +261,11 @@ export class AmuleService {
 
 			//console.log('Download Queue:', queue);
 			const transfers = dbRecords.map(async (dbRecord) => {
+				// TODO: move to mediaprovider service
+				if (dbRecord.provider === 'telegram') {
+					return getTelegramTransfer(dbRecord);
+				}
+
 				const queueFile = findByHash(queue, dbRecord.hash);
 				//console.log('Matching queue file for hash', dbRecord.hash, ':', queueFile);
 				if (!queueFile && !dbRecord.is_completed) {
@@ -223,11 +277,7 @@ export class AmuleService {
 						// Mark as completed in DB
 						try {
 							// Also update name and size from shared file info just in case they were never set
-							db.prepare('UPDATE downloads SET is_completed = 1, name = ?, size = ? WHERE hash = ?').run(
-								sharedFile.fileName,
-								sharedFile.sizeFull,
-								dbRecord.hash
-							);
+							this.db.updateDownloadCompletion(dbRecord.hash, true, sharedFile.fileName, sharedFile.sizeFull);
 							dbRecord.is_completed = 1;
 							dbRecord.name = sharedFile.fileName ?? '';
 							dbRecord.size = sharedFile.sizeFull || 0;
@@ -336,13 +386,7 @@ export class AmuleService {
 	async clearCompletedTransfers(hashes?: string[]) {
 		console.log('[AmuleService] Clearing completed transfers from DB and client queue', hashes ? `for hashes: ${hashes.join(', ')}` : 'for all');
 		try {
-			if (hashes && hashes.length > 0) {
-				const placeholders = hashes.map(() => '?').join(',');
-				const stmt = db.prepare(`DELETE FROM downloads WHERE is_completed = 1 AND hash IN (${placeholders})`);
-				stmt.run(...hashes);
-			} else {
-				db.exec('DELETE FROM downloads WHERE is_completed = 1');
-			}
+			this.db.clearCompletedDownloads(hashes);
 		} catch (e) {
 			console.error('DB Clear Completed Transfers Error:', e);
 			throw e;
@@ -351,10 +395,25 @@ export class AmuleService {
 
 	private lastSearchResults: any[] = [];
 
+	// TODO: move to mediaprovider service
+	private telegramResults: any[] = [];
+
 	async startSearch(query: string, type: string = 'Global') {
 		console.log(`[AmuleService] Starting Search for: ${query}`);
 
 		try {
+			// TODO: move to mediaprovider service {
+			// Search Telegram Indexer if available
+			this.telegramResults = [];
+			try {
+				const indexer = container.get(TelegramIndexerService);
+				this.telegramResults = indexer.search(query);
+				console.log(`[AmuleService] Telegram search found ${this.telegramResults.length} results`);
+			} catch (err) {
+				console.warn('[AmuleService] Telegram Indexer Service not available for search', err);
+			}
+			// }
+
 			// Convert string type to enum if possible, default to Global
 			// Options: Local, Global, Kad, Web
 			let searchType = SearchType.GLOBAL;
@@ -395,6 +454,9 @@ export class AmuleService {
 			const results = await this.client.searchResults();
 			//console.log('Search Results:', results);
 
+			// TODO: move to mediaprovider service
+			const combinedList = [...this.telegramResults];
+
 			if (results && results.files) {
 				const list = results.files.map((file) => {
 					const hash = file.hash.toString('hex');
@@ -410,14 +472,22 @@ export class AmuleService {
 						type: '',
 						//link: ed2k,
 						hash: hash,
+						provider: 'amule',
 					};
 				});
 
+				// TODO: move to mediaprovider service
+				combinedList.push(...list);
+			}
+
+			// TODO: move to mediaprovider service
+			if (combinedList.length > 0) {
 				return {
-					raw: `Found ${list.length} results`,
-					list: list,
+					raw: `Found ${combinedList.length} results`,
+					list: combinedList,
 				};
 			}
+
 			return { raw: 'No results yet', list: [] };
 		} catch (e: any) {
 			console.error('Get Search Results Error:', e);
@@ -462,6 +532,42 @@ export class AmuleService {
 	async addDownload(link: string) {
 		console.log('Adding download:', link);
 
+		// TODO: move to mediaprovider service
+		if (link.startsWith('telegram:')) {
+			const parts = link.split(':');
+			if (parts.length >= 3) {
+				const chatId = parts[1];
+				const messageId = parseInt(parts[2]);
+				const hash = link;
+
+				try {
+					const indexer = container.get(TelegramIndexerService);
+					const msg = indexer.getFileInfo(chatId, messageId);
+
+					if (msg) {
+						let existing = this.db.getDownload(hash);
+						if (!existing) {
+							this.db.addDownload(hash, msg.file_name || 'Unknown', Number(msg.file_size) || 0, null, 'telegram');
+							console.log('Added Telegram download to DB:', hash);
+						} else {
+							console.log('Telegram download already exists:', hash);
+						}
+
+						// Start download in background
+						indexer.startDownload(chatId, messageId, hash).catch((err) => {
+							console.error(`Failed to start Telegram download ${hash}:`, err);
+						});
+					} else {
+						console.warn('Telegram message not found for download:', chatId, messageId);
+					}
+				} catch (e) {
+					console.error('Error adding Telegram download:', e);
+				}
+				return;
+			}
+		}
+		// }
+
 		// Parse metadata for DB
 		let hash: string | undefined;
 
@@ -493,19 +599,10 @@ export class AmuleService {
 		if (hash) {
 			const added = await this.client.getDownloadQueue();
 			const fileInQueue = added.find((f) => (f.fileHashHexString || '').toLowerCase() === hash!.toLowerCase());
-			const name = fileInQueue ? fileInQueue.fileName : 'Unknown';
-			const size = fileInQueue ? fileInQueue.sizeFull || 0 : 0;
+			const name = fileInQueue?.fileName ?? 'Unknown';
+			const size = fileInQueue?.sizeFull ?? 0;
 			try {
-				const existing = db.prepare('SELECT hash FROM downloads WHERE hash = ?').get(hash);
-				if (!existing) {
-					db.prepare('INSERT INTO downloads (hash, name, size, category_name, added_at, is_completed) VALUES (?, ?, ?, ?, ?, 0)').run(
-						hash,
-						name,
-						size,
-						null,
-						new Date().toISOString()
-					);
-				}
+				this.db.addDownload(hash, name, size);
 			} catch (dbe) {
 				console.error('DB Insert Error:', dbe);
 			}
@@ -514,6 +611,19 @@ export class AmuleService {
 
 	async removeDownload(hash: string) {
 		console.log('Removing download:', hash);
+
+		// TODO: move to mediaprovider service {
+		if (hash.startsWith('telegram:')) {
+			try {
+				const indexer = container.get(TelegramIndexerService);
+				indexer.cancelDownload(hash);
+			} catch (e) {
+				console.error('Error removing Telegram download:', e);
+			}
+			this.db.deleteDownload(hash);
+			return;
+		}
+		// }
 
 		try {
 			await this.client.deleteDownload(Buffer.from(hash, 'hex'));
@@ -527,7 +637,7 @@ export class AmuleService {
 		}
 
 		try {
-			db.prepare('DELETE FROM downloads WHERE hash = ?').run(hash.toLowerCase());
+			this.db.deleteDownload(hash.toLowerCase());
 		} catch (e) {
 			console.error('Failed to remove download from DB:', e);
 		}
@@ -535,6 +645,18 @@ export class AmuleService {
 
 	async pauseDownload(hash: string) {
 		console.log('Pausing download:', hash);
+
+		// TODO: move to mediaprovider service {
+		if (hash.startsWith('telegram:')) {
+			try {
+				const indexer = container.get(TelegramIndexerService);
+				indexer.cancelDownload(hash); // Use cancel as pause
+			} catch (e) {
+				console.error('Error pausing Telegram download:', e);
+			}
+			return;
+		}
+		// }
 		try {
 			await this.client.pauseDownload(Buffer.from(hash, 'hex'));
 		} catch (e) {
@@ -545,6 +667,22 @@ export class AmuleService {
 
 	async resumeDownload(hash: string) {
 		console.log('Resuming download:', hash);
+
+		// TODO: move to mediaprovider service {
+		if (hash.startsWith('telegram:')) {
+			try {
+				const parts = hash.split(':');
+				if (parts.length >= 3) {
+					const indexer = container.get(TelegramIndexerService);
+					await indexer.startDownload(parts[1], parseInt(parts[2]), hash);
+				}
+			} catch (e) {
+				console.error('Error resuming Telegram download:', e);
+			}
+			return;
+		}
+		// }
+
 		try {
 			await this.client.resumeDownload(Buffer.from(hash, 'hex'));
 		} catch (e) {
@@ -555,6 +693,14 @@ export class AmuleService {
 
 	async stopDownload(hash: string) {
 		console.log('Stopping download:', hash);
+		// TODO: move to mediaprovider service {
+		if (hash.startsWith('telegram:')) {
+			const indexer = container.get(TelegramIndexerService);
+			indexer.cancelDownload(hash);
+			return;
+		}
+		// }
+
 		try {
 			await this.client.stopDownload(Buffer.from(hash, 'hex'));
 		} catch (e) {
@@ -637,10 +783,9 @@ export class AmuleService {
 			// In many EC implementations, creating a category with an existing ID updates it
 			await this.client.updateCategory(id, updated);
 
-			// Update DB if name changed and category is not "All" (id 0)
 			if (id !== 0 && data.name && data.name !== existing.name) {
 				try {
-					db.prepare('UPDATE downloads SET category_name = ? WHERE category_name = ?').run(data.name, existing.name);
+					this.db.updateCategoryName(existing.name || '', data.name);
 				} catch (e) {
 					console.error('Failed to update category name in DB:', e);
 				}
@@ -680,7 +825,7 @@ export class AmuleService {
 				// If categoryId is 0 (All) or not found, it might mean "General" or unassigned.
 				// Assuming if cat found, we use name.
 				if (catName !== null && catName !== undefined) {
-					db.prepare('UPDATE downloads SET category_name = ? WHERE hash = ?').run(catName, hashHex.toLowerCase());
+					this.db.setDownloadCategory(hashHex.toLowerCase(), catName);
 				}
 			} catch (e) {
 				console.error('DB update category error', e);

@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 
 import { container } from './services/container/ServiceContainer';
+import { MainDB } from './services/db/MainDB';
 import { AmuleService } from './services/AmuleService';
 import { TelegramService } from './services/TelegramService';
 import { TelegramIndexerService } from './services/TelegramIndexerService';
@@ -27,6 +28,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // -- Initialize & register services in container ------------------------------
+
+// Initialize Main DB
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../dev-data/database.sqlite');
+const mainDb = new MainDB(dbPath);
+container.register(MainDB, mainDb);
 
 // Initialize Amule Service
 const amuleService = new AmuleService();

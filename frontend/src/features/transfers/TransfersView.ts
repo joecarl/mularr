@@ -8,6 +8,7 @@ import { fbytes, formatRemaining } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
+import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 
 const NULL_VALUE = '-1';
 const DEFAULT_VALUE = 'default';
@@ -67,6 +68,10 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 							},
 						},
 					},
+				},
+				providerCol: {
+					inner: () => getProviderIcon(t.get().provider),
+					title: () => getProviderName(t.get().provider),
 				},
 				sizeCol: { inner: () => fbytes(t.get().size) },
 				categoryCol: { inner: () => (t.get().categoryName === DEFAULT_VALUE ? '-' : (t.get().categoryName ?? '-')) },
@@ -292,6 +297,7 @@ export const TransfersView = component(() => {
 
 		thName: { onclick: () => sort('name') },
 		thSize: { onclick: () => sort('size') },
+		thProvider: { onclick: () => sort('provider') },
 		thCategory: { onclick: () => sort('categoryName') },
 		thCompleted: { onclick: () => sort('completed') },
 		thSpeed: { onclick: () => sort('speed') },
