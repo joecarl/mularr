@@ -247,15 +247,15 @@ export const TransfersView = component(() => {
 	return tpl.fragment({
 		refreshBtn: { onclick: loadTransfers },
 		pauseBtn: {
-			disabled: computed(() => !canPause.get()),
+			disabled: () => !canPause.get(),
 			onclick: () => executeCommand('pause'),
 		},
 		resumeBtn: {
-			disabled: computed(() => !canResume.get()),
+			disabled: () => !canResume.get(),
 			onclick: () => executeCommand('resume'),
 		},
 		stopBtn: {
-			disabled: computed(() => !canStop.get()),
+			disabled: () => !canStop.get(),
 			onclick: () => executeCommand('stop'),
 		},
 		cancelBtn: {
@@ -270,7 +270,7 @@ export const TransfersView = component(() => {
 			onchange: (e: any) => changeCategory(e.target.value),
 		},
 		clearSelectedBtn: {
-			disabled: computed(() => !isSelectedCompleted.get()),
+			disabled: () => !isSelectedCompleted.get(),
 			onclick: async () => {
 				const hash = selectedHash.get();
 				if (!hash) return;
