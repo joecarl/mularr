@@ -1,0 +1,171 @@
+/* Scoped styles for Telegram Config UI */
+
+.telegram-config {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	height: 100%;
+
+	.status-bar {
+		padding: 5px 8px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		background: white;
+	}
+
+	.error-banner {
+		padding: 10px;
+		background: #ffcccc;
+		color: #cc0000;
+		border: 1px solid #cc0000;
+		margin: 5px;
+	}
+
+	.toolbar {
+		padding: 5px;
+		display: flex;
+		gap: 5px;
+		border-top: 1px solid var(--ui-input-border-color);
+		background: #f0f8ff;
+
+		.ui-btn {
+			min-width: 80px;
+		}
+	}
+
+	.content-area {
+		flex: 1;
+		padding: 10px;
+		overflow-y: auto;
+		background: var(--ui-face);
+	}
+
+	.form-container {
+		margin: 0 auto;
+
+		&.login {
+			max-width: 400px;
+		}
+
+		&.auth {
+			max-width: 300px;
+		}
+
+		.form-title {
+			margin-bottom: 15px;
+			font-weight: bold;
+		}
+
+		.form-group {
+			margin-bottom: 10px;
+
+			label {
+				display: block;
+				margin-bottom: 3px;
+			}
+
+			.ui-input {
+				width: 100%;
+			}
+		}
+
+		.ui-btn {
+			min-width: 100px;
+		}
+	}
+
+	.connected-panel {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+
+		.header {
+			margin-bottom: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.ui-list {
+			width: 100%;
+			border-collapse: collapse;
+
+			thead {
+				background: var(--ui-face);
+				position: sticky;
+				top: 0;
+
+				th {
+					padding: 4px;
+					text-align: left;
+					border-bottom: 1px solid var(--ui-shadow);
+				}
+			}
+
+			tbody {
+				background: white;
+
+				tr {
+					border-bottom: 1px solid #eee;
+
+					td {
+						padding: 4px;
+
+						.ui-btn {
+							padding: 1px 6px;
+							font-size: 11px;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.ui-input {
+		background-color: var(--ui-input-bg, white);
+		border: var(--ui-input-border, 1px solid #999);
+		padding: 3px 6px;
+		font-family: inherit;
+		font-size: 13px;
+		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+
+		&:focus {
+			outline: none;
+			border-color: var(--ui-hl);
+		}
+	}
+
+	.badge {
+		padding: 2px 6px;
+		border-radius: 4px;
+		font-size: 11px;
+		font-weight: bold;
+		color: white;
+		background-color: #888;
+		border: 1px solid rgba(0, 0, 0, 0.2);
+		display: inline-block;
+		text-transform: capitalize;
+
+		&.connected {
+			background-color: #008000;
+		}
+
+		&.disconnected {
+			background-color: #cc0000;
+		}
+
+		&.waiting_code,
+		&.waiting_password {
+			background-color: #ff8000;
+		}
+
+		&.success {
+			background-color: #008000;
+		}
+
+		&.secondary {
+			background-color: #888;
+		}
+	}
+}

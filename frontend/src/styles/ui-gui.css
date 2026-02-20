@@ -90,6 +90,9 @@ body {
 .icon-delete {
 	background-image: url('/assets/icons/Delete.ico');
 }
+.icon-settings {
+	background-image: url('/assets/icons/Preferences.ico');
+}
 
 /* Panels - Base */
 .ui-panel-sunken {

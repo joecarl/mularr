@@ -45,7 +45,11 @@
 					<td data-cb="urlCol"></td>
 					<td data-cb="typeCol"></td>
 					<td data-cb="enabledCol" style="text-align: center;"></td>
-					<td style="text-align: center;">
+					<td style="text-align: right;">
+						<!-- Configure Button -->
+						<button class="ui-btn" style="min-width: 24px; height: 20px; padding: 0;"
+							data-cb="btnConfigure"><span class="icon-img icon-settings"></span></button>
+
 						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 5px;"
 							data-cb="btnToggle">Toggle</button>
 						<button data-cb="btnDelete" class="ui-btn"
@@ -62,47 +66,5 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
-
-	<!-- Modal -->
-	<div class="modal-overlay" data-cb="dlgAdd" style="display: none;">
-		<div class="ui-window" style="width: 400px;">
-			<div class="ui-window-header">
-				<div class="ui-window-title">Add Extension</div>
-				<div class="ui-window-controls">
-					<button class="ui-close-btn" data-cb="btnCloseDlg">×</button>
-				</div>
-			</div>
-			<div class="ui-window-content" style="padding: 10px;">
-				<form data-cb="formAdd">
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">Name:</label>
-						<input type="text" name="name" required style="width: 100%;" />
-					</div>
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">URL:</label>
-						<input type="url" name="url" required placeholder="http://..." style="width: 100%;" />
-					</div>
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">Type:</label>
-						<select name="type" style="width: 100%;">
-							<option value="validator">Validator</option>
-							<option value="enhanced_search">Enhanced search</option>
-							<option value="webhook">Webhook</option>
-						</select>
-					</div>
-					<div class="form-group" style="margin-bottom: 15px;">
-						<label>
-							<input type="checkbox" name="enabled" checked /> Enabled
-						</label>
-					</div>
-
-					<div style="display: flex; justify-content: flex-end; gap: 8px;">
-						<button type="submit" class="ui-btn">Save</button>
-						<button type="button" class="ui-btn" data-cb="btnCancelDlg">Cancel</button>
-					</div>
-				</form>
-			</div>
-		</div>
 	</div>
 </div>

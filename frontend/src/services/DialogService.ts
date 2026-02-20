@@ -1,55 +1,65 @@
-import { signal } from 'chispa';
+import { type Component } from 'chispa';
+import { DialogHost } from '../components/DialogHost';
+import { MessageDialog } from '../components/MessageDialog';
 
-export interface DialogOptions {
+export interface DialogCustomOptions {
 	title: string;
-	message: string;
-	type: 'alert' | 'confirm';
-	onConfirm?: () => void;
-	onCancel?: () => void;
+	width?: string;
+	render: (close: () => void) => Component;
 }
 
 export class DialogService {
-	public activeDialog = signal<DialogOptions | null>(null);
-
 	public alert(message: string, title: string = 'Message'): Promise<void> {
 		return new Promise((resolve) => {
-			this.activeDialog.set({
+			this.open({
 				title,
-				message,
-				type: 'alert',
-				onConfirm: () => {
-					this.activeDialog.set(null);
-					resolve();
-				},
+				width: '350px',
+				render: (close) =>
+					MessageDialog({
+						message,
+						type: 'alert',
+						onConfirm: () => {
+							close();
+							resolve();
+						},
+					}),
 			});
 		});
 	}
 
 	public confirm(message: string, title: string = 'Confirm'): Promise<boolean> {
 		return new Promise((resolve) => {
-			this.activeDialog.set({
+			this.open({
 				title,
-				message,
-				type: 'confirm',
-				onConfirm: () => {
-					this.activeDialog.set(null);
-					resolve(true);
-				},
-				onCancel: () => {
-					this.activeDialog.set(null);
-					resolve(false);
-				},
+				width: '350px',
+				render: (close) =>
+					MessageDialog({
+						message,
+						type: 'confirm',
+						onConfirm: () => {
+							close();
+							resolve(true);
+						},
+						onCancel: () => {
+							close();
+							resolve(false);
+						},
+					}),
 			});
 		});
 	}
 
-	public close() {
-		const current = this.activeDialog.get();
-		if (current?.onCancel) {
-			current.onCancel();
-		} else if (current?.onConfirm) {
-			current.onConfirm();
-		}
-		this.activeDialog.set(null);
+	public open(options: DialogCustomOptions) {
+		const dialogInstance = DialogHost({
+			title: options.title,
+			width: options.width,
+			onClose: () => {
+				dialogInstance.unmount();
+			},
+			body: options.render(() => dialogInstance.unmount()),
+		});
+
+		dialogInstance.mount(document.body);
+		return dialogInstance;
 	}
 }

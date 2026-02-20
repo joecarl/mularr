@@ -2,6 +2,8 @@ import { component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { ExtensionsApiService, Extension, ExtensionType } from '../../services/ExtensionsApiService';
 import { DialogService } from '../../services/DialogService';
+import { TelegramConfig } from './components/TelegramConfig';
+import { AddExtensionForm } from './components/AddExtensionForm';
 import tpl from './ExtensionsView.html';
 import './ExtensionsView.css';
 
@@ -9,7 +11,6 @@ export const ExtensionsView = component(() => {
 	const api = services.get(ExtensionsApiService);
 	const dialogService = services.get(DialogService);
 	const extensions = signal<Extension[]>([]);
-	const showDialog = signal(false);
 
 	const refresh = async () => {
 		try {
@@ -43,32 +44,43 @@ export const ExtensionsView = component(() => {
 		}
 	};
 
-	const handleSubmit = async (e: Event) => {
-		e.preventDefault();
-		const form = e.target as HTMLFormElement;
-		const formData = new FormData(form);
-		const v = {
-			name: formData.get('name') as string,
-			url: formData.get('url') as string,
-			type: formData.get('type') as ExtensionType,
-			enabled: formData.get('enabled') ? 1 : 0,
-		};
-		try {
-			await api.addExtension(v);
-			showDialog.set(false);
-			form.reset();
-			refresh();
-		} catch (e) {
-			console.error(e);
-			await dialogService.alert('Failed to add extension', 'Error');
-		}
+	const openAddDialog = () => {
+		dialogService.open({
+			title: 'Add Extension',
+			render: (close) =>
+				AddExtensionForm({
+					onSave: async (v) => {
+						if (v.type !== 'telegram_indexer' && !v.url) {
+							await dialogService.alert('URL is required for this extension type');
+							return;
+						}
+						try {
+							await api.addExtension(v);
+							refresh();
+							close();
+						} catch (e) {
+							console.error(e);
+							await dialogService.alert('Failed to add extension', 'Error');
+						}
+					},
+					onCancel: close,
+				}),
+		});
+	};
+
+	const openTelegramDialog = () => {
+		dialogService.open({
+			title: 'Telegram Configuration',
+			width: '700px',
+			render: () => TelegramConfig(),
+		});
 	};
 
 	refresh();
 
 	return tpl.fragment({
 		btnRefresh: { onclick: refresh },
-		btnAdd: { onclick: () => showDialog.set(true) },
+		btnAdd: { onclick: openAddDialog },
 
 		listBody: {
 			inner: () => {
@@ -103,6 +115,14 @@ export const ExtensionsView = component(() => {
 							urlCol: { inner: v.url },
 							typeCol: { inner: v.type },
 							enabledCol: { inner: v.enabled ? 'Yes' : 'No' },
+
+							btnConfigure: {
+								style: { display: v.type === 'telegram_indexer' ? 'inline-block' : 'none' },
+								onclick: () => {
+									openTelegramDialog();
+								},
+							},
+
 							btnToggle: {
 								onclick: () => handleToggle(v.id, !!v.enabled),
 								inner: v.enabled ? 'Disable' : 'Enable',
@@ -113,14 +133,5 @@ export const ExtensionsView = component(() => {
 				);
 			},
 		},
-
-		dlgAdd: {
-			style: {
-				display: () => (showDialog.get() ? '' : 'none'),
-			},
-		},
-		btnCloseDlg: { onclick: () => showDialog.set(false) },
-		btnCancelDlg: { onclick: () => showDialog.set(false) },
-		formAdd: { onsubmit: handleSubmit },
 	});
 });

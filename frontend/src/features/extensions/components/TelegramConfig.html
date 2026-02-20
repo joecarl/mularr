@@ -1,0 +1,111 @@
+<div class="telegram-config">
+
+	<!-- Status Bar -->
+	<div class="ui-panel-sunken">
+		<div class="status-bar">
+			<span style="font-weight: bold;">Status:</span>
+			<span data-cb="statusBadge" style="text-transform: capitalize;">Detecting...</span>
+			<div style="flex: 1;"></div>
+			<span data-cb="phoneDisplay" style="display: none;">
+				Phone: <span data-cb="phoneText" style="font-weight: bold;"></span>
+			</span>
+		</div>
+
+		<!-- Error Banner -->
+		<div class="error-banner" data-cb="errorBanner"></div>
+
+		<!-- Toolbar -->
+		<div class="toolbar">
+			<button class="ui-btn" data-cb="btnRefresh">Refresh</button>
+			<div style="flex: 1;"></div>
+			<button class="ui-btn" data-cb="btnLogout">Logout</button>
+		</div>
+	</div>
+
+	<!-- Content Area -->
+	<div class="ui-panel-raised content-area">
+
+		<!-- Login Form -->
+		<div data-cb="panelDisconnected" class="form-container login">
+			<div class="form-title" style="text-decoration: underline;">Telegram Login</div>
+
+			<div class="form-group">
+				<label>API ID (my.telegram.org):</label>
+				<input type="text" data-cb="inputApiId" class="ui-input">
+			</div>
+			<div class="form-group">
+				<label>API Hash:</label>
+				<input type="text" data-cb="inputApiHash" class="ui-input">
+			</div>
+			<div class="form-group" style="margin-bottom: 15px;">
+				<label>Phone Number (intl format):</label>
+				<input type="text" data-cb="inputPhone" class="ui-input" placeholder="+123456789">
+			</div>
+
+			<div style="display: flex; justify-content: flex-end;">
+				<button class="ui-btn" data-cb="btnStartAuth">Send Code</button>
+			</div>
+		</div>
+
+		<!-- Code Form -->
+		<div data-cb="panelWaitingCode" class="form-container auth">
+			<div class="form-title">Enter Verification Code</div>
+			<div class="form-group" style="margin-bottom: 15px;">
+				<label>Code sent to Telegram/SMS:</label>
+				<input type="text" data-cb="inputCode" class="ui-input">
+			</div>
+			<div style="display: flex; justify-content: flex-end;">
+				<button class="ui-btn" data-cb="btnSubmitCode">Submit</button>
+			</div>
+		</div>
+
+		<!-- Password Form -->
+		<div data-cb="panelWaitingPassword" class="form-container auth">
+			<div class="form-title">Two-Step Verification</div>
+			<div class="form-group" style="margin-bottom: 15px;">
+				<label>Cloud Password:</label>
+				<input type="password" data-cb="inputPassword" class="ui-input">
+			</div>
+			<div style="display: flex; justify-content: flex-end;">
+				<button class="ui-btn" data-cb="btnSubmitPassword">Login</button>
+			</div>
+		</div>
+
+		<!-- Connected / Chat List -->
+		<div data-cb="panelConnected" class="connected-panel">
+			<div class="header">
+				<strong>Indexed Chats</strong>
+				<button class="ui-btn" data-cb="btnRefreshChats">Refresh List</button>
+			</div>
+
+			<div class="ui-table-container" style="flex: 1;">
+				<table class="ui-list">
+					<thead>
+						<tr>
+							<th>Chat Name</th>
+							<th>Type</th>
+							<th style="text-align: center;">Status</th>
+							<th style="text-align: center;">Action</th>
+						</tr>
+					</thead>
+					<tbody data-cb="chatsList">
+						<tr data-cb="chatRow">
+							<td data-cb="chatName"></td>
+							<td data-cb="chatType" style="color: #666;"></td>
+							<td style="text-align: center;">
+								<span data-cb="chatStatusBadge"></span>
+							</td>
+							<td style="text-align: center;">
+								<button data-cb="chatActionBtn" class="ui-btn"></button>
+							</td>
+						</tr>
+						<tr data-cb="noChats">
+							<td colspan="4" style="text-align: center; padding: 20px; color: #666;">No chats loaded.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,4 +1,4 @@
-export type ExtensionType = 'validator' | 'enhanced_search' | 'webhook';
+export type ExtensionType = 'validator' | 'enhanced_search' | 'webhook' | 'telegram_indexer';
 
 export interface Extension {
 	id: number;
@@ -6,6 +6,7 @@ export interface Extension {
 	url: string;
 	type: ExtensionType;
 	enabled: number;
+	config?: string;
 }
 
 export interface ValidationResult {

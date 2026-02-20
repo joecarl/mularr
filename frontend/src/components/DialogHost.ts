@@ -1,38 +1,31 @@
-import { component, effect } from 'chispa';
-import { services } from '../services/container/ServiceContainer';
-import { DialogService } from '../services/DialogService';
+import { component, type Component } from 'chispa';
 import tpl from './DialogHost.html';
 import '../styles/ui-modal.css';
 
-export const DialogHost = component(() => {
-	const dialogService = services.get(DialogService);
+export interface IDialogProps {
+	title: string;
+	width?: string;
+	onClose: () => void;
+	body: Component;
+}
 
+export const DialogHost = component<IDialogProps>(({ title, width, onClose, body }) => {
 	return tpl.fragment({
-		overlay: {
+		overlay: {},
+		window: {
 			style: {
-				display: () => (dialogService.activeDialog.get() ? '' : 'none'),
+				width: width || '400px',
 			},
 		},
+		header: {},
 		title: {
-			inner: () => dialogService.activeDialog.get()?.title || 'Dialog',
-		},
-		message: {
-			inner: () => dialogService.activeDialog.get()?.message || '',
-		},
-		icon: {
-			inner: () => (dialogService.activeDialog.get()?.type === 'confirm' ? '❓' : '⚠️'),
+			inner: title,
 		},
 		closeBtn: {
-			onclick: () => dialogService.close(),
+			onclick: onClose,
 		},
-		confirmBtn: {
-			onclick: () => dialogService.activeDialog.get()?.onConfirm?.(),
-		},
-		cancelBtn: {
-			style: {
-				display: () => (dialogService.activeDialog.get()?.type === 'confirm' ? '' : 'none'),
-			},
-			onclick: () => dialogService.activeDialog.get()?.onCancel?.(),
+		content: {
+			inner: body,
 		},
 	});
 });

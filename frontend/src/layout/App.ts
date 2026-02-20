@@ -2,7 +2,6 @@ import { component, type Route, Router, signal } from 'chispa';
 import { services } from '../services/container/ServiceContainer';
 import { AmuleInfo, AmuleApiService } from '../services/AmuleApiService';
 import { StatsService } from '../services/StatsService';
-import { DialogHost } from '../components/DialogHost';
 import { formatSpeed } from '../utils/formats';
 import { Sidebar } from './Sidebar';
 import tpl from './App.html';
@@ -40,7 +39,6 @@ export const App = component<IAppProps>(({ routes }) => {
 		sidebarContainer: Sidebar({
 			onLinkClick: () => isSidebarOpen.set(false),
 		}),
-		dialogHost: DialogHost({}),
 		routerView: {
 			inner: Router({
 				routes,

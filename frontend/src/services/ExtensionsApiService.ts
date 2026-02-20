@@ -1,6 +1,6 @@
 import { BaseApiService } from './BaseApiService';
 
-export type ExtensionType = 'validator' | 'enhanced_search' | 'webhook';
+export type ExtensionType = 'validator' | 'enhanced_search' | 'webhook' | 'telegram_indexer';
 
 export interface Extension {
 	id: number;

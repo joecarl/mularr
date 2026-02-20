@@ -1,8 +1,19 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite');
+export const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../dev-data/database.sqlite');
 const db = new Database(dbPath);
+
+// Migration: Add config column if not exists
+try {
+	const tableInfo = db.prepare('PRAGMA table_info(extensions)').all() as any[];
+	const hasConfig = tableInfo.some((col) => col.name === 'config');
+	if (!hasConfig) {
+		db.prepare('ALTER TABLE extensions ADD COLUMN config TEXT').run();
+	}
+} catch (e) {
+	console.error('Migration error adding config column:', e);
+}
 
 // Initialize tables
 db.exec(`
@@ -20,7 +31,8 @@ db.exec(`
     name TEXT NOT NULL,
     url TEXT NOT NULL,
     type TEXT DEFAULT 'generic',
-    enabled INTEGER DEFAULT 1
+    enabled INTEGER DEFAULT 1,
+    config TEXT
   );
 
   CREATE TABLE IF NOT EXISTS file_validations (

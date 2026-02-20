@@ -1,0 +1,24 @@
+<form data-cb="form">
+	<div class="form-group" style="margin-bottom: 10px;">
+		<label style="display: block; margin-bottom: 3px;">Name:</label>
+		<input type="text" name="name" required style="width: 100%;" />
+	</div>
+	<div class="form-group" style="margin-bottom: 10px;">
+		<label style="display: block; margin-bottom: 3px;">URL:</label>
+		<input type="url" name="url" placeholder="http://..." style="width: 100%;" />
+	</div>
+	<div class="form-group" style="margin-bottom: 10px;">
+		<label style="display: block; margin-bottom: 3px;">Type:</label>
+		<select data-cb="extensionType" name="type" style="width: 100%;"></select>
+	</div>
+	<div class="form-group" style="margin-bottom: 15px;">
+		<label>
+			<input type="checkbox" name="enabled" checked /> Enabled
+		</label>
+	</div>
+
+	<div style="display: flex; justify-content: flex-end; gap: 8px;">
+		<button type="submit" class="ui-btn">Save</button>
+		<button type="button" class="ui-btn" data-cb="btnCancel">Cancel</button>
+	</div>
+</form>
