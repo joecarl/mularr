@@ -435,12 +435,13 @@ export class TelegramIndexerService {
 		if (this.completedDownloads.has(hash)) {
 			return this.completedDownloads.get(hash);
 		}
-		const messages = this.db.searchFiles(hash.split(':')[2] || '');
-		if (messages.length > 0) {
-			const msg = messages.find((m) => `telegram:${m.chat_id}:${m.message_id}` === hash);
-			if (msg) {
+		// hash format: telegram:chatId:messageId — look up directly without a search scan
+		const parts = hash.split(':');
+		if (parts.length >= 3) {
+			const msg = this.db.getMessage(parts[1], parseInt(parts[2]));
+			if (msg && msg.file_size) {
 				return {
-					hash: hash,
+					hash,
 					fileName: msg.file_name || 'Unknown',
 					size: Number(msg.file_size) || 0,
 					downloaded: Number(msg.file_size) || 0,
@@ -581,12 +582,12 @@ export class TelegramIndexerService {
 		return this.db.getMessage(chatId, messageId);
 	}
 
-	public search(query: string) {
+	public async search(query: string, limit: number = 50, offset: number = 0) {
 		const ext = this.mainDb.getExtensionByType('telegram_indexer');
 		if (!ext || !ext.enabled) {
 			return [];
 		}
-		const results = this.db.searchFiles(query);
+		const results = await this.db.searchFiles(query, limit, offset);
 		return results
 			.filter((f) => f.file_size)
 			.map((msg) => ({

@@ -4,7 +4,6 @@ import util from 'util';
 import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
 import { AmulecmdService } from './AmulecmdService';
-import { TelegramIndexerService } from './TelegramIndexerService';
 
 function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): string {
 	const DEFAULT_VALUE = 'default';
@@ -71,59 +70,6 @@ function getDataFromFileRef(hashOrLink: string): FileRefData | null {
 function findByHash<T extends AmuleFile>(downloads: T[], hash: string): T | null {
 	const lowerHash = hash.toLowerCase();
 	return downloads.find((d) => (d.fileHashHexString || '').toLowerCase() === lowerHash) || null;
-}
-
-function getTelegramTransfer(dbRecord: DownloadDbRecord): Download {
-	let statusText = dbRecord.is_completed ? 'Completed' : 'Stopped';
-	let progress = dbRecord.is_completed ? 1 : 0;
-	let completed = dbRecord.is_completed ? dbRecord.size : 0;
-	let speed = 0;
-	let timeLeft = 0;
-
-	try {
-		const indexer = container.get(TelegramIndexerService);
-		const dlStatus = indexer.getDownloadStatus(dbRecord.hash);
-		if (dlStatus) {
-			statusText = dlStatus.status === 'downloading' ? 'Downloading' : dlStatus.status === 'completed' ? 'Completed' : 'Error';
-			completed = dlStatus.downloaded;
-			progress = dlStatus.size > 0 ? dlStatus.downloaded / dlStatus.size : 0;
-			speed = dlStatus.speed || 0;
-
-			if (dlStatus.speed > 0) {
-				timeLeft = (dlStatus.size - dlStatus.downloaded) / dlStatus.speed;
-			}
-
-			if (dlStatus.status === 'completed' && !dbRecord.is_completed) {
-				const db = container.get(MainDB);
-				db.updateDownloadCompletion(dbRecord.hash, true);
-				dbRecord.is_completed = 1;
-			}
-		}
-	} catch (e) {
-		// Service might not be ready
-	}
-
-	return {
-		rawLine: `> ${dbRecord.name} [Telegram] ${statusText}`,
-		name: dbRecord.name,
-		size: dbRecord.size,
-		progress: progress,
-		status: statusText,
-		statusId: dbRecord.is_completed ? 9 : statusText === 'Downloading' ? 4 : 0,
-		stopped: statusText === 'Stopped',
-		hash: dbRecord.hash,
-		link: dbRecord.hash,
-		completed: completed,
-		speed: speed,
-		sources: 0,
-		priority: 0,
-		remaining: dbRecord.size - completed,
-		addedOn: dbRecord.added_at,
-		timeLeft: timeLeft,
-		categoryName: dbRecord.category_name,
-		isCompleted: !!dbRecord.is_completed,
-		provider: 'telegram',
-	} as Download;
 }
 
 export class AmuleService {
@@ -249,7 +195,7 @@ export class AmuleService {
 			const queue = await this.client.getDownloadQueue();
 			const categories = await this.getCategories();
 			//console.log('Download Queue from EC Client:', queue);
-			let dbRecords = this.db.getAllDownloads();
+			let dbRecords = this.db.getAllDownloads().filter((r) => !r.provider || r.provider === 'amule');
 
 			let sharedFiles: AmuleFile[] | null = null;
 			const getSharedFiles = async () => {
@@ -261,11 +207,6 @@ export class AmuleService {
 
 			//console.log('Download Queue:', queue);
 			const transfers = dbRecords.map(async (dbRecord) => {
-				// TODO: move to mediaprovider service
-				if (dbRecord.provider === 'telegram') {
-					return getTelegramTransfer(dbRecord);
-				}
-
 				const queueFile = findByHash(queue, dbRecord.hash);
 				//console.log('Matching queue file for hash', dbRecord.hash, ':', queueFile);
 				if (!queueFile && !dbRecord.is_completed) {
@@ -395,25 +336,10 @@ export class AmuleService {
 
 	private lastSearchResults: any[] = [];
 
-	// TODO: move to mediaprovider service
-	private telegramResults: any[] = [];
-
 	async startSearch(query: string, type: string = 'Global') {
 		console.log(`[AmuleService] Starting Search for: ${query}`);
 
 		try {
-			// TODO: move to mediaprovider service {
-			// Search Telegram Indexer if available
-			this.telegramResults = [];
-			try {
-				const indexer = container.get(TelegramIndexerService);
-				this.telegramResults = indexer.search(query);
-				console.log(`[AmuleService] Telegram search found ${this.telegramResults.length} results`);
-			} catch (err) {
-				console.warn('[AmuleService] Telegram Indexer Service not available for search', err);
-			}
-			// }
-
 			// Convert string type to enum if possible, default to Global
 			// Options: Local, Global, Kad, Web
 			let searchType = SearchType.GLOBAL;
@@ -452,10 +378,6 @@ export class AmuleService {
 	async getSearchResults() {
 		try {
 			const results = await this.client.searchResults();
-			//console.log('Search Results:', results);
-
-			// TODO: move to mediaprovider service
-			const combinedList = [...this.telegramResults];
 
 			if (results && results.files) {
 				const list = results.files.map((file) => {
@@ -475,17 +397,9 @@ export class AmuleService {
 						provider: 'amule',
 					};
 				});
-
-				// TODO: move to mediaprovider service
-				combinedList.push(...list);
-			}
-
-			// TODO: move to mediaprovider service
-			if (combinedList.length > 0) {
-				return {
-					raw: `Found ${combinedList.length} results`,
-					list: combinedList,
-				};
+				if (list.length > 0) {
+					return { raw: `Found ${list.length} results`, list };
+				}
 			}
 
 			return { raw: 'No results yet', list: [] };
@@ -532,42 +446,6 @@ export class AmuleService {
 	async addDownload(link: string) {
 		console.log('Adding download:', link);
 
-		// TODO: move to mediaprovider service
-		if (link.startsWith('telegram:')) {
-			const parts = link.split(':');
-			if (parts.length >= 3) {
-				const chatId = parts[1];
-				const messageId = parseInt(parts[2]);
-				const hash = link;
-
-				try {
-					const indexer = container.get(TelegramIndexerService);
-					const msg = indexer.getFileInfo(chatId, messageId);
-
-					if (msg) {
-						let existing = this.db.getDownload(hash);
-						if (!existing) {
-							this.db.addDownload(hash, msg.file_name || 'Unknown', Number(msg.file_size) || 0, null, 'telegram');
-							console.log('Added Telegram download to DB:', hash);
-						} else {
-							console.log('Telegram download already exists:', hash);
-						}
-
-						// Start download in background
-						indexer.startDownload(chatId, messageId, hash).catch((err) => {
-							console.error(`Failed to start Telegram download ${hash}:`, err);
-						});
-					} else {
-						console.warn('Telegram message not found for download:', chatId, messageId);
-					}
-				} catch (e) {
-					console.error('Error adding Telegram download:', e);
-				}
-				return;
-			}
-		}
-		// }
-
 		// Parse metadata for DB
 		let hash: string | undefined;
 
@@ -612,19 +490,6 @@ export class AmuleService {
 	async removeDownload(hash: string) {
 		console.log('Removing download:', hash);
 
-		// TODO: move to mediaprovider service {
-		if (hash.startsWith('telegram:')) {
-			try {
-				const indexer = container.get(TelegramIndexerService);
-				indexer.cancelDownload(hash);
-			} catch (e) {
-				console.error('Error removing Telegram download:', e);
-			}
-			this.db.deleteDownload(hash);
-			return;
-		}
-		// }
-
 		try {
 			await this.client.deleteDownload(Buffer.from(hash, 'hex'));
 			// Remove from DB if successfully deleted from client
@@ -646,17 +511,6 @@ export class AmuleService {
 	async pauseDownload(hash: string) {
 		console.log('Pausing download:', hash);
 
-		// TODO: move to mediaprovider service {
-		if (hash.startsWith('telegram:')) {
-			try {
-				const indexer = container.get(TelegramIndexerService);
-				indexer.cancelDownload(hash); // Use cancel as pause
-			} catch (e) {
-				console.error('Error pausing Telegram download:', e);
-			}
-			return;
-		}
-		// }
 		try {
 			await this.client.pauseDownload(Buffer.from(hash, 'hex'));
 		} catch (e) {
@@ -668,21 +522,6 @@ export class AmuleService {
 	async resumeDownload(hash: string) {
 		console.log('Resuming download:', hash);
 
-		// TODO: move to mediaprovider service {
-		if (hash.startsWith('telegram:')) {
-			try {
-				const parts = hash.split(':');
-				if (parts.length >= 3) {
-					const indexer = container.get(TelegramIndexerService);
-					await indexer.startDownload(parts[1], parseInt(parts[2]), hash);
-				}
-			} catch (e) {
-				console.error('Error resuming Telegram download:', e);
-			}
-			return;
-		}
-		// }
-
 		try {
 			await this.client.resumeDownload(Buffer.from(hash, 'hex'));
 		} catch (e) {
@@ -693,13 +532,6 @@ export class AmuleService {
 
 	async stopDownload(hash: string) {
 		console.log('Stopping download:', hash);
-		// TODO: move to mediaprovider service {
-		if (hash.startsWith('telegram:')) {
-			const indexer = container.get(TelegramIndexerService);
-			indexer.cancelDownload(hash);
-			return;
-		}
-		// }
 
 		try {
 			await this.client.stopDownload(Buffer.from(hash, 'hex'));

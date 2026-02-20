@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import axios from 'axios';
 
-export class TelegramService {
+export class TelegramBotService {
 	private bot: TelegramBot | null = null;
 	private chatId: string | null = null;
 	private topicId: number | null = null;
@@ -15,7 +15,7 @@ export class TelegramService {
 			this.bot = new TelegramBot(token, { polling: false });
 			this.chatId = chatId;
 			this.topicId = topicId ?? null;
-			console.log('Telegram Service initialized');
+			console.log('Telegram Bot Service initialized');
 		} else {
 			console.warn('Telegram Service NOT initialized: Missing token or chatId');
 		}

@@ -1,7 +1,7 @@
 import { container } from './container/ServiceContainer';
 import { AmuledService } from './AmuledService';
 import { GluetunService } from './GluetunService';
-import { TelegramService } from './TelegramService';
+import { TelegramBotService } from './TelegramBotService';
 
 export class MularrMonitoringService {
 	private readonly checkInterval: number = 10 * 1000; // 10 seconds
@@ -12,9 +12,9 @@ export class MularrMonitoringService {
 	private readonly amuledService = container.get(AmuledService);
 	private readonly gluetunService = container.get(GluetunService);
 
-	private get telegramService(): TelegramService | null {
+	private get telegramService(): TelegramBotService | null {
 		try {
-			return container.get(TelegramService);
+			return container.get(TelegramBotService);
 		} catch {
 			return null;
 		}
@@ -66,7 +66,9 @@ export class MularrMonitoringService {
 
 					if (this.gluetunFailures >= this.maxGluetunFailures) {
 						console.error(`🚨 Gluetun health check failed ${this.maxGluetunFailures} consecutive times. Suicide triggered.`);
-						await this.notify(`🚨 Gluetun health check failed ${this.maxGluetunFailures} consecutive times (Status: ${statusStr}). Restarting container...`);
+						await this.notify(
+							`🚨 Gluetun health check failed ${this.maxGluetunFailures} consecutive times (Status: ${statusStr}). Restarting container...`
+						);
 						// Give a small delay for the notification to be sent
 						setTimeout(() => process.exit(1), 2000);
 						return; // Stop further checks

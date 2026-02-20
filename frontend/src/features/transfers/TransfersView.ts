@@ -1,6 +1,7 @@
 import { component, signal, computed, componentList, WritableSignal, effect, bindControlledSelect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { AmuleApiService, Transfer, Category, AmuleUpDownClient } from '../../services/AmuleApiService';
+import { AmuleApiService, AmuleUpDownClient } from '../../services/AmuleApiService';
+import { MediaApiService, Transfer, Category } from '../../services/MediaApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { getFileIcon } from '../../utils/icons';
@@ -110,6 +111,7 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 
 export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
+	const mediaService = services.get(MediaApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
 
@@ -158,7 +160,7 @@ export const TransfersView = component(() => {
 	});
 
 	const loadTransfers = smartPoll(async () => {
-		const data = await apiService.getTransfers();
+		const data = await mediaService.getTransfers();
 		transferList.set(data.list || []);
 		categories.set(data.categories || []);
 	}, 2000);
@@ -184,7 +186,7 @@ export const TransfersView = component(() => {
 			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel this download?', 'Cancel Download'))) {
 				return;
 			}
-			await apiService.sendDownloadCommand(hash, cmd);
+			await mediaService.sendDownloadCommand(hash, cmd);
 			if (cmd === 'cancel') selectedHash.set(null);
 			loadTransfers();
 		} catch (e: any) {
@@ -204,7 +206,7 @@ export const TransfersView = component(() => {
 				if (!cat) throw new Error('Selected category not found');
 				catId = cat.id;
 			}
-			await apiService.setFileCategory(hash, catId);
+			await mediaService.setFileCategory(hash, catId);
 			loadTransfers();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Error');
@@ -280,7 +282,7 @@ export const TransfersView = component(() => {
 				const hash = selectedHash.get();
 				if (!hash) return;
 				if (await dialogService.confirm('Clear this completed file from the list? (The file will remain on disk)', 'Clear Selection')) {
-					await apiService.clearCompletedTransfers([hash]);
+					await mediaService.clearCompletedTransfers([hash]);
 					selectedHash.set(null);
 					loadTransfers();
 				}
@@ -289,7 +291,7 @@ export const TransfersView = component(() => {
 		clearCompletedBtn: {
 			onclick: async () => {
 				if (await dialogService.confirm('Clear all completed transfers from the list? (Files will remain on disk)', 'Clear All Completed')) {
-					await apiService.clearCompletedTransfers();
+					await mediaService.clearCompletedTransfers();
 					loadTransfers();
 				}
 			},

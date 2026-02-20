@@ -4,13 +4,13 @@ import { fbytes } from '../../utils/formats';
 import { services } from '../../services/container/ServiceContainer';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
-import { AmuleApiService, SearchResult } from '../../services/AmuleApiService';
+import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
 export const SearchView = component(() => {
-	const apiService = services.get(AmuleApiService);
+	const apiService = services.get(MediaApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
 

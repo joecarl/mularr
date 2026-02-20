@@ -200,7 +200,11 @@ export class TelegramIndexerDB {
 		return this.db.prepare('SELECT * FROM messages_content WHERE chat_id = ? AND message_id = ?').get(chatId, messageId) as MessageRow | undefined;
 	}
 
-	public searchFiles(query: string, limit: number = 20): MessageRow[] {
+	public async searchFiles(query: string, limit: number = 50, offset: number = 0): Promise<MessageRow[]> {
+		// better-sqlite3 is synchronous; yield to the event loop before running the
+		// query so callers in pagination loops don't starve other async work.
+		// This is the only place that needs to know about the sync/async impedance.
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		return this.db
 			.prepare(
 				`
@@ -208,10 +212,10 @@ export class TelegramIndexerDB {
 				WHERE has_media = 1 
 				AND (file_name LIKE ? OR text LIKE ?)
 				ORDER BY date DESC 
-				LIMIT ?
+				LIMIT ? OFFSET ?
 			`
 			)
-			.all(`%${query}%`, `%${query}%`, limit) as MessageRow[];
+			.all(`%${query}%`, `%${query}%`, limit, offset) as MessageRow[];
 	}
 
 	public getContext(chatId: string, messageId: number, window: number = 5): MessageRow[] {

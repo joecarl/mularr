@@ -6,12 +6,13 @@ import path from 'path';
 import { container } from './services/container/ServiceContainer';
 import { MainDB } from './services/db/MainDB';
 import { AmuleService } from './services/AmuleService';
-import { TelegramService } from './services/TelegramService';
+import { TelegramBotService } from './services/TelegramBotService';
 import { TelegramIndexerService } from './services/TelegramIndexerService';
 import { GluetunService } from './services/GluetunService';
 import { AmuledService } from './services/AmuledService';
 import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
+import { MediaProviderService } from './services/mediaprovider';
 import { ExtensionsService } from './services/ExtensionsService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
@@ -19,6 +20,7 @@ import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
 import { indexerRoutes } from './routes/indexerRoutes';
 import { extensionsRoutes } from './routes/extensionsRoutes';
 import { telegramRoutes } from './routes/telegramRoutes';
+import { mediaProviderRoutes } from './routes/mediaProviderRoutes';
 
 const app = express();
 const port = process.env.PORT || 8940;
@@ -56,8 +58,8 @@ container.register(ExtensionsService, extensionsService);
 // Initialize Telegram Service (Optional)
 if (process.env.TELEGRAM_BOT_TOKEN) {
 	const topicId = process.env.TELEGRAM_TOPIC_ID ? parseInt(process.env.TELEGRAM_TOPIC_ID) : undefined;
-	const tgService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID!, topicId);
-	container.register(TelegramService, tgService);
+	const tgService = new TelegramBotService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID!, topicId);
+	container.register(TelegramBotService, tgService);
 }
 
 // Initialize Telegram Indexer Service (Always init, but disconnected if no auth)
@@ -70,10 +72,15 @@ const monitoringService = new MularrMonitoringService();
 container.register(MularrMonitoringService, monitoringService);
 monitoringService.start();
 
+// Initialize MediaProvider Service (aggregates amule + telegram + future providers)
+const mediaProviderService = new MediaProviderService();
+container.register(MediaProviderService, mediaProviderService);
+
 // -- Setup routes -------------------------------------------------------------
 
 app.use('/api/system', systemRoutes());
 app.use('/api/amule', amuleRoutes());
+app.use('/api/media', mediaProviderRoutes());
 app.use('/api/extensions', extensionsRoutes());
 app.use('/api/telegram', telegramRoutes());
 app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr
