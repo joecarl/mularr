@@ -4,7 +4,6 @@ import { DialogService } from '../../../services/DialogService';
 import { services } from '../../../services/container/ServiceContainer';
 import tpl from './TelegramConfig.html';
 import './TelegramConfig.css';
-import { List } from 'lucide-static';
 
 interface ChatRowProps {
 	onToggleChat: (chat: TelegramChat) => void;
