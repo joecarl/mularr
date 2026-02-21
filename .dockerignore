@@ -8,3 +8,4 @@ database.sqlite
 frontend/dist
 backend/dist
 backend/public
+dev-data

@@ -1,9 +1,36 @@
-import { component, signal, bindControlledInput, computed } from 'chispa';
+import { component, signal, bindControlledInput, computed, componentList } from 'chispa';
 import { TelegramApiService, type TelegramUser, type TelegramChat } from '../../../services/TelegramApiService';
 import { DialogService } from '../../../services/DialogService';
 import { services } from '../../../services/container/ServiceContainer';
 import tpl from './TelegramConfig.html';
 import './TelegramConfig.css';
+import { List } from 'lucide-static';
+
+interface ChatRowProps {
+	onToggleChat: (chat: TelegramChat) => void;
+}
+const ChatsRows = componentList<TelegramChat, ChatRowProps>(
+	(c, i, l, props) => {
+		return tpl.chatRow({
+			nodes: {
+				chatName: { inner: () => c.get().title },
+				chatType: { inner: () => c.get().type },
+				chatStatusBadge: {
+					inner: () => (c.get().indexing_enabled ? 'Indexing' : 'Ignored'),
+					style: {
+						color: () => (c.get().indexing_enabled ? '#008000' : '#808080'),
+						fontWeight: 'bold',
+					},
+				},
+				chatActionBtn: {
+					inner: () => (c.get().indexing_enabled ? 'Disable' : 'Enable'),
+					onclick: () => props!.onToggleChat(c.get()),
+				},
+			},
+		});
+	},
+	(c) => c.id
+);
 
 export const TelegramConfig = component(() => {
 	// Services
@@ -131,6 +158,11 @@ export const TelegramConfig = component(() => {
 	// Initial load
 	refreshStatus();
 
+	const noChats = computed(() => {
+		const list = chats.get();
+		return !list || list.length === 0;
+	});
+
 	return tpl.fragment({
 		btnRefresh: { onclick: refreshStatus },
 		btnLogout: {
@@ -228,31 +260,7 @@ export const TelegramConfig = component(() => {
 		// Chats List
 		btnRefreshChats: { onclick: loadChats },
 		chatsList: {
-			inner: () => {
-				const list = chats.get();
-				if (!list || list.length === 0) {
-					return tpl.noChats({});
-				}
-				return list.map((c: TelegramChat) =>
-					tpl.chatRow({
-						nodes: {
-							chatName: { inner: c.title },
-							chatType: { inner: c.type },
-							chatStatusBadge: {
-								inner: c.indexing_enabled ? 'Indexing' : 'Ignored',
-								style: {
-									color: () => (c.indexing_enabled ? '#008000' : '#808080'),
-									fontWeight: 'bold',
-								},
-							},
-							chatActionBtn: {
-								inner: c.indexing_enabled ? 'Disable' : 'Enable',
-								onclick: () => toggleChat(c),
-							},
-						},
-					})
-				);
-			},
+			inner: () => (noChats.get() ? tpl.noChats({}) : ChatsRows(chats, { onToggleChat: toggleChat })),
 		},
 	});
 });
