@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
+import { __APP_MANIFEST__ } from './app-env';
 import { container } from './services/container/ServiceContainer';
 import { MainDB } from './services/db/MainDB';
 import { AmuleService } from './services/AmuleService';
@@ -21,6 +22,8 @@ import { indexerRoutes } from './routes/indexerRoutes';
 import { extensionsRoutes } from './routes/extensionsRoutes';
 import { telegramRoutes } from './routes/telegramRoutes';
 import { mediaProviderRoutes } from './routes/mediaProviderRoutes';
+
+console.log(`Starting Mularr v${__APP_MANIFEST__.version}...`);
 
 const app = express();
 const port = process.env.PORT || 8940;

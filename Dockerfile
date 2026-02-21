@@ -9,6 +9,7 @@ RUN npm install
 
 # Copy source and build
 COPY frontend/ ./
+COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 2: Build Backend
@@ -22,6 +23,7 @@ RUN npm install
 
 # Copy source and build
 COPY backend/ ./
+COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 3: Production Image
@@ -38,6 +40,8 @@ RUN cd backend && npm install --omit=dev
 
 # Copy backend build results
 COPY --from=backend-builder /app/backend/dist ./backend/dist
+# Copy app-manifest.json for runtime use
+COPY app-manifest.json ./
 # Copy frontend build results to the backend's public directory
 COPY --from=frontend-builder /app/frontend/dist ./backend/public
 

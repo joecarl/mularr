@@ -98,5 +98,6 @@ export const Sidebar = component<SidebarProps>((props) => {
 		},
 		networkContainer: NetworkContainer(),
 		statsContainer: StatsContainer(),
+		appVersion: { inner: `v${__APP_MANIFEST__.version}` },
 	});
 });
