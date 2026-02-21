@@ -67,8 +67,10 @@ export const Sidebar = component<SidebarProps>((props) => {
 						serverName: { inner: 'Not connected' },
 						serverIpPort: { inner: '-' },
 						serverDesc: { inner: 'Please connect to a server' },
-						ed2kIdVal: { inner: '-' },
-						kadIdVal: { inner: '-' },
+						ed2kBadge: { title: '-', classes: { 'badge-error': true } },
+						ed2kBadgeIcon: { inner: '✖' },
+						kadBadge: { title: '-', classes: { 'badge-error': true } },
+						kadBadgeIcon: { inner: '✖' },
 					},
 				});
 			}
@@ -77,22 +79,29 @@ export const Sidebar = component<SidebarProps>((props) => {
 			const server = () => s().connectedServer!;
 			const isHigh = () => !!s().isHighID;
 
+			const hasEd2k = () => !!(s().ed2kId || s().id);
+			const hasKad = () => !!s().kadId && s().kadId !== '-' && s().kadId !== '0';
+
 			return tpl.connectionContainer({
 				nodes: {
 					connStatusText: { inner: () => s().connectionState || 'Connected' },
 					highIdBadge: {
 						inner: () => (isHigh() ? 'High ID' : 'Low ID'),
-						style: {
-							background: () => (isHigh() ? '#4caf50' : '#f44336'),
-							color: 'white',
-							border: () => (isHigh() ? '1px solid #388e3c' : '1px solid #d32f2f'),
-						},
+						addClass: () => (isHigh() ? 'badge-success' : 'badge-error'),
 					},
 					serverName: { inner: () => server().name || 'Unknown Server' },
 					serverIpPort: { inner: () => `${server().ip}:${server().port}` },
 					serverDesc: { inner: () => server().description || 'No description available' },
-					ed2kIdVal: { inner: () => String(s().ed2kId || s().id || '-') },
-					kadIdVal: { inner: () => s().kadId || '-' },
+					ed2kBadge: {
+						title: () => String(s().ed2kId || s().id || '-'),
+						addClass: () => (hasEd2k() ? 'badge-success' : 'badge-error'),
+					},
+					ed2kBadgeIcon: { inner: () => (hasEd2k() ? '✔' : '✖') },
+					kadBadge: {
+						title: () => s().kadId || '-',
+						addClass: () => (hasKad() ? 'badge-success' : 'badge-error'),
+					},
+					kadBadgeIcon: { inner: () => (hasKad() ? '✔' : '✖') },
 				},
 			});
 		},

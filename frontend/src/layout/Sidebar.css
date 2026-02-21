@@ -56,6 +56,25 @@
 		border-radius: 10px;
 		font-weight: bold;
 		text-transform: uppercase;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: white;
+
+		&.badge-success {
+			background: #4caf50;
+			border: 1px solid #388e3c;
+		}
+
+		&.badge-error {
+			background: #f44336;
+			border: 1px solid #d32f2f;
+		}
+
+		&.badge-neutral {
+			background: #9e9e9e;
+			border: 1px solid #757575;
+		}
 	}
 
 	.sidebar-box {
