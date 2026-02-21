@@ -3,6 +3,7 @@ import { container } from '../services/container/ServiceContainer';
 import { AmuleService, getCatByName } from '../services/AmuleService';
 import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
+import { AmuledService } from '../services/AmuledService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
 
 /**
@@ -10,6 +11,7 @@ import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
  */
 export class QbittorrentController {
 	private readonly amuleService = container.get(AmuleService);
+	private readonly amuledService = container.get(AmuledService);
 	private readonly mediaProviderService = container.get(MediaProviderService);
 	private readonly extensionsService = container.get(ExtensionsService);
 
@@ -55,13 +57,13 @@ export class QbittorrentController {
 		if (!hash || typeof hash !== 'string') {
 			return res.status(400).send('No hash provided');
 		}
-
+		const config = await this.amuledService.getConfig();
 		const categories = await this.amuleService.getCategories();
 		const transfers = await this.mediaProviderService.getTransfers();
 		const tr = transfers.list.find((t) => t.hash === hash);
 
 		if (tr) {
-			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || '/incoming';
+			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || config.incomingDir;
 			const properties = {
 				addition_date: 0,
 				comment: '',
@@ -106,6 +108,7 @@ export class QbittorrentController {
 		try {
 			const transfers = await this.mediaProviderService.getTransfers();
 			const categories = await this.amuleService.getCategories();
+			const config = await this.amuledService.getConfig();
 
 			const requestedCtgName = category as string | undefined;
 
@@ -117,7 +120,7 @@ export class QbittorrentController {
 			});
 
 			const qbitTorrents = downloads.map((t) => {
-				const savePath = getCatByName(categories, t.categoryName ?? '')?.path || '/incoming';
+				const savePath = getCatByName(categories, t.categoryName ?? '')?.path || config.incomingDir;
 				const contentPath = t.name ? savePath + '/' + t.name : undefined;
 
 				let state = this.mapStatusIdToQbitState(t.statusId);
@@ -272,9 +275,10 @@ export class QbittorrentController {
 
 	getPreferences = async (req: Request, res: Response) => {
 		console.log('[QbittorrentController] Preferences requested');
+		const config = await this.amuledService.getConfig();
 		res.json({
-			save_path: '/incoming',
-			temp_path: '/temp',
+			save_path: config.incomingDir,
+			temp_path: config.tempDir,
 			dht: true,
 		});
 	};

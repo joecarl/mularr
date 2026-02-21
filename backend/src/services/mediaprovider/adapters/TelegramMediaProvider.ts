@@ -3,12 +3,45 @@ import { TelegramIndexerService } from '../../TelegramIndexerService';
 import { MainDB, DownloadDbRecord } from '../../db/MainDB';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer } from '../types';
 
+/*
+const statusMap: Record<number, string> = {
+	0: 'Downloading',
+	1: 'Empty',
+	2: 'Waiting for Hash',
+	3: 'Hashing',
+	4: 'Error',
+	5: 'Insufficient Space',
+	6: 'Unknown',
+	7: 'Paused',
+	8: 'Completing',
+	9: 'Completed',
+	10: 'Allocating',
+};
+*/
+
+function toAmuleStatusId(status: string): number {
+	switch (status) {
+		case 'downloading':
+			return 0;
+		case 'completed':
+			return 9;
+		case 'paused':
+			return 7;
+		case 'stopped':
+			return 7;
+		case 'error':
+			return 4;
+		default:
+			return 6; // default to 'Unknown'
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helper: build a MediaTransfer from a Telegram DB record
 // ---------------------------------------------------------------------------
 
 function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramIndexerService): MediaTransfer {
-	let statusText = dbRecord.is_completed ? 'Completed' : 'Stopped';
+	let statusText = dbRecord.is_completed ? 'completed' : '';
 	let progress = dbRecord.is_completed ? 1 : 0;
 	let completed = dbRecord.is_completed ? dbRecord.size : 0;
 	let speed = 0;
@@ -17,7 +50,7 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 	try {
 		const dlStatus = indexer.getDownloadStatus(dbRecord.hash);
 		if (dlStatus) {
-			statusText = dlStatus.status === 'downloading' ? 'Downloading' : dlStatus.status === 'completed' ? 'Completed' : 'Error';
+			statusText = dlStatus.status;
 
 			completed = dlStatus.downloaded;
 			progress = dlStatus.size > 0 ? dlStatus.downloaded / dlStatus.size : 0;
@@ -42,8 +75,8 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		size: dbRecord.size,
 		progress,
 		status: statusText,
-		statusId: dbRecord.is_completed ? 9 : statusText === 'Downloading' ? 0 : 4,
-		stopped: statusText === 'Stopped',
+		statusId: dbRecord.is_completed ? 9 : toAmuleStatusId(statusText),
+		stopped: statusText === 'stopped',
 		hash: dbRecord.hash,
 		link: dbRecord.hash,
 		completed,
@@ -68,6 +101,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 	private cachedResults: MediaSearchResult[] = [];
 	private searchDone = true;
 	private readonly PAGE_SIZE = 20;
+	private readonly indexer = container.get(TelegramIndexerService);
 
 	canHandleDownload(link: string): boolean {
 		return link.startsWith('telegram:');
@@ -87,10 +121,9 @@ export class TelegramMediaProvider implements IMediaProvider {
 	}
 
 	private async runSearchLoop(query: string): Promise<void> {
-		const indexer = container.get(TelegramIndexerService);
 		let cursorId: number | null = 0;
 		while (cursorId !== null) {
-			const { results: batch, nextCursor } = await indexer.search(query, this.PAGE_SIZE, cursorId);
+			const { results: batch, nextCursor } = await this.indexer.search(query, this.PAGE_SIZE, cursorId);
 			console.log(`[TelegramMediaProvider] Search batch: ${batch.length} results (cursor ${cursorId})`);
 			if (batch.length === 0) break;
 
@@ -126,9 +159,8 @@ export class TelegramMediaProvider implements IMediaProvider {
 		const messageId = parseInt(parts[2]);
 		const hash = link;
 
-		const indexer = container.get(TelegramIndexerService);
 		const db = container.get(MainDB);
-		const msg = indexer.getFileInfo(chatId, messageId);
+		const msg = this.indexer.getFileInfo(chatId, messageId);
 
 		if (msg) {
 			const existing = db.getDownload(hash);
@@ -136,7 +168,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 				db.addDownload(hash, msg.file_name || 'Unknown', Number(msg.file_size) || 0, null, 'telegram');
 				console.log('[TelegramMediaProvider] Added to DB:', hash);
 			}
-			indexer.startDownload(chatId, messageId, hash).catch((err: any) => {
+			this.indexer.startDownload(chatId, messageId, hash).catch((err: any) => {
 				console.error(`[TelegramMediaProvider] startDownload failed ${hash}:`, err);
 			});
 		} else {
@@ -146,7 +178,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 
 	async removeDownload(hash: string): Promise<void> {
 		try {
-			container.get(TelegramIndexerService).cancelDownload(hash);
+			this.indexer.cancelDownload(hash);
 		} catch (e) {
 			console.error('[TelegramMediaProvider] removeDownload error:', e);
 		}
@@ -155,26 +187,23 @@ export class TelegramMediaProvider implements IMediaProvider {
 
 	async pauseDownload(hash: string): Promise<void> {
 		try {
-			container.get(TelegramIndexerService).cancelDownload(hash);
+			this.indexer.pauseDownload(hash);
 		} catch (e) {
 			console.error('[TelegramMediaProvider] pauseDownload error:', e);
 		}
 	}
 
 	async resumeDownload(hash: string): Promise<void> {
-		const parts = hash.split(':');
-		if (parts.length >= 3) {
-			try {
-				await container.get(TelegramIndexerService).startDownload(parts[1], parseInt(parts[2]), hash);
-			} catch (e) {
-				console.error('[TelegramMediaProvider] resumeDownload error:', e);
-			}
+		try {
+			this.indexer.resumeDownload(hash);
+		} catch (e) {
+			console.error('[TelegramMediaProvider] resumeDownload error:', e);
 		}
 	}
 
 	async stopDownload(hash: string): Promise<void> {
 		try {
-			container.get(TelegramIndexerService).cancelDownload(hash);
+			this.indexer.pauseDownload(hash);
 		} catch (e) {
 			console.error('[TelegramMediaProvider] stopDownload error:', e);
 		}
@@ -183,8 +212,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 	async getTransfers(): Promise<MediaTransfer[]> {
 		const db = container.get(MainDB);
 		const records = db.getAllDownloads().filter((r) => r.provider === 'telegram');
-		const indexer = container.get(TelegramIndexerService);
-		return records.map((r) => buildTelegramTransfer(r, indexer));
+		return records.map((r) => buildTelegramTransfer(r, this.indexer));
 	}
 
 	async clearCompletedTransfers(hashes?: string[]): Promise<void> {
