@@ -1,21 +1,16 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
-import { AmuleService } from '../services/AmuleService';
+import { AmuleService, getCatByName } from '../services/AmuleService';
+import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
-import { AmuleCategory } from 'amule-ec-client';
-
-const getCatByName = (ctgs: AmuleCategory[], name: string) => {
-	const cat = ctgs.find((c) => c.name === name);
-	if (!cat) return ctgs.find((c) => c.id === 0); // Default category
-	return cat;
-};
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
  */
 export class QbittorrentController {
 	private readonly amuleService = container.get(AmuleService);
+	private readonly mediaProviderService = container.get(MediaProviderService);
 	private readonly extensionsService = container.get(ExtensionsService);
 
 	// qBittorrent API: POST /api/v2/auth/login
@@ -62,7 +57,7 @@ export class QbittorrentController {
 		}
 
 		const categories = await this.amuleService.getCategories();
-		const transfers = await this.amuleService.getTransfers();
+		const transfers = await this.mediaProviderService.getTransfers();
 		const tr = transfers.list.find((t) => t.hash === hash);
 
 		if (tr) {
@@ -109,7 +104,7 @@ export class QbittorrentController {
 		console.log('[QbittorrentController] Torrents info requested');
 		const { category } = req.query;
 		try {
-			const transfers = await this.amuleService.getTransfers();
+			const transfers = await this.mediaProviderService.getTransfers();
 			const categories = await this.amuleService.getCategories();
 
 			const requestedCtgName = category as string | undefined;
@@ -174,7 +169,7 @@ export class QbittorrentController {
 		}
 
 		try {
-			const transfers = await this.amuleService.getTransfers();
+			const transfers = await this.mediaProviderService.getTransfers();
 			const tr = transfers.list.find((t) => t.hash === hash);
 			if (!tr) {
 				return res.status(404).send('Torrent not found');
@@ -265,7 +260,7 @@ export class QbittorrentController {
 			const hashList = hashes.split('|');
 			for (const hash of hashList) {
 				if (hash) {
-					await this.amuleService.removeDownload(hash);
+					await this.mediaProviderService.sendDownloadCommand(hash, 'cancel');
 				}
 			}
 			res.send('Ok.');

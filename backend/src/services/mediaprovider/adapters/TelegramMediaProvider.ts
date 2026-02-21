@@ -42,7 +42,7 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		size: dbRecord.size,
 		progress,
 		status: statusText,
-		statusId: dbRecord.is_completed ? 9 : statusText === 'Downloading' ? 4 : 0,
+		statusId: dbRecord.is_completed ? 9 : statusText === 'Downloading' ? 0 : 4,
 		stopped: statusText === 'Stopped',
 		hash: dbRecord.hash,
 		link: dbRecord.hash,

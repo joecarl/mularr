@@ -14,6 +14,12 @@ function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): stri
 	return name;
 }
 
+export const getCatByName = (ctgs: AmuleCategory[], name: string) => {
+	const cat = ctgs.find((c) => c.name === name);
+	if (!cat) return ctgs.find((c) => c.id === 0); // Default category
+	return cat;
+};
+
 const execPromise = util.promisify(exec);
 
 interface FileRefData {
