@@ -287,16 +287,75 @@ export class TelegramIndexerService {
 		const chatId = dialog.id?.toString();
 		if (!chatId) return;
 
-		// For this implementation, I will treat the dialog as a single stream for simplicity
-		// unless I find a clear way to list all topics easily in the client wrapper.
-		// But the requirement says "topics included".
-		// Let's try to get history. If we get history of a Supergroup, we usually get all messages.
+		// If the dialog is a forum supergroup, fetch and register all topic names first
+		const entity = dialog.entity as any;
+		if (entity?.forum) {
+			await this.registerForumTopics(dialog.inputEntity, chatId);
+		}
 
-		await this.indexChatHistory(dialog.inputEntity, chatId, chatName, 0);
+		await this.indexChatHistory(dialog.inputEntity, chatId, chatName);
 	}
 
-	private async indexChatHistory(entity: Api.TypeInputPeer, chatId: string, chatName: string, topicId: number = 0) {
-		let lastId = this.db.getLastMessageId(chatId, topicId);
+	/**
+	 * Fetches all forum topics for a channel and stores their names in the `topics` table.
+	 *
+	 * GetForumTopics uses a three-part cursor: (offsetDate, offsetId, offsetTopic).
+	 * All three must advance together or the server returns the same page repeatedly.
+	 * The response includes a `messages` array (the top message of each topic) from
+	 * which we extract the proper offsetDate and offsetId for the next page.
+	 */
+	private async registerForumTopics(entity: Api.TypeInputPeer, chatId: string) {
+		const PAGE = 100;
+		let offsetDate = 0;
+		let offsetId = 0;
+		let offsetTopic = 0;
+		let totalFetched = 0;
+
+		while (true) {
+			try {
+				const result = (await this.fetchWithFloodWait(() =>
+					this.client!.invoke(
+						new Api.channels.GetForumTopics({
+							channel: entity,
+							limit: PAGE,
+							offsetDate,
+							offsetId,
+							offsetTopic,
+						})
+					)
+				)) as any;
+
+				const topics: Api.ForumTopic[] = result.topics ?? [];
+				if (topics.length === 0) break;
+
+				for (const topic of topics) {
+					this.db.registerTopic(chatId, topic.id, topic.title);
+				}
+				totalFetched += topics.length;
+				logger.info(`Registered ${totalFetched} forum topics so far for chat ${chatId}`);
+
+				// Stop if we've received everything
+				if (topics.length < PAGE || totalFetched >= (result.count ?? Infinity)) break;
+
+				// Advance cursor — all three parts must come from the last topic's top message
+				const lastTopic = topics[topics.length - 1];
+				const topMsgId: number = lastTopic.topMessage;
+				const topMsg = (result.messages as any[])?.find((m: any) => m.id === topMsgId);
+				offsetDate = topMsg?.date ?? 0;
+				offsetId = topMsgId;
+				offsetTopic = lastTopic.id;
+
+				// Safety: if cursor didn't advance (malformed response), stop
+				if (offsetTopic === 0 && offsetId === 0) break;
+			} catch (err) {
+				logger.warn(`Could not fetch forum topics for ${chatId}: ${err}`);
+				break;
+			}
+		}
+	}
+
+	private async indexChatHistory(entity: Api.TypeInputPeer, chatId: string, chatName: string) {
+		let lastId = this.db.getLastMessageId(chatId);
 		logger.info(`Indexing ${chatName} (ID: ${chatId}) starting from ${lastId}...`);
 
 		let hasMore = true;
@@ -389,7 +448,7 @@ export class TelegramIndexerService {
 
 				if (messagesToInsert.length > 0) {
 					this.db.insertMessages(messagesToInsert);
-					this.db.updateLastMessageId(chatId, topicId, maxIdInBatch);
+					this.db.updateLastMessageId(chatId, maxIdInBatch);
 					lastId = maxIdInBatch;
 				} else {
 					// We got messages but none were suitable or all were old?
@@ -400,7 +459,7 @@ export class TelegramIndexerService {
 						const lastMsg = messages[messages.length - 1];
 						if (lastMsg.id > lastId) {
 							lastId = lastMsg.id;
-							this.db.updateLastMessageId(chatId, topicId, lastId);
+							this.db.updateLastMessageId(chatId, lastId);
 						}
 					}
 				}
@@ -582,13 +641,13 @@ export class TelegramIndexerService {
 		return this.db.getMessage(chatId, messageId);
 	}
 
-	public async search(query: string, limit: number = 50, offset: number = 0) {
+	public async search(query: string, limit: number = 50, cursorId: number = 0) {
 		const ext = this.mainDb.getExtensionByType('telegram_indexer');
 		if (!ext || !ext.enabled) {
-			return [];
+			return { results: [], nextCursor: null };
 		}
-		const results = await this.db.searchFiles(query, limit, offset);
-		return results
+		const { rows, nextCursor } = await this.db.searchFiles(query, limit, cursorId);
+		const results = rows
 			.filter((f) => f.file_size)
 			.map((msg) => ({
 				name: msg.file_name || 'Unknown',
@@ -603,6 +662,7 @@ export class TelegramIndexerService {
 				type: msg.media_type || '',
 				link: `telegram:${msg.chat_id}:${msg.message_id}`,
 			}));
+		return { results, nextCursor };
 	}
 
 	private async executeWithRetry<T>(fn: () => Promise<T>, retries = 5): Promise<T> {
@@ -613,7 +673,7 @@ export class TelegramIndexerService {
 				const waitSeconds = err.seconds;
 				logger.warn(`FloodWait caught in wrapper: waiting ${waitSeconds}s`);
 				await new Promise((resolve) => setTimeout(resolve, (waitSeconds + 1) * 1000));
-				return this.executeWithRetry(fn, retries);
+				return this.executeWithRetry(fn, retries - 1);
 			}
 			if (retries > 0) {
 				logger.error(`Error in API call, retrying... (${retries} left)`, err);

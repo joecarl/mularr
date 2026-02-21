@@ -67,7 +67,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 	readonly providerId = 'telegram';
 	private cachedResults: MediaSearchResult[] = [];
 	private searchDone = true;
-	private readonly PAGE_SIZE = 15;
+	private readonly PAGE_SIZE = 20;
 
 	canHandleDownload(link: string): boolean {
 		return link.startsWith('telegram:');
@@ -88,10 +88,10 @@ export class TelegramMediaProvider implements IMediaProvider {
 
 	private async runSearchLoop(query: string): Promise<void> {
 		const indexer = container.get(TelegramIndexerService);
-		let offset = 0;
-		while (true) {
-			const batch = await indexer.search(query, this.PAGE_SIZE, offset);
-			console.log(`[TelegramMediaProvider] Search batch: ${batch.length} results (offset ${offset})`);
+		let cursorId: number | null = 0;
+		while (cursorId !== null) {
+			const { results: batch, nextCursor } = await indexer.search(query, this.PAGE_SIZE, cursorId);
+			console.log(`[TelegramMediaProvider] Search batch: ${batch.length} results (cursor ${cursorId})`);
 			if (batch.length === 0) break;
 
 			const mapped: MediaSearchResult[] = batch.map((r: any) => ({
@@ -106,9 +106,9 @@ export class TelegramMediaProvider implements IMediaProvider {
 			}));
 			this.cachedResults.push(...mapped);
 
-			if (batch.length < this.PAGE_SIZE) break;
-			offset += batch.length;
+			cursorId = nextCursor;
 		}
+		console.log('[TelegramMediaProvider] Search completed. Total results:', this.cachedResults.length);
 	}
 
 	async getSearchResults(): Promise<MediaSearchResult[]> {
