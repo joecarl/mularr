@@ -41,6 +41,17 @@ export interface MessageRow {
 	file_size: number | null;
 }
 
+export interface ActiveDownloadRow {
+	hash: string;
+	chat_id: string;
+	message_id: number;
+	file_name: string;
+	out_path: string;
+	downloaded_bytes: number;
+	file_size: number;
+	status: string;
+}
+
 export class TelegramIndexerDB {
 	private db: Database.Database;
 
@@ -95,6 +106,19 @@ export class TelegramIndexerDB {
 				file_name TEXT,
 				file_size INTEGER,
 				UNIQUE(chat_id, topic_id, message_id)
+			);
+		`);
+
+		this.db.exec(`
+			CREATE TABLE IF NOT EXISTS active_downloads (
+				hash TEXT PRIMARY KEY,
+				chat_id TEXT NOT NULL,
+				message_id INTEGER NOT NULL,
+				file_name TEXT,
+				out_path TEXT,
+				downloaded_bytes INTEGER DEFAULT 0,
+				file_size INTEGER,
+				status TEXT
 			);
 		`);
 
@@ -333,6 +357,47 @@ export class TelegramIndexerDB {
 			`
 			)
 			.run(enabled ? 1 : 0, chatId);
+	}
+
+	// Active Downloads management
+
+	public addActiveDownload(row: ActiveDownloadRow) {
+		this.db
+			.prepare(
+				`INSERT INTO active_downloads (hash, chat_id, message_id, file_name, out_path, downloaded_bytes, file_size, status)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				 ON CONFLICT(hash) DO UPDATE SET downloaded_bytes = ?, status = ?`
+			)
+			.run(
+				row.hash,
+				row.chat_id,
+				row.message_id,
+				row.file_name,
+				row.out_path,
+				row.downloaded_bytes,
+				row.file_size,
+				row.status,
+				row.downloaded_bytes,
+				row.status
+			);
+	}
+
+	public updateDownloadProgress(hash: string, downloadedBytes: number, status: string) {
+		this.db
+			.prepare(
+				`UPDATE active_downloads 
+				 SET downloaded_bytes = ?, status = ? 
+				 WHERE hash = ?`
+			)
+			.run(downloadedBytes, status, hash);
+	}
+
+	public removeActiveDownload(hash: string) {
+		this.db.prepare('DELETE FROM active_downloads WHERE hash = ?').run(hash);
+	}
+
+	public getActiveDownloads(): ActiveDownloadRow[] {
+		return this.db.prepare('SELECT * FROM active_downloads').all() as ActiveDownloadRow[];
 	}
 
 	public close() {

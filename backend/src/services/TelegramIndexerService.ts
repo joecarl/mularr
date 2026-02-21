@@ -190,6 +190,7 @@ export class TelegramIndexerService {
 		const session = this.client!.session.save() as unknown as string;
 		this.saveExtensionConfig({ session });
 		logger.info('Telegram login successful!');
+		this.downloadManager.resumeActiveDownloads();
 		this.runIndexingLoop();
 	}
 
@@ -220,6 +221,7 @@ export class TelegramIndexerService {
 		this.client = new TelegramClient(new StringSession(sessionString), apiId, apiHash, { connectionRetries: 5 });
 		await this.client.connect();
 		this.authStatus = 'connected';
+		this.downloadManager.resumeActiveDownloads();
 		this.runIndexingLoop();
 	}
 

@@ -154,6 +154,18 @@ export class TelegramDownloadManager {
 			const outPath = path.join(await this.getDownloadTempDir(), fileName);
 			logger.info(`Starting download: ${fileName} -> ${outPath}`);
 
+			// Save to DB for persistence
+			this.telegramDb.addActiveDownload({
+				hash,
+				chat_id: chatId,
+				message_id: messageId,
+				file_name: fileName,
+				out_path: outPath,
+				downloaded_bytes: 0,
+				file_size: fileSize,
+				status: 'downloading',
+			});
+
 			const control: DownloadControl = {
 				cancelled: false,
 				paused: false,
@@ -168,6 +180,7 @@ export class TelegramDownloadManager {
 				if (s) {
 					s.status = 'error';
 					s.speed = 0;
+					this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
 				}
 			});
 
@@ -175,6 +188,64 @@ export class TelegramDownloadManager {
 		} catch (err) {
 			logger.error('Error starting download:', err);
 			return false;
+		}
+	}
+
+	public async resumeActiveDownloads() {
+		const active = this.telegramDb.getActiveDownloads();
+		if (active.length === 0) return;
+
+		const client = this.getClient();
+		if (!client) return;
+
+		logger.info(`Resuming ${active.length} active downloads...`);
+
+		for (const row of active) {
+			// Skip if already in memory
+			if (this.activeDownloads.has(row.hash)) continue;
+
+			try {
+				const messages = await client.getMessages(row.chat_id, { ids: [row.message_id] });
+				if (!messages || messages.length === 0) continue;
+
+				const message = messages[0];
+				if (!message.media || !(message.media instanceof Api.MessageMediaDocument)) continue;
+
+				const doc = message.media.document as Api.Document;
+
+				const status: DownloadStatus = {
+					hash: row.hash,
+					fileName: row.file_name,
+					size: row.file_size,
+					downloaded: row.downloaded_bytes,
+					speed: 0,
+					status: 'downloading',
+					startTime: Date.now(),
+					lastUpdate: Date.now(),
+					lastBytes: row.downloaded_bytes,
+				};
+				this.activeDownloads.set(row.hash, status);
+
+				const control: DownloadControl = {
+					cancelled: false,
+					paused: false,
+					pausePromise: null,
+					pauseResolve: null,
+				};
+				this.downloadControls.set(row.hash, control);
+
+				this.runIterDownload(row.hash, doc, row.out_path, row.file_name, row.downloaded_bytes).catch((err) => {
+					logger.error(`Resume download failed: ${row.file_name}`, err);
+					const s = this.activeDownloads.get(row.hash);
+					if (s) {
+						s.status = 'error';
+						s.speed = 0;
+						this.telegramDb.updateDownloadProgress(row.hash, s.downloaded, 'error');
+					}
+				});
+			} catch (err) {
+				logger.error(`Error resuming download ${row.file_name}:`, err);
+			}
 		}
 	}
 
@@ -189,6 +260,7 @@ export class TelegramDownloadManager {
 		if (status) {
 			status.status = 'paused';
 			status.speed = 0;
+			this.telegramDb.updateDownloadProgress(hash, status.downloaded, 'paused');
 		}
 	}
 
@@ -202,7 +274,10 @@ export class TelegramDownloadManager {
 			control.pausePromise = null;
 		}
 		const status = this.activeDownloads.get(hash);
-		if (status && status.status === 'paused') status.status = 'downloading';
+		if (status && status.status === 'paused') {
+			status.status = 'downloading';
+			this.telegramDb.updateDownloadProgress(hash, status.downloaded, 'downloading');
+		}
 	}
 
 	public cancelDownload(hash: string) {
@@ -220,15 +295,33 @@ export class TelegramDownloadManager {
 		if (status) {
 			status.status = 'stopped';
 			status.speed = 0;
+			this.telegramDb.removeActiveDownload(hash);
 		}
 	}
 
 	// -- Core streaming download --
 
-	private async runIterDownload(hash: string, doc: Api.Document, outPath: string, fileName: string) {
+	private async runIterDownload(hash: string, doc: Api.Document, outPath: string, fileName: string, initialProgress: number = 0) {
 		const client = this.getClient()!;
 		const control = this.downloadControls.get(hash)!;
-		const fileStream = fs.createWriteStream(outPath);
+
+		// Source of truth for resume: check file size on disk if it exists
+		let offsetProgress = initialProgress;
+		if (fs.existsSync(outPath)) {
+			try {
+				const stats = fs.statSync(outPath);
+				offsetProgress = stats.size;
+				logger.info(`Resuming ${fileName} from disk offset: ${offsetProgress} bytes`);
+			} catch (e) {
+				logger.warn(`Could not read file size for ${fileName}`);
+			}
+		}
+
+		// Update DB with current actual progress before starting
+		this.telegramDb.updateDownloadProgress(hash, offsetProgress, 'downloading');
+
+		// Open in append mode
+		const fileStream = fs.createWriteStream(outPath, { flags: 'a' });
 
 		try {
 			const fileLocation = new Api.InputDocumentFileLocation({
@@ -238,13 +331,15 @@ export class TelegramDownloadManager {
 				thumbSize: '',
 			});
 
-			let downloadedBytes = 0;
+			let downloadedBytes = offsetProgress;
+			let lastDbUpdate = Date.now();
 
 			for await (const chunk of client.iterDownload({
 				file: fileLocation,
-				requestSize: 512 * 1024, // 512 KB per request
+				requestSize: 1024 * 1024, // 1MB per request for better throughput
 				fileSize: doc.size,
 				dcId: doc.dcId,
+				offset: doc.size.constructor(offsetProgress),
 			})) {
 				// Check cancellation before processing chunk
 				if (control.cancelled) {
@@ -256,7 +351,10 @@ export class TelegramDownloadManager {
 				if (control.paused && control.pausePromise) {
 					await control.pausePromise;
 					const s = this.activeDownloads.get(hash);
-					if (s && !control.cancelled) s.status = 'downloading';
+					if (s && !control.cancelled) {
+						s.status = 'downloading';
+						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'downloading');
+					}
 				}
 
 				// Re-check after potential resume
@@ -277,6 +375,12 @@ export class TelegramDownloadManager {
 						status.lastBytes = downloadedBytes;
 					}
 					status.downloaded = downloadedBytes;
+
+					// Throttle DB updates (every 5 seconds)
+					if (now - lastDbUpdate > 5000) {
+						this.telegramDb.updateDownloadProgress(hash, downloadedBytes, 'downloading');
+						lastDbUpdate = now;
+					}
 				}
 			}
 
@@ -286,13 +390,32 @@ export class TelegramDownloadManager {
 				try {
 					fs.unlinkSync(outPath);
 				} catch {
-					/* ignore */
+					logger.warn(`Could not delete file after cancellation: ${outPath}`);
 				}
 			} else {
+				// Final verification (size check)
+				logger.info(`Verifying download completion for ${fileName}...`);
+				const finalSize = fs.statSync(outPath).size;
+				if (finalSize !== doc.size.toJSNumber()) {
+					logger.error(`Download size mismatch for ${fileName}: expected ${doc.size.toJSNumber()}, got ${finalSize}`);
+					const s = this.activeDownloads.get(hash);
+					if (s) {
+						s.status = 'error';
+						s.speed = 0;
+						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
+					}
+					return;
+				}
 				logger.info(`Download completed: ${fileName}`);
+
 				const finalDir = await this.getDownloadDir(hash);
 				if (!fs.existsSync(finalDir)) fs.mkdirSync(finalDir, { recursive: true });
 				const finalPath = path.join(finalDir, fileName);
+
+				// If final destination exists, delete it first (or rename)
+				if (fs.existsSync(finalPath)) {
+					fs.renameSync(finalPath, `${finalPath}.bak`);
+				}
 				fs.renameSync(outPath, finalPath);
 
 				const status = this.activeDownloads.get(hash);
@@ -303,13 +426,17 @@ export class TelegramDownloadManager {
 					this.completedDownloads.set(hash, status);
 					this.activeDownloads.delete(hash);
 				}
+				this.telegramDb.removeActiveDownload(hash);
 			}
 		} catch (err) {
 			fileStream.end();
-			try {
-				if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
-			} catch {
-				/* ignore */
+			// TODO: try to resume after some seconds?
+			logger.error(`Error in runIterDownload for ${fileName}:`, err);
+			const s = this.activeDownloads.get(hash);
+			if (s) {
+				s.status = 'error';
+				s.speed = 0;
+				this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
 			}
 			throw err;
 		} finally {
