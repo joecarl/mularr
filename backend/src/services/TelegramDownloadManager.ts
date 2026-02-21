@@ -82,23 +82,18 @@ export class TelegramDownloadManager {
 		if (this.completedDownloads.has(hash)) {
 			return this.completedDownloads.get(hash);
 		}
-		// hash format: telegram:chatId:messageId
-		const parts = hash.split(':');
-		if (parts.length >= 3) {
-			const msg = this.telegramDb.getMessage(parts[1], parseInt(parts[2]));
-			if (msg && msg.file_size) {
-				return {
-					hash,
-					fileName: msg.file_name || 'Unknown',
-					size: Number(msg.file_size) || 0,
-					downloaded: Number(msg.file_size) || 0,
-					speed: 0,
-					status: 'completed',
-					startTime: 0,
-				};
-			}
-		}
-		return undefined;
+		const dbRecord = this.mainDb.getDownload(hash);
+		if (!dbRecord) return undefined;
+
+		return {
+			hash,
+			fileName: dbRecord.name,
+			size: dbRecord.size,
+			downloaded: dbRecord.is_completed ? dbRecord.size : 0,
+			speed: 0,
+			status: dbRecord.is_completed ? 'completed' : 'error',
+			startTime: 0,
+		};
 	}
 
 	// -- Download lifecycle --

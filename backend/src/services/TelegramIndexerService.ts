@@ -18,6 +18,15 @@ const logger = {
 
 export type AuthStatus = 'disconnected' | 'waiting_code' | 'waiting_password' | 'connected' | 'authenticating';
 
+export interface TelegramIndexerSearchResult {
+	hash: string;
+	name: string;
+	size: number;
+	chatId: string;
+	messageId: number;
+	type: string;
+}
+
 export class TelegramIndexerService {
 	private readonly mainDb = container.get(MainDB);
 	private client: TelegramClient | null = null;
@@ -505,19 +514,18 @@ export class TelegramIndexerService {
 		const { rows, nextCursor } = await this.db.searchFiles(query, limit, cursorId);
 		const results = rows
 			.filter((f) => f.file_size)
-			.map((msg) => ({
-				name: msg.file_name || 'Unknown',
-				size: msg.file_size || 0,
-				hash: `telegram:${msg.chat_id}:${msg.message_id}`,
-				provider: 'telegram',
-				chatId: msg.chat_id,
-				messageId: msg.message_id,
-				sources: 1,
-				completeSources: 1,
-				downloadStatus: 'Unknown',
-				type: msg.media_type || '',
-				link: `telegram:${msg.chat_id}:${msg.message_id}`,
-			}));
+			.map((msg) => {
+				const hash = `telegram:${msg.chat_id}:${msg.message_id}`;
+
+				return {
+					name: msg.file_name || 'Unknown',
+					size: msg.file_size || 0,
+					hash: hash,
+					chatId: msg.chat_id,
+					messageId: msg.message_id,
+					type: msg.media_type || '',
+				} as TelegramIndexerSearchResult;
+			});
 		return { results, nextCursor };
 	}
 

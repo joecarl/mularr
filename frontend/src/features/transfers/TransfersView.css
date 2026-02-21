@@ -5,6 +5,11 @@
 	flex-direction: column;
 }
 
+/* Prevent accidental text selection during shift/ctrl click */
+.ui-list tbody tr {
+	user-select: none;
+}
+
 .transfer-list textarea {
 	width: 100%;
 	height: 400px;

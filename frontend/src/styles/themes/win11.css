@@ -79,7 +79,8 @@
 	/* Status Bar */
 	--status-bar-bg: #1a1a1a;
 	--status-bar-text: #ffffff;
-	--status-pane-border: 1px solid #333;
+	--status-pane-border: none;
+	--status-pane-border-right: 1px solid #333;
 	--ui-status-bar-border-top: 1px solid #333;
 	--ui-status-bar-box-shadow: none;
 	--ui-status-pane-box-shadow: none;
@@ -113,6 +114,10 @@
 
 	/* Specific component refinements nested inside the theme */
 
+	body {
+		font-size: 12px;
+	}
+
 	.ui-window {
 		border-radius: var(--ui-window-radius);
 		overflow: hidden; /* Ensure content respects radius */
@@ -126,6 +131,9 @@
 			border-color 0.1s,
 			box-shadow 0.1s;
 	}
+	.icon-img {
+		filter: saturate(0.8);
+	}
 
 	.sidebar {
 		/* Override Sidebar.css defaults with higher specificity */
@@ -136,18 +144,37 @@
 		--sidebar-text-label: #bbbbbb;
 		--sidebar-text-value: #ffffff;
 		--sidebar-border-light: rgba(255, 255, 255, 0.1);
+		width: 240px;
+
+		.sidebar-box-primary .sidebar-box-header {
+			display: none;
+		}
 
 		/* Make sidebar items look like Win11 pills */
 		.nav-links .nav-link {
 			border-radius: 4px;
 			margin: 2px 0;
-			padding: 6px 8px;
+			padding: 5px 10px !important;
 			transition: background-color 0.1s ease;
 			/* No need for color here, using variables */
 
+			.nav-icon-emoji {
+				width: 24px !important;
+				height: 24px !important;
+				font-size: 21px !important;
+			}
+			.nav-icon {
+				width: 24px !important;
+				height: 24px !important;
+				filter: saturate(0.8);
+			}
+			.nav-label {
+				font-size: 14px;
+			}
+
 			/* Remove underlines from sidebar links in Win11 */
 			&:hover .nav-label {
-				text-decoration: none;
+				text-decoration: none !important;
 			}
 
 			/* Active indicator for Win11 - Side pill style */
@@ -206,5 +233,10 @@
 		.vpn-port-value {
 			font-weight: 600;
 		}
+	}
+
+	.ui-status-pane:last-child {
+		border-right: none;
+		box-shadow: none;
 	}
 }

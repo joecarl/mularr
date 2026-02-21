@@ -93,6 +93,19 @@ body {
 .icon-settings {
 	background-image: url('/assets/icons/Preferences.ico');
 }
+.icon-upload {
+	background-image: url('/assets/icons/Upload.ico');
+}
+.icon-download {
+	background-image: url('/assets/icons/Download.ico');
+}
+
+.icon-telegram {
+	background-image: url('/assets/icons/ext/Telegram.png');
+}
+.icon-emule {
+	background-image: url('/favicon.ico');
+}
 
 /* Panels - Base */
 .ui-panel-sunken {
@@ -244,10 +257,10 @@ legend {
 .ui-status-pane {
 	height: 18px;
 	border: var(--status-pane-border);
-	border-right: var(--status-pane-border-right);
+	border-right: var(--status-pane-border-right, var(--status-pane-border));
 	display: flex;
 	align-items: center;
-	padding: 0 4px;
+	padding: 0 8px;
 	overflow: hidden;
 	white-space: nowrap;
 	box-shadow: var(--ui-status-pane-box-shadow, none);

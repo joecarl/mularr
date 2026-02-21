@@ -29,13 +29,15 @@ const statusMap: Record<number, string> = {
 };
 
 interface TransferListProps {
-	selectedHash: WritableSignal<string | null>;
+	selectedHashes: WritableSignal<Set<string>>;
+	lastClickedHash: WritableSignal<string | null>;
 }
 
 const TransfersRows = componentList<Transfer, TransferListProps>(
 	(t, i, l, props) => {
-		const selectedHash = props!.selectedHash;
-		const isSelected = computed(() => selectedHash.get() === t.get().hash);
+		const selectedHashes = props!.selectedHashes;
+		const lastClickedHash = props!.lastClickedHash;
+		const isSelected = computed(() => selectedHashes.get().has(t.get().hash || ''));
 		const addedOn = computed(() => {
 			const dt = t.get().addedOn;
 			return dt ? new Date(dt).toLocaleString() : '-';
@@ -43,7 +45,42 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 
 		return tpl.transferRow({
 			classes: { selected: isSelected },
-			onclick: () => selectedHash.set(t.get().hash || null),
+			onclick: (e: MouseEvent) => {
+				const hash = t.get().hash;
+				if (!hash) return;
+				const current = selectedHashes.get();
+
+				if (e.shiftKey && lastClickedHash.get()) {
+					// Range selection
+					const list = l.get();
+					const anchorIdx = list.findIndex((x) => x.hash === lastClickedHash.get());
+					const targetIdx = list.findIndex((x) => x.hash === hash);
+					if (anchorIdx !== -1 && targetIdx !== -1) {
+						const lo = Math.min(anchorIdx, targetIdx);
+						const hi = Math.max(anchorIdx, targetIdx);
+						const next = e.ctrlKey || e.metaKey ? new Set(current) : new Set<string>();
+						for (let k = lo; k <= hi; k++) {
+							const h = list[k].hash;
+							if (h) next.add(h);
+						}
+						selectedHashes.set(next);
+					}
+				} else if (e.ctrlKey || e.metaKey) {
+					// Toggle individual
+					const next = new Set(current);
+					if (next.has(hash)) {
+						next.delete(hash);
+					} else {
+						next.add(hash);
+					}
+					selectedHashes.set(next);
+					lastClickedHash.set(hash);
+				} else {
+					// Normal click: select only this row
+					selectedHashes.set(new Set([hash]));
+					lastClickedHash.set(hash);
+				}
+			},
 			nodes: {
 				nameCol: {
 					nodes: {
@@ -118,7 +155,8 @@ export const TransfersView = component(() => {
 	const transferList = signal<Transfer[]>([]);
 	const uploadQueue = signal<AmuleUpDownClient[]>([]);
 	const categories = signal<Category[]>([]);
-	const selectedHash = signal<string | null>(null);
+	const selectedHashes = signal<Set<string>>(new Set());
+	const lastClickedHash = signal<string | null>(null);
 
 	const initialSort = prefs.getSort<keyof Transfer>('transfers', 'name');
 	const sortColumn = signal(initialSort.column);
@@ -128,36 +166,39 @@ export const TransfersView = component(() => {
 		prefs.setSort('transfers', sortColumn.get(), sortDirection.get());
 	});
 
-	const isDisabled = computed(() => !selectedHash.get());
+	const isDisabled = computed(() => selectedHashes.get().size === 0);
 
-	const selectedTransfer = computed(() => {
-		const hash = selectedHash.get();
-		if (!hash) return null;
+	const selectedTransfersSingle = computed(() => {
+		const hashes = selectedHashes.get();
+		if (hashes.size !== 1) return null;
+		const [hash] = hashes;
 		return transferList.get().find((t) => t.hash === hash) || null;
 	});
 
 	const canPause = computed(() => {
-		const t = selectedTransfer.get();
+		const t = selectedTransfersSingle.get();
 		if (!t || t.isCompleted) return false;
 		return !t.stopped && t.statusId === 0; // 0 is Downloading
 	});
 
 	const canResume = computed(() => {
-		const t = selectedTransfer.get();
+		const t = selectedTransfersSingle.get();
 		if (!t || t.isCompleted) return false;
 		return t.stopped || t.statusId === 7; // 7 is Paused
 	});
 
 	const canStop = computed(() => {
-		const t = selectedTransfer.get();
+		const t = selectedTransfersSingle.get();
 		if (!t || t.isCompleted) return false;
 		return !t.stopped;
 	});
 
 	const isSelectedCompleted = computed(() => {
-		const t = selectedTransfer.get();
+		const t = selectedTransfersSingle.get();
 		return !!t?.isCompleted;
 	});
+
+	const selectionCount = computed(() => selectedHashes.get().size);
 
 	const loadTransfers = smartPoll(async () => {
 		const data = await mediaService.getTransfers();
@@ -180,14 +221,14 @@ export const TransfersView = component(() => {
 	};
 
 	const executeCommand = async (cmd: 'pause' | 'resume' | 'stop' | 'cancel') => {
-		const hash = selectedHash.get();
-		if (!hash) return;
+		const hashes = [...selectedHashes.get()];
+		if (hashes.length === 0) return;
 		try {
-			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel this download?', 'Cancel Download'))) {
+			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel the selected downloads?', 'Cancel Download'))) {
 				return;
 			}
-			await mediaService.sendDownloadCommand(hash, cmd);
-			if (cmd === 'cancel') selectedHash.set(null);
+			await Promise.all(hashes.map((hash) => mediaService.sendDownloadCommand(hash, cmd)));
+			if (cmd === 'cancel') selectedHashes.set(new Set());
 			loadTransfers();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Error');
@@ -195,8 +236,8 @@ export const TransfersView = component(() => {
 	};
 
 	const changeCategory = async (catName: string) => {
-		const hash = selectedHash.get();
-		if (!hash || catName === NULL_VALUE) return;
+		const hashes = [...selectedHashes.get()];
+		if (hashes.length === 0 || catName === NULL_VALUE) return;
 		try {
 			let catId: number;
 			if (catName === DEFAULT_VALUE) {
@@ -206,7 +247,7 @@ export const TransfersView = component(() => {
 				if (!cat) throw new Error('Selected category not found');
 				catId = cat.id;
 			}
-			await mediaService.setFileCategory(hash, catId);
+			await Promise.all(hashes.map((hash) => mediaService.setFileCategory(hash, catId)));
 			loadTransfers();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Error');
@@ -233,7 +274,7 @@ export const TransfersView = component(() => {
 		return list;
 	});
 
-	const computedTransferListLength = computed(() => computedTransferList.get().length);
+	const transferListLength = computed(() => computedTransferList.get().length);
 
 	const ctgOptions = computed(() => {
 		const opts = [
@@ -245,10 +286,10 @@ export const TransfersView = component(() => {
 
 	const selectedCategoryName = signal(NULL_VALUE);
 	effect(() => {
-		const currentSelection = selectedHash.get();
-		const currentTransfer = transferList.get().find((t) => t.hash === currentSelection);
-		const currentCatName = currentTransfer?.categoryName ?? DEFAULT_VALUE;
-		selectedCategoryName.set(currentCatName);
+		// Show current category only when exactly one item is selected
+		const singleTransfer = selectedTransfersSingle.get();
+		const currentCatName = singleTransfer?.categoryName ?? DEFAULT_VALUE;
+		selectedCategoryName.set(singleTransfer ? currentCatName : NULL_VALUE);
 	});
 
 	return tpl.fragment({
@@ -276,14 +317,20 @@ export const TransfersView = component(() => {
 			},
 			onchange: (e: any) => changeCategory(e.target.value),
 		},
+		selectionCountLabel: {
+			inner: () => {
+				const n = selectionCount.get();
+				return n === 0 ? '' : `${n} selected`;
+			},
+		},
 		clearSelectedBtn: {
 			disabled: () => !isSelectedCompleted.get(),
 			onclick: async () => {
-				const hash = selectedHash.get();
-				if (!hash) return;
-				if (await dialogService.confirm('Clear this completed file from the list? (The file will remain on disk)', 'Clear Selection')) {
-					await mediaService.clearCompletedTransfers([hash]);
-					selectedHash.set(null);
+				const hashes = [...selectedHashes.get()];
+				if (hashes.length === 0) return;
+				if (await dialogService.confirm('Clear the selected completed files from the list? (The files will remain on disk)', 'Clear Selection')) {
+					await Promise.all(hashes.map((hash) => mediaService.clearCompletedTransfers([hash])));
+					selectedHashes.set(new Set());
 					loadTransfers();
 				}
 			},
@@ -311,7 +358,7 @@ export const TransfersView = component(() => {
 		thAddedOn: { onclick: () => sort('addedOn') },
 
 		transferListContainer: {
-			inner: () => (computedTransferListLength.get() === 0 ? tpl.noTransferRow({}) : TransfersRows(computedTransferList, { selectedHash })),
+			inner: () => (transferListLength.get() === 0 ? tpl.noTransferRow({}) : TransfersRows(computedTransferList, { selectedHashes, lastClickedHash })),
 		},
 
 		sharedListContainer: {

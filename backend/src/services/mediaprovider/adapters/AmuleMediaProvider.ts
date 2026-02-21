@@ -64,7 +64,7 @@ export class AmuleMediaProvider implements IMediaProvider {
 	async getTransfers(): Promise<MediaTransfer[]> {
 		try {
 			const result = await container.get(AmuleService).getTransfers();
-			return result.list as MediaTransfer[];
+			return result.list.map((d) => ({ ...d, provider: 'amule' })) as MediaTransfer[];
 		} catch (e) {
 			console.error('[AmuleMediaProvider] getTransfers error:', e);
 			return [];

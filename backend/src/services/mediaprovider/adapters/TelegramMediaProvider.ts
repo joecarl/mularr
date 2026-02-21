@@ -1,7 +1,8 @@
 import { container } from '../../container/ServiceContainer';
-import { TelegramIndexerService } from '../../TelegramIndexerService';
+import { TelegramIndexerSearchResult, TelegramIndexerService } from '../../TelegramIndexerService';
 import { MainDB, DownloadDbRecord } from '../../db/MainDB';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer } from '../types';
+import { DownloadStatus } from '../../TelegramDownloadManager';
 
 function toAmuleStatusId(status: string): number {
 	switch (status) {
@@ -17,6 +18,21 @@ function toAmuleStatusId(status: string): number {
 			return 4;
 		default:
 			return 6; // default to 'Unknown'
+	}
+}
+
+function toAmuleDownloadStatus(downloadStatus?: DownloadStatus): number {
+	switch (downloadStatus?.status) {
+		case 'completed':
+			return 1;
+		case 'downloading':
+			return 2;
+		case 'paused':
+			return 2;
+		case 'stopped':
+			return 2;
+		default:
+			return 0; // default to 'Unknown'
 	}
 }
 
@@ -82,7 +98,7 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 
 export class TelegramMediaProvider implements IMediaProvider {
 	readonly providerId = 'telegram';
-	private cachedResults: MediaSearchResult[] = [];
+	private cachedResults: TelegramIndexerSearchResult[] = [];
 	private searchDone = true;
 	private readonly PAGE_SIZE = 20;
 	private readonly indexer = container.get(TelegramIndexerService);
@@ -111,25 +127,25 @@ export class TelegramMediaProvider implements IMediaProvider {
 			console.log(`[TelegramMediaProvider] Search batch: ${batch.length} results (cursor ${cursorId})`);
 			if (batch.length === 0) break;
 
-			const mapped: MediaSearchResult[] = batch.map((r: any) => ({
-				name: r.name,
-				size: r.size,
-				hash: r.hash,
-				sources: r.sources,
-				completeSources: r.completeSources,
-				downloadStatus: r.downloadStatus,
-				type: r.type || '',
-				provider: 'telegram',
-			}));
-			this.cachedResults.push(...mapped);
-
+			this.cachedResults.push(...batch);
 			cursorId = nextCursor;
 		}
 		console.log('[TelegramMediaProvider] Search completed. Total results:', this.cachedResults.length);
 	}
 
 	async getSearchResults(): Promise<MediaSearchResult[]> {
-		return this.cachedResults;
+		return this.cachedResults.map((r) => {
+			return {
+				name: r.name,
+				size: r.size,
+				hash: r.hash,
+				sources: 1,
+				completeSources: 1,
+				downloadStatus: toAmuleDownloadStatus(this.indexer.getDownloadStatus(r.hash)),
+				type: r.type || '',
+				provider: 'telegram',
+			};
+		});
 	}
 
 	async getSearchStatus(): Promise<number> {

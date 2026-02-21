@@ -1,16 +1,19 @@
 interface ProviderMeta {
 	name: string;
 	icon: string;
+	iconClass: string;
 }
 
 const providersMeta: Record<string, ProviderMeta> = {
 	amule: {
 		name: 'aMule',
 		icon: '🐴',
+		iconClass: 'icon-emule',
 	},
 	telegram: {
 		name: 'Telegram',
 		icon: '📩',
+		iconClass: 'icon-telegram',
 	},
 };
 
@@ -21,5 +24,11 @@ export function getProviderName(provider?: string) {
 
 export function getProviderIcon(provider?: string) {
 	if (!provider) return '-';
-	return providersMeta[provider]?.icon ?? '❓';
+	const meta = providersMeta[provider];
+	if (meta?.iconClass) {
+		const span = document.createElement('span');
+		span.className = `icon-img ${meta.iconClass}`;
+		return span;
+	}
+	return meta?.icon ?? '❓';
 }
