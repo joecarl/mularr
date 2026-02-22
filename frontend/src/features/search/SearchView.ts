@@ -196,6 +196,10 @@ export const SearchView = component(() => {
 							fileNameText: { inner: res.name },
 							mobileInfo: {
 								nodes: {
+									mobProviderIcon: {
+										inner: getProviderIcon(res.provider),
+										title: getProviderName(res.provider),
+									},
 									mobSize: { inner: fbytes(res.size) },
 									mobSources: { inner: res.sources ? `${res.sources}` : '0' },
 									mobDownloadBtn: { onclick: () => download(res.hash), disabled: addingDownload },

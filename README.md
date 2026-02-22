@@ -6,16 +6,15 @@ It also includes an extension to use the **Telegram Network** as a download prov
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- 🌐 **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic and Windows 11 (Experimental). Built with [Chispa](https://github.com/joecarl/chispa).
-- 🔗 **\*Arr Integration**: Native support for Sonarr/Radarr via qBittorrent & Torznab API compatibility.
-- 📦 **Docker Ready**: Easy deployment using Docker and Docker Compose.
-- 📬 **Telegram Integration**:
+- **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic and Windows 11 (Experimental). Built with [Chispa](https://github.com/joecarl/chispa).
+- **\*Arr Integration**: Native support for Sonarr/Radarr via qBittorrent & Torznab API compatibility.
+- **Docker Ready**: Easy deployment using Docker and Docker Compose.
+- **Telegram Integration**:
     - **Notifications**: Get notified of your downloads via a Telegram bot.
     - **Provider**: Use the Telegram network for searching and downloading files.
 - 🛡️ **VPN Ready**: Built-in support for Gluetun health checks and automatic port updates.
-- 🗄️ **Lightweight & Fast**: High performance built with Node.js and SQLite.
 
 ---
 
@@ -82,7 +81,7 @@ Mularr is built primarily with TypeScript.
 
 ---
 
-## 👨‍💻 Development Setup
+## Development Setup
 
 If you want to contribute or run Mularr you need docker & VS Code devcontainers.
 Open the project in the devcontainer and it automatically installs the needed dependencies.
@@ -108,7 +107,7 @@ npm run dev
 
 ---
 
-## 📦 Production Build
+## Production Build
 
 The included `Dockerfile` handles everything for you. It builds the frontend and bundles it with the backend for a single-image deployment.
 
@@ -118,7 +117,7 @@ docker build -t mularr .
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 To contribute, follow the standard process:
 
@@ -130,9 +129,9 @@ Any contributions you make are **greatly appreciated**.
 
 ---
 
-## 📄 License
+## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+MIT
 
 ---
 

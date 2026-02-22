@@ -88,6 +88,10 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 						fileIcon: { inner: () => getFileIcon(t.get().name || '') },
 						mobileInfo: {
 							nodes: {
+								mobProviderIcon: {
+									inner: () => getProviderIcon(t.get().provider),
+									title: () => getProviderName(t.get().provider),
+								},
 								mobSize: { inner: () => fbytes(t.get().size) },
 								mobStatus: {
 									inner: () => {
