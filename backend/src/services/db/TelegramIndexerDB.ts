@@ -50,6 +50,7 @@ export interface ActiveDownloadRow {
 	downloaded_bytes: number;
 	file_size: number;
 	status: string;
+	error_message?: string | null;
 }
 
 export class TelegramIndexerDB {
@@ -118,9 +119,17 @@ export class TelegramIndexerDB {
 				out_path TEXT,
 				downloaded_bytes INTEGER DEFAULT 0,
 				file_size INTEGER,
-				status TEXT
+				status TEXT,
+				error_message TEXT
 			);
 		`);
+
+		// Migration: add error_message column if it doesn't exist (for existing DBs)
+		try {
+			this.db.exec('ALTER TABLE active_downloads ADD COLUMN error_message TEXT');
+		} catch {
+			// Column already exists — ignore
+		}
 
 		// View that joins messages with their normalized names — used as FTS5 content source
 		this.db.exec(`
@@ -364,9 +373,9 @@ export class TelegramIndexerDB {
 	public addActiveDownload(row: ActiveDownloadRow) {
 		this.db
 			.prepare(
-				`INSERT INTO active_downloads (hash, chat_id, message_id, file_name, out_path, downloaded_bytes, file_size, status)
-				 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-				 ON CONFLICT(hash) DO UPDATE SET downloaded_bytes = ?, status = ?`
+				`INSERT INTO active_downloads (hash, chat_id, message_id, file_name, out_path, downloaded_bytes, file_size, status, error_message)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+				 ON CONFLICT(hash) DO UPDATE SET downloaded_bytes = ?, status = ?, error_message = ?`
 			)
 			.run(
 				row.hash,
@@ -377,19 +386,21 @@ export class TelegramIndexerDB {
 				row.downloaded_bytes,
 				row.file_size,
 				row.status,
+				row.error_message ?? null,
 				row.downloaded_bytes,
-				row.status
+				row.status,
+				row.error_message ?? null
 			);
 	}
 
-	public updateDownloadProgress(hash: string, downloadedBytes: number, status: string) {
+	public updateDownloadProgress(hash: string, downloadedBytes: number, status: string, errorMessage?: string | null) {
 		this.db
 			.prepare(
 				`UPDATE active_downloads 
-				 SET downloaded_bytes = ?, status = ? 
+				 SET downloaded_bytes = ?, status = ?, error_message = ? 
 				 WHERE hash = ?`
 			)
-			.run(downloadedBytes, status, hash);
+			.run(downloadedBytes, status, errorMessage ?? null, hash);
 	}
 
 	public removeActiveDownload(hash: string) {

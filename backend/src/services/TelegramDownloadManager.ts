@@ -174,15 +174,7 @@ export class TelegramDownloadManager {
 			};
 			this.downloadControls.set(hash, control);
 
-			this.runIterDownload(hash, doc, outPath, fileName).catch((err) => {
-				logger.error(`Download failed: ${fileName}`, err);
-				const s = this.activeDownloads.get(hash);
-				if (s) {
-					s.status = 'error';
-					s.speed = 0;
-					this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
-				}
-			});
+			this.runIterDownload(hash, doc, outPath, fileName);
 
 			return true;
 		} catch (err) {
@@ -234,15 +226,7 @@ export class TelegramDownloadManager {
 				};
 				this.downloadControls.set(row.hash, control);
 
-				this.runIterDownload(row.hash, doc, row.out_path, row.file_name, row.downloaded_bytes).catch((err) => {
-					logger.error(`Resume download failed: ${row.file_name}`, err);
-					const s = this.activeDownloads.get(row.hash);
-					if (s) {
-						s.status = 'error';
-						s.speed = 0;
-						this.telegramDb.updateDownloadProgress(row.hash, s.downloaded, 'error');
-					}
-				});
+				this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
 			} catch (err) {
 				logger.error(`Error resuming download ${row.file_name}:`, err);
 			}
@@ -301,29 +285,30 @@ export class TelegramDownloadManager {
 
 	// -- Core streaming download --
 
-	private async runIterDownload(hash: string, doc: Api.Document, outPath: string, fileName: string, initialProgress: number = 0) {
+	private async runIterDownload(hash: string, doc: Api.Document, outPath: string, fileName: string) {
 		const client = this.getClient()!;
 		const control = this.downloadControls.get(hash)!;
-
-		// Source of truth for resume: check file size on disk if it exists
-		let offsetProgress = initialProgress;
-		if (fs.existsSync(outPath)) {
-			try {
-				const stats = fs.statSync(outPath);
-				offsetProgress = stats.size;
-				logger.info(`Resuming ${fileName} from disk offset: ${offsetProgress} bytes`);
-			} catch (e) {
-				logger.warn(`Could not read file size for ${fileName}`);
-			}
-		}
-
-		// Update DB with current actual progress before starting
-		this.telegramDb.updateDownloadProgress(hash, offsetProgress, 'downloading');
-
-		// Open in append mode
-		const fileStream = fs.createWriteStream(outPath, { flags: 'a' });
+		let fileStream: fs.WriteStream | undefined;
 
 		try {
+			// Source of truth for resume: check file size on disk if it exists
+			let offsetProgress = 0;
+			if (fs.existsSync(outPath)) {
+				try {
+					const stats = fs.statSync(outPath);
+					offsetProgress = stats.size;
+					logger.info(`Resuming ${fileName} from disk offset: ${offsetProgress} bytes`);
+				} catch (e) {
+					logger.warn(`Could not read file size for ${fileName}`);
+				}
+			}
+
+			// Update DB with current actual progress before starting
+			this.telegramDb.updateDownloadProgress(hash, offsetProgress, 'downloading');
+
+			// Open in append mode
+			fileStream = fs.createWriteStream(outPath, { flags: 'a' });
+
 			const fileLocation = new Api.InputDocumentFileLocation({
 				id: doc.id,
 				accessHash: doc.accessHash,
@@ -384,7 +369,12 @@ export class TelegramDownloadManager {
 				}
 			}
 
-			fileStream.end();
+			await new Promise<void>((resolve, reject) => {
+				fileStream!.end((err?: Error | null) => {
+					if (err) reject(err);
+					else resolve();
+				});
+			});
 
 			if (control.cancelled) {
 				try {
@@ -397,12 +387,13 @@ export class TelegramDownloadManager {
 				logger.info(`Verifying download completion for ${fileName}...`);
 				const finalSize = fs.statSync(outPath).size;
 				if (finalSize !== doc.size.toJSNumber()) {
-					logger.error(`Download size mismatch for ${fileName}: expected ${doc.size.toJSNumber()}, got ${finalSize}`);
+					const errMsg = `expected ${doc.size.toJSNumber()}, got ${finalSize}`;
+					logger.error(`Download size mismatch for ${fileName}: ${errMsg}`);
 					const s = this.activeDownloads.get(hash);
 					if (s) {
 						s.status = 'error';
 						s.speed = 0;
-						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
+						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error', 'Size mismatch: ' + errMsg);
 					}
 					return;
 				}
@@ -428,17 +419,15 @@ export class TelegramDownloadManager {
 				}
 				this.telegramDb.removeActiveDownload(hash);
 			}
-		} catch (err) {
-			fileStream.end();
-			// TODO: try to resume after some seconds?
+		} catch (err: any) {
+			fileStream?.end();
 			logger.error(`Error in runIterDownload for ${fileName}:`, err);
 			const s = this.activeDownloads.get(hash);
 			if (s) {
 				s.status = 'error';
 				s.speed = 0;
-				this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error');
+				this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error', String(err?.message ?? err));
 			}
-			throw err;
 		} finally {
 			this.downloadControls.delete(hash);
 		}
