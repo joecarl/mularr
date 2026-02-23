@@ -59,48 +59,4 @@
 		</table>
 	</div>
 
-	<!-- Modal -->
-	<div class="modal-overlay" data-cb="modalOverlay" style="display: none;">
-		<div class="ui-window">
-			<div class="ui-window-header">
-				<div class="ui-window-title" data-cb="modalTitle">Category Details</div>
-				<div class="ui-window-controls">
-					<button class="ui-close-btn" data-cb="closeModalBtn">×</button>
-				</div>
-			</div>
-			<div class="ui-window-content" style="padding: 10px;">
-				<form data-cb="categoryForm">
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">Name:</label>
-						<input type="text" data-cb="name" name="name" required style="width: 100%;" />
-					</div>
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">Save Path:</label>
-						<input type="text" data-cb="path" name="path" style="width: 100%;"
-							placeholder="/path/to/downloads/category" />
-					</div>
-					<div style="display: flex; gap: 10px;">
-						<div class="form-group" style="margin-bottom: 10px; flex: 1;">
-							<label style="display: block; margin-bottom: 3px;">Color:</label>
-							<input type="color" data-cb="color" name="color" style="width: 100%; height: 30px;" />
-						</div>
-						<div class="form-group" style="margin-bottom: 10px; flex: 1;">
-							<label style="display: block; margin-bottom: 3px;">Priority:</label>
-							<input type="number" data-cb="priority" name="priority" min="0" max="255"
-								style="width: 100%; height: 30px;" />
-						</div>
-					</div>
-					<div class="form-group" style="margin-bottom: 10px;">
-						<label style="display: block; margin-bottom: 3px;">Comment:</label>
-						<textarea data-cb="comment" name="comment" style="width: 100%; height: 60px; resize: none;"
-							placeholder="Optional comment"></textarea>
-					</div>
-					<div style="display: flex; gap: 5px; justify-content: flex-end; margin-top: 15px;">
-						<button type="submit" class="ui-btn">Save</button>
-						<button type="button" class="ui-btn" data-cb="cancelModalBtn">Cancel</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
 </div>

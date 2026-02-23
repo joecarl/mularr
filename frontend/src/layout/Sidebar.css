@@ -9,6 +9,7 @@
 	overflow-y: auto;
 	height: 100%;
 	flex-shrink: 0;
+	scrollbar-width: thin;
 
 	/* Default Sidebar Theme Variables (Classic/XP Blue) */
 	--sidebar-text-primary: #003c74;
@@ -36,7 +37,8 @@
 	.sidebar-header {
 		margin-bottom: 1rem;
 		background: var(--sidebar-header-bg);
-		padding: 5px;
+		padding: var(--sidebar-header-padding, 5px);
+		box-shadow: var(--sidebar-header-box-shadow, none);
 		border-radius: 3px;
 
 		.app-logo {

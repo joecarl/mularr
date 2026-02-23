@@ -18,12 +18,22 @@
 			title="Clear Selected completed transfer from list (Removes from DB, keeps file on disk)">
 			❎
 		</button>
-		<div style="width: 1px; height: 20px; background: #808080;"></div>
-		<label>Category:</label>
-		<select data-cb="catSelect" disabled>
-			<option value="-1">Select...</option>
-		</select>
 		<span data-cb="selectionCountLabel" style="font-size: 0.82em; color: #aaa; white-space: nowrap;"></span>
+
+		<div style="width: 1px; height: 20px; background: #808080;"></div>
+		<div class="ui-inline-input-block">
+			<label>Category:</label>
+			<select data-cb="catSelect" disabled>
+				<option value="-1">Select...</option>
+			</select>
+		</div>
+
+		<div class="mobile-only" style="width: 1px; height: 20px; background: #808080;"></div>
+		<div class="mobile-only ui-inline-input-block">
+			<label>Sort:</label>
+			<select data-cb="mobileSortSelect" class="ui-input"></select>
+		</div>
+
 		<div style="width: 1px; height: 20px; background: #808080;"></div>
 		<button class="ui-btn ui-btn-icon" data-cb="clearCompletedBtn"
 			title="Clear ALL Completed transfers from list (Removes from DB, keeps file on disk)">🧹</button>

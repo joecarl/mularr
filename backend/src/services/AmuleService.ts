@@ -176,6 +176,15 @@ export class AmuleService {
 		}
 	}
 
+	async disconnectFromServer() {
+		try {
+			await this.client.disconnectFromServer();
+		} catch (error) {
+			console.error('EC Client Disconnect Error:', error);
+			throw error;
+		}
+	}
+
 	async getSharedFiles() {
 		try {
 			const files = await this.client.getSharedFiles();

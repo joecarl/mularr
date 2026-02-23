@@ -135,7 +135,7 @@
 				<thead>
 					<tr>
 						<th style="width: 60px;">Source</th>
-						<th>Filename</th>
+						<th class="is-mobile-primary">Filename</th>
 						<th style="text-align:right; width: 90px;">Speed</th>
 						<th style="width: 130px; min-width: 100px;">Progress</th>
 						<th style="text-align:right; width: 110px;">Remaining</th>
@@ -144,7 +144,27 @@
 				<tbody data-cb="activeList">
 					<tr data-cb="activeRow">
 						<td data-cb="aProvider" style="text-align: center; font-size: 1.1em;"></td>
-						<td data-cb="aName" class="dashboard-name-cell"></td>
+						<td class="dashboard-name-cell is-mobile-primary">
+							<div style="display: flex; align-items: center; gap: 5px;">
+								<span data-cb="aName"></span>
+							</div>
+							<!-- Mobile Info Block -->
+							<div class="mobile-info-block">
+								<div class="mobile-info-row">
+									<span data-cb="aMobSpeed" style="color: var(--success-color);"></span>
+									<span style="flex: 1;"></span>
+									<span data-cb="aMobProgress"></span>
+									<span data-cb="aMobProviderIcon" style="font-size: 1.1em; flex-shrink: 0;"></span>
+								</div>
+								<!-- Mini Progress Bar for Mobile -->
+								<div
+									style="height: 3px; background: rgba(255,255,255,0.15); margin-top: 3px; width: 100%; border-radius: 2px; overflow: hidden;">
+									<div data-cb="aMobProgressBar"
+										style="height: 100%; background: var(--success-color); width: 0%; border-radius: 2px;">
+									</div>
+								</div>
+							</div>
+						</td>
 						<td data-cb="aSpeed" style="text-align:right; color: var(--success-color);"></td>
 						<td>
 							<div class="mini-progress-wrap">

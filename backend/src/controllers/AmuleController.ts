@@ -208,6 +208,15 @@ export class AmuleController {
 		}
 	};
 
+	disconnect = async (req: Request, res: Response) => {
+		try {
+			await this.amuleService.disconnectFromServer();
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getLog = async (req: Request, res: Response) => {
 		try {
 			const lines = req.query.lines ? parseInt(req.query.lines as string) : 50;

@@ -61,7 +61,10 @@
 
 	/* Sidebar */
 	--sidebar-bg: #202020; /* Same as window bg for seamless look */
-	--sidebar-header-bg: transparent;
+	--sidebar-header-bg: #218bae;
+	--sidebar-header-padding: 8px;
+	--sidebar-header-box-shadow: 0 3px #1ca2cf57;
+
 	--sidebar-box-bg: transparent; /* Remove boxy look */
 	--sidebar-box-header-bg: transparent;
 	--sidebar-box-header-text: #ffffff;
@@ -238,5 +241,39 @@
 	.ui-status-pane:last-child {
 		border-right: none;
 		box-shadow: none;
+	}
+
+	.transfer-progress-bar-container {
+		border: none;
+		border-radius: 4px;
+		overflow: hidden;
+		/* box-shadow: inset 0 0 1px var(--shadow-color);
+
+		&:has(.transfer-progress-bar) {
+			--shadow-color: rgb(134 175 249);
+		}
+
+		&:has(.transfer-progress-bar-paused) {
+			--shadow-color: rgb(198, 105, 105);
+		}
+
+		&:has(.transfer-progress-bar-complete) {
+			--shadow-color: rgb(85, 255, 85);
+		} */
+
+		.transfer-progress-bar {
+			--edge-color: rgb(134 175 249);
+			--center-color: rgb(134 175 249);
+		}
+
+		.transfer-progress-bar-paused {
+			--edge-color: rgb(198, 105, 105);
+			--center-color: rgb(198, 105, 105);
+		}
+
+		.transfer-progress-bar-complete {
+			--edge-color: rgb(85, 255, 85);
+			--center-color: rgb(85, 255, 85);
+		}
 	}
 }

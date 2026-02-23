@@ -1,3 +1,6 @@
+.view-container:has(.dashboard-view) {
+	padding: 0 !important;
+}
 .dashboard-view {
 	display: flex;
 	flex-direction: column;
@@ -6,6 +9,7 @@
 	overflow: auto;
 	padding: 12px;
 	box-sizing: border-box;
+	overflow-y: auto;
 
 	/* ── Stat Tiles ───────────────────────────────────────────────────────────── */
 
@@ -172,6 +176,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: 10px 12px;
+		min-height: 300px;
 	}
 
 	.dashboard-active-scroll {
@@ -239,8 +244,6 @@
 		gap: 10px;
 		padding: 5px 0 8px;
 		flex-wrap: wrap;
-		border-bottom: 1px solid var(--border-color);
-		margin-bottom: 6px;
 		flex-shrink: 0;
 	}
 

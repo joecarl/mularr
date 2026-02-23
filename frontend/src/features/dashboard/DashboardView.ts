@@ -102,6 +102,10 @@ const ActiveRows = componentList<Transfer>(
 				aProgressBar: { style: { width: progressWidth } },
 				aProgressPct: { inner: progressPct },
 				aRemaining: { inner: remainingText },
+				aMobProviderIcon: { inner: () => getProviderIcon(tf().provider) },
+				aMobSpeed: { inner: speedText },
+				aMobProgress: { inner: progressPct },
+				aMobProgressBar: { style: { width: progressWidth } },
 			},
 		});
 	},

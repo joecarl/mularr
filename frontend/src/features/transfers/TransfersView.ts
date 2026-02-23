@@ -14,6 +14,15 @@ import { getProviderIcon, getProviderName } from '../../services/ProvidersApiSer
 const NULL_VALUE = '-1';
 const DEFAULT_VALUE = 'default';
 
+const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof Transfer; dir: 'asc' | 'desc' }[] = [
+	{ value: 'name-asc', label: 'Name A→Z', col: 'name', dir: 'asc' },
+	{ value: 'name-desc', label: 'Name Z→A', col: 'name', dir: 'desc' },
+	{ value: 'sources-asc', label: 'Sources ↑', col: 'sources', dir: 'asc' },
+	{ value: 'sources-desc', label: 'Sources ↓', col: 'sources', dir: 'desc' },
+	{ value: 'provider-asc', label: 'Provider A→Z', col: 'provider', dir: 'asc' },
+	{ value: 'provider-desc', label: 'Provider Z→A', col: 'provider', dir: 'desc' },
+];
+
 const statusMap: Record<number, string> = {
 	0: 'Downloading',
 	1: 'Empty',
@@ -84,7 +93,7 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 			nodes: {
 				nameCol: {
 					nodes: {
-						fileNameText: { inner: () => t.get().name || 'Unknown' },
+						fileNameText: { inner: () => t.get().name || 'Unknown', title: () => t.get().name || 'Unknown' },
 						fileIcon: { inner: () => getFileIcon(t.get().name || '') },
 						mobileInfo: {
 							nodes: {
@@ -150,6 +159,15 @@ const TransfersRows = componentList<Transfer, TransferListProps>(
 	(t) => t.hash
 );
 
+function hashesToTransfers(hashes: Set<string>, list: Transfer[]): Transfer[] {
+	const selected: Transfer[] = [];
+	for (const hash of hashes) {
+		const t = list.find((x) => x.hash === hash);
+		if (t) selected.push(t);
+	}
+	return selected;
+}
+
 export const TransfersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const mediaService = services.get(MediaApiService);
@@ -180,21 +198,27 @@ export const TransfersView = component(() => {
 	});
 
 	const canPause = computed(() => {
-		const t = selectedTransfersSingle.get();
-		if (!t || t.isCompleted) return false;
-		return !t.stopped && t.statusId === 0; // 0 is Downloading
+		const selection = hashesToTransfers(selectedHashes.get(), transferList.get());
+		for (const t of selection) {
+			if (!t.isCompleted && !t.stopped && t.statusId === 0) return true;
+		}
+		return false;
 	});
 
 	const canResume = computed(() => {
-		const t = selectedTransfersSingle.get();
-		if (!t || t.isCompleted) return false;
-		return t.stopped || t.statusId === 7; // 7 is Paused
+		const selection = hashesToTransfers(selectedHashes.get(), transferList.get());
+		for (const t of selection) {
+			if (!t.isCompleted && (t.stopped || t.statusId === 7)) return true;
+		}
+		return false;
 	});
 
 	const canStop = computed(() => {
-		const t = selectedTransfersSingle.get();
-		if (!t || t.isCompleted) return false;
-		return !t.stopped;
+		const selection = hashesToTransfers(selectedHashes.get(), transferList.get());
+		for (const t of selection) {
+			if (t.provider === 'amule' && !t.isCompleted && !t.stopped) return true;
+		}
+		return false;
 	});
 
 	const isSelectedCompleted = computed(() => {
@@ -296,6 +320,24 @@ export const TransfersView = component(() => {
 		selectedCategoryName.set(singleTransfer ? currentCatName : NULL_VALUE);
 	});
 
+	const mobileSortOpts = computed(() => MOBILE_SORT_OPTIONS);
+	const mobileSortValue = signal(MOBILE_SORT_OPTIONS.find((o) => o.col === initialSort.column && o.dir === initialSort.direction)?.value ?? 'name-asc');
+	// Keep select in sync when sort changes via column header clicks
+	// TODO: fix chispa para que esto no cause un loop infinito (porque setMobileSortValue dispara efecto que cambia sortColumn/sortDirection, que dispara efecto que vuelve a setMobileSortValue)
+	// effect(() => {
+	// 	const opt = MOBILE_SORT_OPTIONS.find((o) => o.col === sortColumn.get() && o.dir === sortDirection.get());
+	// 	if (opt) mobileSortValue.set(opt.value);
+	// });
+	// Apply select changes to the active sort
+	effect(() => {
+		const sortVal = mobileSortValue.get();
+		const opt = MOBILE_SORT_OPTIONS.find((o) => o.value === sortVal);
+		if (opt) {
+			sortColumn.set(opt.col);
+			sortDirection.set(opt.dir);
+		}
+	});
+
 	return tpl.fragment({
 		refreshBtn: { onclick: loadTransfers },
 		pauseBtn: {
@@ -348,6 +390,11 @@ export const TransfersView = component(() => {
 			},
 		},
 
+		mobileSortSelect: {
+			_ref: (el: HTMLSelectElement) => {
+				bindControlledSelect(el, mobileSortValue, mobileSortOpts);
+			},
+		},
 		thName: { onclick: () => sort('name') },
 		thSize: { onclick: () => sort('size') },
 		thProvider: { onclick: () => sort('provider') },

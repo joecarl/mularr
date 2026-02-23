@@ -90,9 +90,9 @@ export const Sidebar = component<SidebarProps>((props) => {
 						inner: () => (isHigh() ? 'High ID' : 'Low ID'),
 						addClass: () => (isHigh() ? 'badge-success' : 'badge-error'),
 					},
-					serverName: { inner: () => server().name || 'Unknown Server' },
-					serverIpPort: { inner: () => `${server().ip}:${server().port}` },
-					serverDesc: { inner: () => server().description || 'No description available' },
+					serverName: { inner: () => server()?.name || 'Unknown Server' },
+					serverIpPort: { inner: () => `${server()?.ip}:${server()?.port}` },
+					serverDesc: { inner: () => server()?.description || 'No description available' },
 					ed2kBadge: {
 						title: () => String(s().ed2kId || s().id || '-'),
 						addClass: () => (hasEd2k() ? 'badge-success' : 'badge-error'),

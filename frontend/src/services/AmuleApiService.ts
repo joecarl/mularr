@@ -327,10 +327,16 @@ export class AmuleApiService extends BaseApiService {
 		});
 	}
 
-	async connectToServer(ip: string, port: number): Promise<SuccessResponse> {
+	async connectToServer(ip?: string, port?: number): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>('/server/connect', {
 			method: 'POST',
 			body: JSON.stringify({ ip, port }),
+		});
+	}
+
+	async disconnectFromServer(): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/disconnect', {
+			method: 'POST',
 		});
 	}
 

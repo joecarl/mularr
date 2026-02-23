@@ -88,10 +88,10 @@ export const ServersView = component(() => {
 		servers.set(data.list || []);
 	}, 10000);
 
-	const connectToServer = async (s: Server) => {
+	const connectToServer = async (s?: Server) => {
 		// logText.set(`Connecting to ${s.name ?? s.ip}...`);
 		try {
-			await apiService.connectToServer(s.ip, s.port);
+			await apiService.connectToServer(s?.ip, s?.port);
 			// logText.set(`Connected request sent to ${s.name ?? s.ip}. Refreshing...`);
 			setTimeout(loadServers, 1000);
 		} catch (e: any) {
@@ -124,6 +124,19 @@ export const ServersView = component(() => {
 			_ref: (el) => {
 				logContainer = el;
 			},
+		},
+		connectBtn: {
+			onclick: () => {
+				connectToServer();
+			},
+			style: { display: () => (someServers.get() && !connectedServer.get() ? '' : 'none') },
+		},
+		disconnectBtn: {
+			onclick: async () => {
+				await apiService.disconnectFromServer();
+				setTimeout(loadServers, 1000);
+			},
+			style: { display: () => (someServers.get() && connectedServer.get() ? '' : 'none') },
 		},
 		refreshBtn: { onclick: loadServers },
 	});
