@@ -8,13 +8,13 @@ It also includes an extension to use the **Telegram Network** as a download prov
 
 ## Key Features
 
-- **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic and Windows 11 (Experimental). Built with [Chispa](https://github.com/joecarl/chispa).
 - **\*Arr Integration**: Native support for Sonarr/Radarr via qBittorrent & Torznab API compatibility.
 - **Docker Ready**: Easy deployment using Docker and Docker Compose.
 - **Telegram Integration**:
     - **Notifications**: Get notified of your downloads via a Telegram bot.
     - **Provider**: Use the Telegram network for searching and downloading files.
 - 🛡️ **VPN Ready**: Built-in support for Gluetun health checks and automatic port updates.
+- **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic and Windows 11 (Experimental). Built with [Chispa](https://github.com/joecarl/chispa).
 
 ---
 
