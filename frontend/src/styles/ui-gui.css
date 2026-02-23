@@ -99,6 +99,9 @@ body {
 .icon-download {
 	background-image: url('/assets/icons/Download.ico');
 }
+.icon-fileimportparts {
+	background-image: url('/assets/icons/FileImportParts.ico');
+}
 
 .icon-telegram {
 	background-image: url('/assets/icons/ext/Telegram.png');

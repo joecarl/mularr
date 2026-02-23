@@ -48,14 +48,14 @@
 		</div>
 
 		<div class="ui-panel-raised stat-tile stat-tile-count">
-			<div class="stat-tile-icon"><span class="icon-img icon-download"></span></div>
+			<div class="stat-tile-icon"><span class="icon-img icon-fileimportparts"></span></div>
 			<div class="stat-tile-content">
 				<div class="stat-tile-value-row">
-					<span class="stat-tile-value" data-cb="activeAmuleVal">0</span>
+					<span class="stat-tile-value" data-cb="activeDlVal">0</span>
 					<span class="stat-tile-unit">/ </span>
-					<span class="stat-tile-value" data-cb="activeTgVal">0</span>
+					<span class="stat-tile-value" data-cb="activeUlVal">0</span>
 				</div>
-				<div class="stat-tile-label">aMule / Telegram Active</div>
+				<div class="stat-tile-label">Downloading / Shared files</div>
 			</div>
 		</div>
 
@@ -66,11 +66,14 @@
 
 		<div class="ui-panel-raised dashboard-chart-card">
 			<div class="dashboard-chart-header">
-				<span class="dashboard-chart-title">↓ Download Speed</span>
-				<div class="chart-legend">
-					<span class="legend-dot" style="background:#d0d0d0;"></span><span>Total</span>
-					<span class="legend-dot" style="background:#9b59b6;"></span><span>aMule</span>
-					<span class="legend-dot" style="background:#2aabee;"></span><span>Telegram</span>
+				<span class="dashboard-chart-title"><span class="icon-img icon-download"
+						style="width: 12px; height: 12px;"></span> Download Speed</span>
+				<div data-cb="chart-legend-dl" class="chart-legend">
+					<span data-cb="legend-item" class="legend-item">
+						<span data-cb="legend-dot" class="legend-dot" style="background:#2f7536;"></span>
+						<span data-cb="legend-label">Totalizador</span>
+					</span>
+					<span class="legend-dot"></span><span>aMule</span>
 				</div>
 			</div>
 			<div data-cb="dlChartWrap" class="chart-canvas-wrap"></div>
@@ -79,9 +82,10 @@
 
 		<div class="ui-panel-raised dashboard-chart-card">
 			<div class="dashboard-chart-header">
-				<span class="dashboard-chart-title">↑ Upload Speed</span>
-				<div class="chart-legend">
-					<span class="legend-dot" style="background:#ffa00a;"></span><span>aMule Upload</span>
+				<span class="dashboard-chart-title"><span class="icon-img icon-upload"
+						style="width: 12px; height: 12px;"></span> Upload Speed</span>
+				<div data-cb="chart-legend-ul" class="chart-legend">
+					<span class="legend-dot"></span><span>aMule Upload</span>
 				</div>
 			</div>
 			<div data-cb="ulChartWrap" class="chart-canvas-wrap"></div>

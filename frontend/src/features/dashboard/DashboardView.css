@@ -6,267 +6,273 @@
 	overflow: auto;
 	padding: 12px;
 	box-sizing: border-box;
-}
 
-/* ── Stat Tiles ───────────────────────────────────────────────────────────── */
+	/* ── Stat Tiles ───────────────────────────────────────────────────────────── */
 
-.dashboard-tiles {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 10px;
-}
-
-.stat-tile {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 12px 16px;
-	border-radius: 6px !important;
-	flex: 1;
-	min-width: 140px;
-}
-
-.stat-tile-icon {
-	font-size: 1.5em;
-	opacity: 0.7;
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-}
-
-.stat-tile-content {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-
-.stat-tile-value-row {
-	display: flex;
-	align-items: baseline;
-	gap: 4px;
-}
-
-.stat-tile-value {
-	font-size: 1.5em;
-	font-weight: bold;
-	line-height: 1;
-	font-variant-numeric: tabular-nums;
-}
-
-.stat-tile-unit {
-	font-size: 0.78em;
-	color: var(--text-muted);
-}
-
-.stat-tile-label {
-	font-size: 0.75em;
-	color: var(--text-muted);
-	white-space: nowrap;
-}
-
-/* Accent borders per tile type */
-.stat-tile-total {
-	border-left: 3px solid #d0d0d0 !important;
-}
-.stat-tile-amule {
-	border-left: 3px solid #9b59b6 !important;
-}
-.stat-tile-telegram {
-	border-left: 3px solid #2aabee !important;
-}
-.stat-tile-upload {
-	border-left: 3px solid var(--warning-color) !important;
-}
-.stat-tile-count {
-	border-left: 3px solid var(--success-color) !important;
-}
-
-/* ── Charts ──────────────────────────────────────────────────────────────── */
-
-.dashboard-charts {
-	display: flex;
-	gap: 12px;
-	flex-shrink: 0;
-}
-
-.dashboard-chart-card {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-	padding: 10px 12px;
-}
-
-.dashboard-chart-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 8px;
-	flex-shrink: 0;
-}
-
-.dashboard-chart-title {
-	font-size: 0.85em;
-	font-weight: 600;
-	color: var(--text-muted);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.chart-legend {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 0.75em;
-	color: var(--text-muted);
-	flex-wrap: wrap;
-}
-
-.legend-dot {
-	display: inline-block;
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
-.chart-canvas-wrap {
-	height: 140px;
-	position: relative;
-}
-
-.chart-canvas-wrap canvas {
-	width: 100%;
-	height: 100%;
-	display: block;
-	cursor: crosshair;
-}
-
-/* ── Chart value row (below chart canvas) ───────────────────────────────── */
-
-.chart-value-row {
-	display: flex;
-	gap: 14px;
-	padding: 5px 2px 0;
-	flex-wrap: wrap;
-	flex-shrink: 0;
-	min-height: 1.3em;
-}
-
-.chart-val-item {
-	font-size: 0.8em;
-	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
-}
-
-/* ── Active Transfers ────────────────────────────────────────────────────── */
-
-.dashboard-active {
-	flex: 1;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-	padding: 10px 12px;
-}
-
-.dashboard-active-scroll {
-	flex: 1;
-	overflow: auto;
-	margin: 0;
-}
-
-.dashboard-name-cell {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: 320px;
-}
-
-.dashboard-remaining-cell {
-	text-align: right;
-	font-size: 0.82em;
-	color: var(--text-muted);
-}
-
-/* Mini progress bar */
-.mini-progress-wrap {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.mini-progress-bg {
-	flex: 1;
-	height: 6px;
-	background: rgba(0, 0, 0, 0.1);
-	border-radius: 3px;
-	overflow: hidden;
-}
-
-.mini-progress-fill {
-	height: 100%;
-	background: var(--success-color);
-	border-radius: 3px;
-	transition: width 0.4s ease;
-}
-
-.mini-progress-pct {
-	font-size: 0.78em;
-	width: 36px;
-	text-align: right;
-	color: var(--text-muted);
-	flex-shrink: 0;
-}
-
-/* ── Responsive adjustments ──────────────────────────────────────────────── */
-
-@media (max-width: 700px) {
-	.dashboard-charts {
-		flex-direction: column;
+	.dashboard-tiles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
 	}
-}
 
-/* ── Active transfers summary bar ────────────────────────────────────────── */
+	.stat-tile {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 16px;
+		border-radius: 6px !important;
+		flex: 1;
+		min-width: 140px;
+	}
 
-.active-summary-bar {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 5px 0 8px;
-	flex-wrap: wrap;
-	border-bottom: 1px solid var(--border-color);
-	margin-bottom: 6px;
-	flex-shrink: 0;
-}
+	.stat-tile-icon {
+		font-size: 1.5em;
+		opacity: 0.7;
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+	}
 
-.active-summary-item {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
+	.stat-tile-content {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
 
-.active-summary-item-progress {
-	flex: 1;
-}
+	.stat-tile-value-row {
+		display: flex;
+		align-items: baseline;
+		gap: 4px;
+	}
 
-.active-summary-label {
-	font-size: 0.72em;
-	color: var(--text-muted);
-	white-space: nowrap;
-	text-transform: uppercase;
-	letter-spacing: 0.03em;
-}
+	.stat-tile-value {
+		font-size: 1.5em;
+		font-weight: bold;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
 
-.active-summary-value {
-	font-size: 0.85em;
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
-}
+	.stat-tile-unit {
+		font-size: 0.78em;
+		color: var(--text-muted);
+	}
 
-.active-summary-sep {
-	width: 1px;
-	height: 14px;
-	background: var(--border-color);
-	flex-shrink: 0;
+	.stat-tile-label {
+		font-size: 0.75em;
+		color: var(--text-muted);
+		white-space: nowrap;
+	}
+
+	/* Accent borders per tile type */
+	.stat-tile-total {
+		border-left: 3px solid var(--success-color) !important;
+	}
+	.stat-tile-amule {
+		border-left: 3px solid #9b59b6 !important;
+	}
+	.stat-tile-telegram {
+		border-left: 3px solid #2aabee !important;
+	}
+	.stat-tile-upload {
+		border-left: 3px solid var(--warning-color) !important;
+	}
+	.stat-tile-count {
+		border-left: 3px solid #d0d0d0 !important;
+	}
+
+	/* ── Charts ──────────────────────────────────────────────────────────────── */
+
+	.dashboard-charts {
+		display: flex;
+		gap: 12px;
+		flex-shrink: 0;
+	}
+
+	.dashboard-chart-card {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		padding: 10px 12px;
+	}
+
+	.dashboard-chart-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 8px;
+		flex-shrink: 0;
+	}
+
+	.dashboard-chart-title {
+		font-size: 0.85em;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.chart-legend {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 0.75em;
+		color: var(--text-muted);
+		flex-wrap: wrap;
+	}
+
+	.legend-item {
+		display: inline-flex;
+		gap: 4px;
+		align-items: center;
+	}
+
+	.legend-dot {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.chart-canvas-wrap {
+		height: 140px;
+		position: relative;
+	}
+
+	.chart-canvas-wrap canvas {
+		width: 100%;
+		height: 100%;
+		display: block;
+		cursor: crosshair;
+	}
+
+	/* ── Chart value row (below chart canvas) ───────────────────────────────── */
+
+	.chart-value-row {
+		display: flex;
+		gap: 14px;
+		padding: 5px 2px 0;
+		flex-wrap: wrap;
+		flex-shrink: 0;
+		min-height: 1.3em;
+	}
+
+	.chart-val-item {
+		font-size: 0.8em;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	/* ── Active Transfers ────────────────────────────────────────────────────── */
+
+	.dashboard-active {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		padding: 10px 12px;
+	}
+
+	.dashboard-active-scroll {
+		flex: 1;
+		overflow: auto;
+		margin: 0;
+	}
+
+	.dashboard-name-cell {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 320px;
+	}
+
+	.dashboard-remaining-cell {
+		text-align: right;
+		font-size: 0.82em;
+		color: var(--text-muted);
+	}
+
+	/* Mini progress bar */
+	.mini-progress-wrap {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.mini-progress-bg {
+		flex: 1;
+		height: 6px;
+		background: rgba(0, 0, 0, 0.1);
+		border-radius: 3px;
+		overflow: hidden;
+	}
+
+	.mini-progress-fill {
+		height: 100%;
+		background: var(--success-color);
+		border-radius: 3px;
+		transition: width 0.4s ease;
+	}
+
+	.mini-progress-pct {
+		font-size: 0.78em;
+		width: 36px;
+		text-align: right;
+		color: var(--text-muted);
+		flex-shrink: 0;
+	}
+
+	/* ── Responsive adjustments ──────────────────────────────────────────────── */
+
+	@media (max-width: 700px) {
+		.dashboard-charts {
+			flex-direction: column;
+		}
+	}
+
+	/* ── Active transfers summary bar ────────────────────────────────────────── */
+
+	.active-summary-bar {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 5px 0 8px;
+		flex-wrap: wrap;
+		border-bottom: 1px solid var(--border-color);
+		margin-bottom: 6px;
+		flex-shrink: 0;
+	}
+
+	.active-summary-item {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.active-summary-item-progress {
+		flex: 1;
+	}
+
+	.active-summary-label {
+		font-size: 0.72em;
+		color: var(--text-muted);
+		white-space: nowrap;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.active-summary-value {
+		font-size: 0.85em;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	.active-summary-sep {
+		width: 1px;
+		height: 14px;
+		background: var(--border-color);
+		flex-shrink: 0;
+	}
 }

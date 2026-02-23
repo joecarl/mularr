@@ -8,6 +8,7 @@ export interface SpeedSample {
 	ulAmule: number;
 	activeAmule: number;
 	activeTelegram: number;
+	totalShared: number;
 }
 
 export interface SpeedHistoryResponse {

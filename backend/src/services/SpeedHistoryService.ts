@@ -19,6 +19,8 @@ export interface SpeedSample {
 	activeAmule: number;
 	/** Number of active Telegram transfers */
 	activeTelegram: number;
+	/** Total number of shared files */
+	totalShared: number;
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
@@ -94,8 +96,10 @@ export class SpeedHistoryService {
 
 			// ── Upload speed from aMule global status ─────────────────────────
 			let ulAmule = 0;
+			let totalShared = 0;
 			if (amuleStats.status === 'fulfilled') {
 				ulAmule = (amuleStats.value as any)?.uploadSpeed ?? 0;
+				totalShared = (amuleStats.value as any)?.sharedFileCount ?? 0;
 			}
 
 			const sample: SpeedSample = {
@@ -106,6 +110,7 @@ export class SpeedHistoryService {
 				ulAmule,
 				activeAmule,
 				activeTelegram,
+				totalShared,
 			};
 
 			// Push sample, drop oldest if buffer is full

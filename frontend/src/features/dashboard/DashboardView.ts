@@ -16,7 +16,7 @@ import './DashboardView.css';
 const MAX_CHART_POINTS = 120;
 
 const CHART_COLORS = {
-	total: '#d0d0d0',
+	total: '#8c8c8c',
 	amule: '#9b59b6',
 	telegram: '#2aabee',
 	upload: '#ffa00a',
@@ -34,7 +34,7 @@ const DL_DEFS: SeriesDef[] = [
 	{ key: 'dlTelegram', label: 'Telegram', color: CHART_COLORS.telegram },
 ];
 
-const UL_DEFS: SeriesDef[] = [{ key: 'ulAmule', label: 'Upload', color: CHART_COLORS.upload }];
+const UL_DEFS: SeriesDef[] = [{ key: 'ulAmule', label: 'aMule upload', color: CHART_COLORS.upload }];
 
 // ── Chart helpers ─────────────────────────────────────────────────────────────
 
@@ -299,14 +299,34 @@ export const DashboardView = component(() => {
 		tgDlUnit: { inner: () => fmtSpeed(latest()?.dlTelegram ?? 0).unit },
 		ulVal: { inner: () => fmtSpeed(latest()?.ulAmule ?? 0).val },
 		ulUnit: { inner: () => fmtSpeed(latest()?.ulAmule ?? 0).unit },
-		activeAmuleVal: { inner: () => String(latest()?.activeAmule ?? 0) },
-		activeTgVal: { inner: () => String(latest()?.activeTelegram ?? 0) },
+		activeDlVal: { inner: () => String(activeSummary().count) },
+		activeUlVal: { inner: () => String(latest()?.totalShared ?? 0) },
 
 		// Charts (canvas + value row)
 		dlChartWrap: { inner: dlCanvas },
 		dlValueRow: { inner: dlValueRowEl },
+		chartLegendDl: {
+			inner: DL_DEFS.map((d) =>
+				tpl.legendItem({
+					nodes: {
+						legendDot: { style: { background: d.color } },
+						legendLabel: { inner: d.label },
+					},
+				})
+			),
+		},
 		ulChartWrap: { inner: ulCanvas },
 		ulValueRow: { inner: ulValueRowEl },
+		chartLegendUl: {
+			inner: UL_DEFS.map((d) =>
+				tpl.legendItem({
+					nodes: {
+						legendDot: { style: { background: d.color } },
+						legendLabel: { inner: d.label },
+					},
+				})
+			),
+		},
 
 		// Active transfers table
 		activeList: { inner: () => ActiveRows(activeTransfers) },
