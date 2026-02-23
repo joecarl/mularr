@@ -227,6 +227,10 @@ export class TelegramDownloadManager {
 				this.downloadControls.set(row.hash, control);
 
 				this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
+
+				if (row.status === 'paused') {
+					this.pauseDownload(row.hash);
+				}
 			} catch (err) {
 				logger.error(`Error resuming download ${row.file_name}:`, err);
 			}
@@ -428,6 +432,12 @@ export class TelegramDownloadManager {
 				s.speed = 0;
 				this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'error', String(err?.message ?? err));
 			}
+			// Retry after delay for transient errors (e.g. network issues)
+			setTimeout(() => {
+				if (control.cancelled) return;
+				logger.info(`Retrying download after error: ${fileName}`);
+				this.runIterDownload(hash, doc, outPath, fileName);
+			}, 10000);
 		} finally {
 			this.downloadControls.delete(hash);
 		}
