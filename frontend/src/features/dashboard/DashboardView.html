@@ -1,0 +1,160 @@
+<div class="dashboard-view">
+
+	<!-- ── Stat Tiles ─────────────────────────────────────────────────────── -->
+	<div class="dashboard-tiles">
+
+		<div class="ui-panel-raised stat-tile stat-tile-total">
+			<div class="stat-tile-icon"><span class="icon-img icon-download"></span></div>
+			<div class="stat-tile-content">
+				<div class="stat-tile-value-row">
+					<span class="stat-tile-value" data-cb="totalDlVal">0</span>
+					<span class="stat-tile-unit" data-cb="totalDlUnit">B/s</span>
+				</div>
+				<div class="stat-tile-label">Total Download</div>
+			</div>
+		</div>
+
+		<div class="ui-panel-raised stat-tile stat-tile-amule">
+			<div class="stat-tile-icon"><span class="icon-img icon-emule"></span></div>
+			<div class="stat-tile-content">
+				<div class="stat-tile-value-row">
+					<span class="stat-tile-value" data-cb="amuleDlVal">0</span>
+					<span class="stat-tile-unit" data-cb="amuleDlUnit">B/s</span>
+				</div>
+				<div class="stat-tile-label">aMule Download</div>
+			</div>
+		</div>
+
+		<div class="ui-panel-raised stat-tile stat-tile-telegram">
+			<div class="stat-tile-icon"><span class="icon-img icon-telegram"></span></div>
+			<div class="stat-tile-content">
+				<div class="stat-tile-value-row">
+					<span class="stat-tile-value" data-cb="tgDlVal">0</span>
+					<span class="stat-tile-unit" data-cb="tgDlUnit">B/s</span>
+				</div>
+				<div class="stat-tile-label">Telegram Download</div>
+			</div>
+		</div>
+
+		<div class="ui-panel-raised stat-tile stat-tile-upload">
+			<div class="stat-tile-icon"><span class="icon-img icon-upload"></span></div>
+			<div class="stat-tile-content">
+				<div class="stat-tile-value-row">
+					<span class="stat-tile-value" data-cb="ulVal">0</span>
+					<span class="stat-tile-unit" data-cb="ulUnit">B/s</span>
+				</div>
+				<div class="stat-tile-label">aMule Upload</div>
+			</div>
+		</div>
+
+		<div class="ui-panel-raised stat-tile stat-tile-count">
+			<div class="stat-tile-icon"><span class="icon-img icon-download"></span></div>
+			<div class="stat-tile-content">
+				<div class="stat-tile-value-row">
+					<span class="stat-tile-value" data-cb="activeAmuleVal">0</span>
+					<span class="stat-tile-unit">/ </span>
+					<span class="stat-tile-value" data-cb="activeTgVal">0</span>
+				</div>
+				<div class="stat-tile-label">aMule / Telegram Active</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- ── Speed Charts ───────────────────────────────────────────────────── -->
+	<div class="dashboard-charts">
+
+		<div class="ui-panel-raised dashboard-chart-card">
+			<div class="dashboard-chart-header">
+				<span class="dashboard-chart-title">↓ Download Speed</span>
+				<div class="chart-legend">
+					<span class="legend-dot" style="background:#d0d0d0;"></span><span>Total</span>
+					<span class="legend-dot" style="background:#9b59b6;"></span><span>aMule</span>
+					<span class="legend-dot" style="background:#2aabee;"></span><span>Telegram</span>
+				</div>
+			</div>
+			<div data-cb="dlChartWrap" class="chart-canvas-wrap"></div>
+			<div data-cb="dlValueRow" class="chart-value-row"></div>
+		</div>
+
+		<div class="ui-panel-raised dashboard-chart-card">
+			<div class="dashboard-chart-header">
+				<span class="dashboard-chart-title">↑ Upload Speed</span>
+				<div class="chart-legend">
+					<span class="legend-dot" style="background:#ffa00a;"></span><span>aMule Upload</span>
+				</div>
+			</div>
+			<div data-cb="ulChartWrap" class="chart-canvas-wrap"></div>
+			<div data-cb="ulValueRow" class="chart-value-row"></div>
+		</div>
+
+	</div>
+
+	<!-- ── Active Transfers ───────────────────────────────────────────────── -->
+	<div class="ui-panel-raised dashboard-active">
+		<div class="ui-header-small">Active Transfers</div>
+		<div class="active-summary-bar">
+			<span class="active-summary-item">
+				<span class="active-summary-label">Files</span>
+				<span class="active-summary-value" data-cb="summaryCount">0</span>
+			</span>
+			<span class="active-summary-sep"></span>
+			<span class="active-summary-item">
+				<span class="active-summary-label">Speed</span>
+				<span class="active-summary-value" style="color: var(--success-color);" data-cb="summarySpeed">0
+					B/s</span>
+			</span>
+			<span class="active-summary-sep"></span>
+			<span class="active-summary-item active-summary-item-progress">
+				<span class="active-summary-label">Overall</span>
+				<div class="mini-progress-wrap">
+					<div class="mini-progress-bg" style="width: 90px;">
+						<div data-cb="summaryProgressBar" class="mini-progress-fill"
+							style="background: var(--primary-color);"></div>
+					</div>
+					<span data-cb="summaryProgressPct" class="mini-progress-pct">0%</span>
+				</div>
+			</span>
+			<span class="active-summary-sep"></span>
+			<span class="active-summary-item">
+				<span class="active-summary-label">Downloaded</span>
+				<span class="active-summary-value" data-cb="summaryDownloaded">0 B</span>
+			</span>
+			<span class="active-summary-item" style="color: var(--text-muted);">/</span>
+			<span class="active-summary-item">
+				<span class="active-summary-label">Total</span>
+				<span class="active-summary-value" data-cb="summarySize">0 B</span>
+			</span>
+		</div>
+		<div class="ui-table-container dashboard-active-scroll">
+			<table class="ui-list">
+				<thead>
+					<tr>
+						<th style="width: 60px;">Source</th>
+						<th>Filename</th>
+						<th style="text-align:right; width: 90px;">Speed</th>
+						<th style="width: 130px; min-width: 100px;">Progress</th>
+						<th style="text-align:right; width: 110px;">Remaining</th>
+					</tr>
+				</thead>
+				<tbody data-cb="activeList">
+					<tr data-cb="activeRow">
+						<td data-cb="aProvider" style="text-align: center; font-size: 1.1em;"></td>
+						<td data-cb="aName" class="dashboard-name-cell"></td>
+						<td data-cb="aSpeed" style="text-align:right; color: var(--success-color);"></td>
+						<td>
+							<div class="mini-progress-wrap">
+								<div class="mini-progress-bg">
+									<div data-cb="aProgressBar" class="mini-progress-fill"></div>
+								</div>
+								<span data-cb="aProgressPct" class="mini-progress-pct"></span>
+							</div>
+						</td>
+						<td data-cb="aRemaining" class="dashboard-remaining-cell"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>

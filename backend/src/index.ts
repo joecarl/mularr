@@ -15,6 +15,7 @@ import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
 import { MediaProviderService } from './services/mediaprovider';
 import { ExtensionsService } from './services/ExtensionsService';
+import { SpeedHistoryService } from './services/SpeedHistoryService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
 import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
@@ -22,6 +23,7 @@ import { indexerRoutes } from './routes/indexerRoutes';
 import { extensionsRoutes } from './routes/extensionsRoutes';
 import { telegramRoutes } from './routes/telegramRoutes';
 import { mediaProviderRoutes } from './routes/mediaProviderRoutes';
+import { statsRoutes } from './routes/statsRoutes';
 
 console.log(`Starting Mularr v${__APP_MANIFEST__.version}...`);
 
@@ -79,11 +81,17 @@ monitoringService.start();
 const mediaProviderService = new MediaProviderService();
 container.register(MediaProviderService, mediaProviderService);
 
+// Initialize Speed History Service (records download/upload samples for the dashboard)
+const speedHistoryService = new SpeedHistoryService();
+container.register(SpeedHistoryService, speedHistoryService);
+speedHistoryService.start();
+
 // -- Setup routes -------------------------------------------------------------
 
 app.use('/api/system', systemRoutes());
 app.use('/api/amule', amuleRoutes());
 app.use('/api/media', mediaProviderRoutes());
+app.use('/api/stats', statsRoutes());
 app.use('/api/extensions', extensionsRoutes());
 app.use('/api/telegram', telegramRoutes());
 app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr

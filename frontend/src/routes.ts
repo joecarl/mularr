@@ -1,4 +1,5 @@
 import { type Route } from 'chispa';
+import { DashboardView } from './features/dashboard/DashboardView';
 import { ServersView } from './features/servers/ServersView';
 import { TransfersView } from './features/transfers/TransfersView';
 import { SearchView } from './features/search/SearchView';
@@ -8,7 +9,8 @@ import { CategoriesView } from './features/categories/CategoriesView';
 import { ExtensionsView } from './features/extensions/ExtensionsView';
 
 export const routes: Route[] = [
-	{ path: '/', component: ServersView },
+	{ path: '/', component: DashboardView },
+	{ path: '/dashboard', component: DashboardView },
 	{ path: '/servers', component: ServersView },
 	{ path: '/transfers', component: TransfersView },
 	{ path: '/search', component: SearchView },

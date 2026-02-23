@@ -26,6 +26,7 @@ export const Sidebar = component<SidebarProps>((props) => {
 	const statsService = services.get(StatsService);
 
 	const linksData: LinkData[] = [
+		{ to: '/dashboard', icon: '/assets/icons/Statistics.ico', label: 'Dashboard' },
 		{ to: '/servers', icon: '/assets/icons/Server.ico', label: 'Servers' },
 		{ to: '/transfers', icon: '/assets/icons/Transfer.ico', label: 'Transfers' },
 		{ to: '/search', icon: '/assets/icons/Search.ico', label: 'Search' },
