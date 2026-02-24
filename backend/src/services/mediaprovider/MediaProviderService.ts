@@ -1,12 +1,17 @@
+import * as fs from 'fs';
+import * as nodePath from 'path';
 import type { AmuleCategory } from 'amule-ec-client';
 import { container } from '../container/ServiceContainer';
 import { AmuleService } from '../AmuleService';
+import { AmuledService } from '../AmuledService';
+import { MainDB } from '../db/MainDB';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
 import type { IMediaProvider, MediaTransfer, MediaSearchResult, MediaTransfersResponse, MediaSearchResponse, MediaSearchStatusResponse } from './types';
 
 export class MediaProviderService {
 	private providers: IMediaProvider[] = [];
+	private readonly db = container.get(MainDB);
 
 	constructor() {
 		// Order matters: first matching provider wins for canHandleDownload
@@ -94,7 +99,115 @@ export class MediaProviderService {
 		return container.get(AmuleService).getCategories();
 	}
 
-	async setFileCategory(hashHex: string, categoryId: number): Promise<void> {
-		await container.get(AmuleService).setFileCategory(hashHex, categoryId);
+	/**
+	 * Change the category of a file in aMule and update the DB.
+	 * If `moveFiles` is true and the completed file exists on disk, it is moved
+	 * from its current location to the new category directory using filename-based resolution
+	 * (no reliance on aMule's shared-files hash list).
+	 */
+	async setFileCategory(hashHex: string, categoryId: number, moveFiles = false): Promise<void> {
+		const amule = container.get(AmuleService);
+
+		const categories = await amule.getCategories();
+		const newCat = categories.find((c) => c.id === categoryId);
+
+		// Resolve old location before updating DB
+		const dbRecord = this.db.getDownload(hashHex.toLowerCase());
+		const oldCatName = dbRecord?.category_name ?? null;
+		const oldCat = oldCatName ? categories.find((c) => c.name === oldCatName) : categories.find((c) => c.id === 0);
+
+		// Delegate EC protocol update to AmuleService
+		await amule.setFileCategory(hashHex, categoryId);
+
+		// Update our DB record with the new category name (or empty string for "none")
+		const catName = categoryId === 0 ? null : newCat ? newCat.name : null;
+		if (catName !== undefined) {
+			this.db.setDownloadCategory(hashHex.toLowerCase(), catName);
+		}
+
+		if (moveFiles && dbRecord?.is_completed && dbRecord.name) {
+			try {
+				const incomingDir = await this.getIncomingDir();
+				const srcPath = this.resolveFilePath(dbRecord.name, oldCat?.path, incomingDir);
+				const destPath = this.resolveFilePath(dbRecord.name, newCat?.path, incomingDir);
+
+				const wasMoved = await this.moveFile(srcPath, destPath);
+				if (wasMoved) console.log(`[setFileCategory] Moved: ${srcPath} -> ${destPath}`);
+			} catch (e: any) {
+				console.error('[setFileCategory] Error moving file:', e);
+			}
+		}
+	}
+
+	/**
+	 * Move all completed files that belong to a category from oldCatPath to newCatPath.
+	 * Called after a category's save path is changed.
+	 * Pass empty string for a path to mean "use aMule's global IncomingDir".
+	 */
+	async moveCategoryCompletedFiles(categoryName: string, oldCatPath: string, newCatPath: string): Promise<{ moved: number; errors: string[] }> {
+		const downloads = this.db.getAllDownloads().filter((d) => d.is_completed === 1 && d.category_name === categoryName);
+
+		if (downloads.length === 0) return { moved: 0, errors: [] };
+
+		const incomingDir = await this.getIncomingDir();
+		let moved = 0;
+		const errors: string[] = [];
+
+		for (const dl of downloads) {
+			if (!dl.name) continue;
+			try {
+				const srcPath = this.resolveFilePath(dl.name, oldCatPath || undefined, incomingDir);
+				const destPath = this.resolveFilePath(dl.name, newCatPath || undefined, incomingDir);
+
+				const wasMoved = await this.moveFile(srcPath, destPath);
+				if (!wasMoved) continue;
+				console.log(`[moveCategoryCompletedFiles] Moved: ${srcPath} -> ${destPath}`);
+				moved++;
+			} catch (e: any) {
+				console.error(`[moveCategoryCompletedFiles] Error moving ${dl.name}:`, e);
+				errors.push(`Failed to move "${dl.name}": ${e.message}`);
+			}
+		}
+
+		return { moved, errors };
+	}
+
+	// ---- Private helpers -------------------------------------------------------
+
+	private async moveFile(srcPath: string, destPath: string): Promise<boolean> {
+		if (srcPath === destPath) return false;
+
+		if (!fs.existsSync(srcPath)) {
+			throw new Error(`File not found on disk`);
+		}
+
+		const destDir = nodePath.dirname(destPath);
+		if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+		await fs.promises.rename(srcPath, destPath);
+
+		return true;
+	}
+
+	/**
+	 * Returns the aMule global incoming directory.
+	 * Priority: AMULE_INCOMING_DIR env var → amule.conf IncomingDir.
+	 */
+	async getIncomingDir(): Promise<string> {
+		if (process.env.AMULE_INCOMING_DIR) return process.env.AMULE_INCOMING_DIR;
+		try {
+			const config = await container.get(AmuledService).getConfig();
+			if (config.incomingDir) return config.incomingDir;
+		} catch (_e) {}
+		return '/incoming'; // last-resort fallback
+	}
+
+	/**
+	 * Resolve the absolute path of a file given its basename and an optional
+	 * category-specific directory.  When catPath is falsy the global incomingDir is used.
+	 */
+	private resolveFilePath(filename: string, catPath: string | undefined, incomingDir: string): string {
+		const dir = catPath || incomingDir;
+		return nodePath.join(dir, nodePath.basename(filename));
 	}
 }

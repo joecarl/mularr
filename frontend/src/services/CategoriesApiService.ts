@@ -25,10 +25,10 @@ export class CategoriesApiService extends BaseApiService {
 		});
 	}
 
-	public async update(id: number, category: Partial<Category>): Promise<Category> {
+	public async update(id: number, category: Partial<Category>, moveFiles = false): Promise<Category> {
 		return this.request<Category>(`/${id}`, {
 			method: 'PUT',
-			body: JSON.stringify(category),
+			body: JSON.stringify({ ...category, moveFiles }),
 		});
 	}
 

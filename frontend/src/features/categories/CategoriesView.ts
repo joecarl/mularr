@@ -37,7 +37,19 @@ export const CategoriesView = component(() => {
 					onSave: async (data) => {
 						try {
 							if (cat) {
-								await apiService.update(cat.id, data);
+								const oldPath = cat.path || '';
+								const newPath = data.path || '';
+								const pathChanged = oldPath !== newPath && !!newPath;
+
+								if (pathChanged) {
+									const confirmed = await dialogService.confirm(
+										`Save path for "${cat.name}" has changed. All completed files will be moved to the new directory.\n\nOld: ${oldPath || '(none)'}\nNew: ${newPath}\n\nSave and move files?`,
+										'Update Category'
+									);
+									if (!confirmed) return;
+								}
+
+								await apiService.update(cat.id, data, pathChanged);
 							} else {
 								await apiService.create(data);
 							}

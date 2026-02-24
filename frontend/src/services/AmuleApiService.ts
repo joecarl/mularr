@@ -171,6 +171,8 @@ export interface Category {
 	comment: string;
 	color: number;
 	priority: number;
+	/** Effective directory on disk: category.path if set, otherwise aMule's global IncomingDir */
+	resolvedPath?: string;
 }
 
 export interface TransfersResponse {

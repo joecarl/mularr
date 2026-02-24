@@ -658,25 +658,11 @@ export class AmuleService {
 	}
 
 	/**
-	 * Set a file's category by its hash (hex string)
+	 * Set a file's category by its hash (hex string).
 	 */
 	async setFileCategory(hashHex: string, categoryId: number) {
 		try {
 			await this.client.setFileCategory(Buffer.from(hashHex, 'hex'), categoryId);
-
-			// Update DB
-			try {
-				const cats = await this.getCategories();
-				const cat = cats.find((c) => c.id === categoryId);
-				const catName = categoryId === 0 ? '' : cat ? cat.name : null;
-				// If categoryId is 0 (All) or not found, it might mean "General" or unassigned.
-				// Assuming if cat found, we use name.
-				if (catName !== null && catName !== undefined) {
-					this.db.setDownloadCategory(hashHex.toLowerCase(), catName);
-				}
-			} catch (e) {
-				console.error('DB update category error', e);
-			}
 		} catch (e) {
 			console.error('Set File Category Error:', e);
 			throw e;

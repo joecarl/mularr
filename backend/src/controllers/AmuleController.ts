@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
 import { AmuleService } from '../services/AmuleService';
 import { AmuledService } from '../services/AmuledService';
+import { MediaProviderService } from '../services/mediaprovider/MediaProviderService';
 
 export class AmuleController {
 	private readonly amuleService = container.get(AmuleService);
@@ -153,7 +154,13 @@ export class AmuleController {
 	getCategories = async (req: Request, res: Response) => {
 		try {
 			const categories = await this.amuleService.getCategories();
-			res.json(categories);
+			const incomingDir = await container.get(MediaProviderService).getIncomingDir();
+			const enriched = categories.map((c) => ({ ...c, resolvedPath: c.path || incomingDir }));
+			// Ensure a default category (id=0) is always present so the frontend can resolve its path
+			if (!enriched.some((c) => c.id === 0)) {
+				enriched.unshift({ id: 0, name: '', path: '', comment: '', color: 0, priority: 0, resolvedPath: incomingDir });
+			}
+			res.json(enriched);
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}
@@ -171,7 +178,18 @@ export class AmuleController {
 	updateCategory = async (req: Request, res: Response) => {
 		try {
 			const { id } = req.params;
-			const cat = await this.amuleService.updateCategory(parseInt(id as string), req.body);
+			const { moveFiles, ...data } = req.body;
+			let oldPath: string | undefined;
+			if (moveFiles && data.path !== undefined) {
+				const oldCats = await this.amuleService.getCategories();
+				const oldCat = oldCats.find((c) => c.id === parseInt(id as string));
+				oldPath = oldCat?.path;
+			}
+			const cat = await this.amuleService.updateCategory(parseInt(id as string), data);
+			const newPath: string | undefined = data.path;
+			if (moveFiles && newPath !== undefined && oldPath !== newPath) {
+				await container.get(MediaProviderService).moveCategoryCompletedFiles(cat.name ?? '', oldPath ?? '', newPath);
+			}
 			res.json(cat);
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });

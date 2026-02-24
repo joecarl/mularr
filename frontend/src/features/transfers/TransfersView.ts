@@ -1,20 +1,20 @@
-import { component, signal, computed, componentList, WritableSignal, effect, bindControlledSelect } from 'chispa';
+import { component, signal, computed, effect, bindControlledSelect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { MediaApiService, Transfer, Category } from '../../services/MediaApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
-import { getFileIcon } from '../../utils/icons';
-import { fbytes, formatRemaining } from '../../utils/formats';
+import { fbytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
-import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
+import { DEFAULT_VALUE, TransfersRows } from './TransferRows';
 
-const NULL_VALUE = '-1';
-const DEFAULT_VALUE = 'default';
+export const NULL_VALUE = '-1';
 
 const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof Transfer; dir: 'asc' | 'desc' }[] = [
+	{ value: 'added-asc', label: 'Added ↑', col: 'addedOn', dir: 'asc' },
+	{ value: 'added-desc', label: 'Added ↓', col: 'addedOn', dir: 'desc' },
 	{ value: 'name-asc', label: 'Name A→Z', col: 'name', dir: 'asc' },
 	{ value: 'name-desc', label: 'Name Z→A', col: 'name', dir: 'desc' },
 	{ value: 'sources-asc', label: 'Sources ↑', col: 'sources', dir: 'asc' },
@@ -22,142 +22,6 @@ const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof Transfer; 
 	{ value: 'provider-asc', label: 'Provider A→Z', col: 'provider', dir: 'asc' },
 	{ value: 'provider-desc', label: 'Provider Z→A', col: 'provider', dir: 'desc' },
 ];
-
-const statusMap: Record<number, string> = {
-	0: 'Downloading',
-	1: 'Empty',
-	2: 'Waiting for Hash',
-	3: 'Hashing',
-	4: 'Error',
-	5: 'Insufficient Space',
-	6: 'Unknown',
-	7: 'Paused',
-	8: 'Completing',
-	9: 'Completed',
-	10: 'Allocating',
-};
-
-interface TransferListProps {
-	selectedHashes: WritableSignal<Set<string>>;
-	lastClickedHash: WritableSignal<string | null>;
-}
-
-const TransfersRows = componentList<Transfer, TransferListProps>(
-	(t, i, l, props) => {
-		const selectedHashes = props!.selectedHashes;
-		const lastClickedHash = props!.lastClickedHash;
-		const isSelected = computed(() => selectedHashes.get().has(t.get().hash || ''));
-		const addedOn = computed(() => {
-			const dt = t.get().addedOn;
-			return dt ? new Date(dt).toLocaleString() : '-';
-		});
-
-		return tpl.transferRow({
-			classes: { selected: isSelected },
-			onclick: (e: MouseEvent) => {
-				const hash = t.get().hash;
-				if (!hash) return;
-				const current = selectedHashes.get();
-
-				if (e.shiftKey && lastClickedHash.get()) {
-					// Range selection
-					const list = l.get();
-					const anchorIdx = list.findIndex((x) => x.hash === lastClickedHash.get());
-					const targetIdx = list.findIndex((x) => x.hash === hash);
-					if (anchorIdx !== -1 && targetIdx !== -1) {
-						const lo = Math.min(anchorIdx, targetIdx);
-						const hi = Math.max(anchorIdx, targetIdx);
-						const next = e.ctrlKey || e.metaKey ? new Set(current) : new Set<string>();
-						for (let k = lo; k <= hi; k++) {
-							const h = list[k].hash;
-							if (h) next.add(h);
-						}
-						selectedHashes.set(next);
-					}
-				} else if (e.ctrlKey || e.metaKey) {
-					// Toggle individual
-					const next = new Set(current);
-					if (next.has(hash)) {
-						next.delete(hash);
-					} else {
-						next.add(hash);
-					}
-					selectedHashes.set(next);
-					lastClickedHash.set(hash);
-				} else {
-					// Normal click: select only this row
-					selectedHashes.set(new Set([hash]));
-					lastClickedHash.set(hash);
-				}
-			},
-			nodes: {
-				nameCol: {
-					nodes: {
-						fileNameText: { inner: () => t.get().name || 'Unknown', title: () => t.get().name || 'Unknown' },
-						fileIcon: { inner: () => getFileIcon(t.get().name || '') },
-						mobileInfo: {
-							nodes: {
-								mobProviderIcon: {
-									inner: () => getProviderIcon(t.get().provider),
-									title: () => getProviderName(t.get().provider),
-								},
-								mobSize: { inner: () => fbytes(t.get().size) },
-								mobStatus: {
-									inner: () => {
-										const tfer = t.get();
-										if (tfer.stopped) return 'Stopped';
-										if (tfer.isCompleted) return 'Completed';
-										return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
-									},
-								},
-								mobSpeed: {
-									inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : ''),
-									style: { display: () => ((t.get().speed ?? 0) > 0 ? 'inline' : 'none') },
-								},
-								mobProgress: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
-								mobProgressBar: { style: { width: () => `${(t.get().progress || 0) * 100}%` } },
-							},
-						},
-					},
-				},
-				providerCol: {
-					inner: () => getProviderIcon(t.get().provider),
-					title: () => getProviderName(t.get().provider),
-				},
-				sizeCol: { inner: () => fbytes(t.get().size) },
-				categoryCol: { inner: () => (t.get().categoryName === DEFAULT_VALUE ? '-' : (t.get().categoryName ?? '-')) },
-				completedCol: { inner: () => fbytes(t.get().completed) },
-				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
-				progressCol: {
-					nodes: {
-						progressBar: {
-							style: { width: () => `${(t.get().progress || 0) * 100}%` },
-							addClass: () => {
-								if (t.get().stopped || t.get().statusId === 7) return 'transfer-progress-bar-paused';
-								if (t.get().isCompleted) return 'transfer-progress-bar-complete';
-								return '';
-							},
-						},
-						progressText: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
-					},
-				},
-				sourcesCol: { inner: () => String(t.get().sources || 0) },
-				priorityCol: { inner: () => String(t.get().priority || 0) },
-				statusCol: {
-					inner: () => {
-						const tfer = t.get();
-						if (tfer.stopped) return 'Stopped';
-						if (tfer.isCompleted) return 'Completed';
-						return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
-					},
-				},
-				remainingCol: { inner: () => formatRemaining(t.get().remaining, t.get().speed) },
-				addedOnCol: { inner: addedOn },
-			},
-		});
-	},
-	(t) => t.hash
-);
 
 function hashesToTransfers(hashes: Set<string>, list: Transfer[]): Transfer[] {
 	const selected: Transfer[] = [];
@@ -183,6 +47,8 @@ export const TransfersView = component(() => {
 	const initialSort = prefs.getSort<keyof Transfer>('transfers', 'name');
 	const sortColumn = signal(initialSort.column);
 	const sortDirection = signal(initialSort.direction);
+
+	const selectCategoryName = signal(NULL_VALUE);
 
 	effect(() => {
 		prefs.setSort('transfers', sortColumn.get(), sortDirection.get());
@@ -267,15 +133,43 @@ export const TransfersView = component(() => {
 		const hashes = [...selectedHashes.get()];
 		if (hashes.length === 0 || catName === NULL_VALUE) return;
 		try {
+			const allCats = categories.get();
 			let catId: number;
 			if (catName === DEFAULT_VALUE) {
 				catId = 0;
 			} else {
-				const cat = categories.get().find((c) => c.name === catName);
+				const cat = allCats.find((c) => c.name === catName);
 				if (!cat) throw new Error('Selected category not found');
 				catId = cat.id;
 			}
-			await Promise.all(hashes.map((hash) => mediaService.setFileCategory(hash, catId)));
+
+			// If completed files would actually change directory, ask confirmation before proceeding.
+			// Answering No aborts the entire category change.
+			let moveFiles = false;
+			const destCat = allCats.find((c) => c.id === catId);
+			const destPath = destCat?.resolvedPath ?? destCat?.path ?? '';
+			if (destPath) {
+				const completedThatMove = hashesToTransfers(new Set(hashes), transferList.get()).filter((t) => {
+					if (!t.isCompleted) return false;
+					const srcCat = allCats.find((c) => c.name === (t.categoryName ?? ''));
+					const srcPath = srcCat?.resolvedPath ?? srcCat?.path ?? '';
+					console.log('Comparing paths for completed file:', t.name, 'src:', srcPath, 'dest:', destPath);
+					return srcPath !== destPath;
+				});
+				if (completedThatMove.length > 0) {
+					const confirmed = await dialogService.confirm(
+						`Change category and move ${completedThatMove.length === 1 ? 'the completed file' : `${completedThatMove.length} completed files`} to the new directory?\n\nDestination: ${destPath}`,
+						'Change Category'
+					);
+					if (!confirmed) {
+						selectCategoryName.set(NULL_VALUE);
+						return;
+					}
+					moveFiles = true;
+				}
+			}
+
+			await Promise.all(hashes.map((hash) => mediaService.setFileCategory(hash, catId, moveFiles)));
 			loadTransfers();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Error');
@@ -306,22 +200,14 @@ export const TransfersView = component(() => {
 
 	const ctgOptions = computed(() => {
 		const opts = [
-			{ value: NULL_VALUE, label: 'Select Category...' },
+			{ value: NULL_VALUE, label: 'Select Category...', disabled: true },
 			...categories.get().map((c) => (c.id === 0 ? { value: DEFAULT_VALUE, label: 'Default' } : { value: c.name, label: c.name })),
 		];
 		return opts;
 	});
 
-	const selectedCategoryName = signal(NULL_VALUE);
-	effect(() => {
-		// Show current category only when exactly one item is selected
-		const singleTransfer = selectedTransfersSingle.get();
-		const currentCatName = singleTransfer?.categoryName ?? DEFAULT_VALUE;
-		selectedCategoryName.set(singleTransfer ? currentCatName : NULL_VALUE);
-	});
-
 	const mobileSortOpts = computed(() => MOBILE_SORT_OPTIONS);
-	const mobileSortValue = signal(MOBILE_SORT_OPTIONS.find((o) => o.col === initialSort.column && o.dir === initialSort.direction)?.value ?? 'name-asc');
+	const mobileSortValue = signal(MOBILE_SORT_OPTIONS.find((o) => o.col === initialSort.column && o.dir === initialSort.direction)?.value ?? '');
 	// Keep select in sync when sort changes via column header clicks
 	// TODO: fix chispa para que esto no cause un loop infinito (porque setMobileSortValue dispara efecto que cambia sortColumn/sortDirection, que dispara efecto que vuelve a setMobileSortValue)
 	// effect(() => {
@@ -359,7 +245,7 @@ export const TransfersView = component(() => {
 		catSelect: {
 			disabled: isDisabled,
 			_ref: (el) => {
-				bindControlledSelect(el, selectedCategoryName, ctgOptions);
+				bindControlledSelect(el, selectCategoryName, ctgOptions);
 			},
 			onchange: (e: any) => changeCategory(e.target.value),
 		},
@@ -409,7 +295,21 @@ export const TransfersView = component(() => {
 		thAddedOn: { onclick: () => sort('addedOn') },
 
 		transferListContainer: {
-			inner: () => (transferListLength.get() === 0 ? tpl.noTransferRow({}) : TransfersRows(computedTransferList, { selectedHashes, lastClickedHash })),
+			inner: () =>
+				transferListLength.get() === 0
+					? tpl.noTransferRow({})
+					: TransfersRows(computedTransferList, {
+							selectedHashes,
+							lastClickedHash,
+							onRowClick: (hash) => {
+								const current = selectedHashes.get();
+
+								// Show current category only when exactly one item is selected
+								const singleTransfer = current.size === 1 ? transferList.get().find((t) => t.hash === hash) : null;
+								const currentCatName = singleTransfer?.categoryName || DEFAULT_VALUE;
+								selectCategoryName.set(singleTransfer ? currentCatName : NULL_VALUE);
+							},
+						}),
 		},
 
 		sharedListContainer: {

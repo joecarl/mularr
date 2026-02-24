@@ -10,7 +10,7 @@
 		"postinstall": "chispa-cli --compile-html"
 	},
 	"dependencies": {
-		"chispa": "^0.9.0",
+		"chispa": "^0.9.1",
 		"lucide-static": "^0.562.0"
 	},
 	"devDependencies": {

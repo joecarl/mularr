@@ -36,10 +36,10 @@ export class MediaApiService extends BaseApiService {
 		});
 	}
 
-	async setFileCategory(hash: string, categoryId: number): Promise<SuccessResponse> {
+	async setFileCategory(hash: string, categoryId: number, moveFiles = false): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>('/download/set-category', {
 			method: 'POST',
-			body: JSON.stringify({ hash, categoryId }),
+			body: JSON.stringify({ hash, categoryId, moveFiles }),
 		});
 	}
 

@@ -136,7 +136,7 @@ export class MainDB {
 		this.db.prepare('UPDATE downloads SET category_name = ? WHERE category_name = ?').run(newName, oldName);
 	}
 
-	public setDownloadCategory(hash: string, categoryName: string) {
+	public setDownloadCategory(hash: string, categoryName: string | null) {
 		this.db.prepare('UPDATE downloads SET category_name = ? WHERE hash = ?').run(categoryName, hash);
 	}
 

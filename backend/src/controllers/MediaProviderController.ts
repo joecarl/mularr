@@ -83,8 +83,8 @@ export class MediaProviderController {
 
 	setFileCategory = async (req: Request, res: Response) => {
 		try {
-			const { hash, categoryId } = req.body;
-			await this.service.setFileCategory(hash, parseInt(categoryId));
+			const { hash, categoryId, moveFiles } = req.body;
+			await this.service.setFileCategory(hash, parseInt(categoryId), !!moveFiles);
 			res.json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
