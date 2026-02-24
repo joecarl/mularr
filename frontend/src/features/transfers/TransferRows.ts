@@ -1,8 +1,9 @@
-import { computed, componentList, WritableSignal } from 'chispa';
+import { computed, componentList } from 'chispa';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { Transfer } from '../../services/MediaApiService';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes, formatRemaining } from '../../utils/formats';
+import { RowSelectionManager } from '../../utils/ListManager';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
@@ -23,17 +24,15 @@ const statusMap: Record<number, string> = {
 };
 
 interface TransferListProps {
-	selectedHashes: WritableSignal<Set<string>>;
-	lastClickedHash: WritableSignal<string | null>;
+	selectionMgr: RowSelectionManager;
 	onRowClick: (hash: string) => void;
 }
 
 export const TransfersRows = componentList<Transfer, TransferListProps>(
 	(t, i, l, props) => {
-		const selectedHashes = props!.selectedHashes;
-		const lastClickedHash = props!.lastClickedHash;
+		const selectionMgr = props!.selectionMgr;
 		const onRowClick = props!.onRowClick;
-		const isSelected = computed(() => selectedHashes.get().has(t.get().hash || ''));
+		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(t.get().hash || ''));
 		const addedOn = computed(() => {
 			const dt = t.get().addedOn;
 			return dt ? new Date(dt).toLocaleString() : '-';
@@ -44,38 +43,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 			onclick: (e: MouseEvent) => {
 				const hash = t.get().hash;
 				if (!hash) return;
-				const current = selectedHashes.get();
-
-				if (e.shiftKey && lastClickedHash.get()) {
-					// Range selection
-					const list = l.get();
-					const anchorIdx = list.findIndex((x) => x.hash === lastClickedHash.get());
-					const targetIdx = list.findIndex((x) => x.hash === hash);
-					if (anchorIdx !== -1 && targetIdx !== -1) {
-						const lo = Math.min(anchorIdx, targetIdx);
-						const hi = Math.max(anchorIdx, targetIdx);
-						const next = e.ctrlKey || e.metaKey ? new Set(current) : new Set<string>();
-						for (let k = lo; k <= hi; k++) {
-							const h = list[k].hash;
-							if (h) next.add(h);
-						}
-						selectedHashes.set(next);
-					}
-				} else if (e.ctrlKey || e.metaKey) {
-					// Toggle individual
-					const next = new Set(current);
-					if (next.has(hash)) {
-						next.delete(hash);
-					} else {
-						next.add(hash);
-					}
-					selectedHashes.set(next);
-					lastClickedHash.set(hash);
-				} else {
-					// Normal click: select only this row
-					selectedHashes.set(new Set([hash]));
-					lastClickedHash.set(hash);
-				}
+				selectionMgr.handleRowSelection(e, hash, l.get());
 				onRowClick(hash);
 			},
 			nodes: {

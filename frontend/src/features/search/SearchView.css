@@ -25,3 +25,23 @@
 .status-queued td {
 	color: #d93d00;
 }
+
+@media (max-width: 768px) {
+	.search-progress-container {
+		width: 100% !important;
+	}
+
+	.search-progress-wrapper {
+		width: 100%;
+	}
+
+	.search-ed2k-form {
+		width: 100%;
+	}
+
+	.search-ed2k-form input {
+		flex: 1;
+		width: auto !important;
+		min-width: 0;
+	}
+}
