@@ -1,4 +1,4 @@
-import { component, signal, bindControlledInput, bindControlledSelect, onUnmount, effect } from 'chispa';
+import { component, signal, bindControlledInput, bindControlledSelect, onUnmount, effect, computed, componentList, Signal } from 'chispa';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import { services } from '../../services/container/ServiceContainer';
@@ -8,6 +8,59 @@ import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import tpl from './SearchView.html';
 import './SearchView.css';
+
+interface ResultsRowsProps {
+	onDownload: (linkOrHash: string) => void;
+	addingDownload: Signal<boolean>;
+}
+const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
+	(res, i, l, props) => {
+		const onDownload = props!.onDownload;
+		const addingDownload = props!.addingDownload;
+
+		return tpl.resultRow({
+			classes: {
+				'status-downloaded': () => res.get().downloadStatus === 1,
+				'status-queued': () => res.get().downloadStatus === 2,
+			},
+			nodes: {
+				nameCol: { title: () => res.get().name },
+				fileIcon: { inner: () => getFileIcon(res.get().name) },
+				fileNameText: { inner: () => res.get().name },
+				mobileInfo: {
+					nodes: {
+						mobProviderIcon: {
+							inner: () => getProviderIcon(res.get().provider),
+							title: () => getProviderName(res.get().provider),
+						},
+						mobSize: { inner: () => fbytes(res.get().size) },
+						mobSources: { inner: () => (res.get().sources ? `${res.get().sources}` : '0') },
+						mobDownloadBtn: { onclick: () => onDownload(res.get().hash), disabled: addingDownload },
+					},
+				},
+				providerCol: {
+					inner: () => getProviderIcon(res.get().provider),
+					title: () => getProviderName(res.get().provider),
+				},
+				typeCol: { inner: () => res.get().type || '' },
+				sizeCol: { inner: () => fbytes(res.get().size) },
+				sourcesCol: { inner: () => res.get().sources || '0' },
+				completeCol: {
+					inner: () => {
+						const r = res.get();
+						if (!r.sources || !r.completeSources) return '0%';
+						const s = parseInt(r.sources);
+						const c = parseInt(r.completeSources);
+						if (isNaN(s) || isNaN(c) || s === 0) return '0%';
+						return `${((c / s) * 100).toFixed(0)}% (${c})`;
+					},
+				},
+				downloadMiniBtn: { onclick: () => onDownload(res.get().hash), disabled: addingDownload },
+			},
+		});
+	},
+	(r) => r.hash
+);
 
 export const SearchView = component(() => {
 	const apiService = services.get(MediaApiService);
@@ -132,6 +185,35 @@ export const SearchView = component(() => {
 		}
 	};
 
+	const sortedResults = computed(() => {
+		let list = [...results.get()];
+		const col = sortColumn.get();
+		const dir = sortDirection.get();
+
+		if (list.length > 0) {
+			list.sort((a, b) => {
+				const va = a[col];
+				const vb = b[col];
+
+				if (!va) return 1;
+				if (!vb) return -1;
+
+				if (col === 'size' || col === 'sources' || col === 'completeSources') {
+					const na = va as number;
+					const nb = vb as number;
+					if (!isNaN(na) && !isNaN(nb)) {
+						return dir === 'asc' ? na - nb : nb - na;
+					}
+				}
+
+				if (va < vb) return dir === 'asc' ? -1 : 1;
+				if (va > vb) return dir === 'asc' ? 1 : -1;
+				return 0;
+			});
+		}
+		return list;
+	});
+
 	return tpl.fragment({
 		thName: { onclick: () => sort('name') },
 		thProvider: { onclick: () => sort('provider') },
@@ -157,75 +239,7 @@ export const SearchView = component(() => {
 		refreshBtn: { onclick: loadResults },
 		resultsList: { inner: statusLog },
 		resultsContainer: {
-			inner: () => {
-				let list = [...results.get()];
-				const col = sortColumn.get();
-				const dir = sortDirection.get();
-
-				if (list.length > 0) {
-					list.sort((a, b) => {
-						const va = a[col];
-						const vb = b[col];
-
-						if (!va) return 1;
-						if (!vb) return -1;
-
-						if (col === 'size' || col === 'sources' || col === 'completeSources') {
-							const na = va as number;
-							const nb = vb as number;
-							if (!isNaN(na) && !isNaN(nb)) {
-								return dir === 'asc' ? na - nb : nb - na;
-							}
-						}
-
-						if (va < vb) return dir === 'asc' ? -1 : 1;
-						if (va > vb) return dir === 'asc' ? 1 : -1;
-						return 0;
-					});
-				}
-
-				return list.map((res) =>
-					tpl.resultRow({
-						classes: {
-							'status-downloaded': res.downloadStatus === 1,
-							'status-queued': res.downloadStatus === 2,
-						},
-						nodes: {
-							nameCol: { title: res.name },
-							fileIcon: { inner: getFileIcon(res.name) },
-							fileNameText: { inner: res.name },
-							mobileInfo: {
-								nodes: {
-									mobProviderIcon: {
-										inner: getProviderIcon(res.provider),
-										title: getProviderName(res.provider),
-									},
-									mobSize: { inner: fbytes(res.size) },
-									mobSources: { inner: res.sources ? `${res.sources}` : '0' },
-									mobDownloadBtn: { onclick: () => download(res.hash), disabled: addingDownload },
-								},
-							},
-							providerCol: {
-								inner: getProviderIcon(res.provider),
-								title: getProviderName(res.provider),
-							},
-							typeCol: { inner: res.type || '' },
-							sizeCol: { inner: fbytes(res.size) },
-							sourcesCol: { inner: res.sources || '0' },
-							completeCol: {
-								inner: () => {
-									if (!res.sources || !res.completeSources) return '0%';
-									const s = parseInt(res.sources);
-									const c = parseInt(res.completeSources);
-									if (isNaN(s) || isNaN(c) || s === 0) return '0%';
-									return `${((c / s) * 100).toFixed(0)}% (${c})`;
-								},
-							},
-							downloadMiniBtn: { onclick: () => download(res.hash), disabled: addingDownload },
-						},
-					})
-				);
-			},
+			inner: () => ResultsRows(sortedResults, { onDownload: (linkOrHash) => download(linkOrHash), addingDownload }),
 		},
 		downloadInput: {
 			_ref: (el) => {
