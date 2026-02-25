@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { Api, TelegramClient } from 'telegram';
-import { TelegramIndexerDB } from './db/TelegramIndexerDB';
+import { ActiveDownloadRow, TelegramIndexerDB } from './db/TelegramIndexerDB';
 import { MainDB } from './db/MainDB';
 import { AmuleService, getCatByName } from './AmuleService';
 import { AmuledService } from './AmuledService';
@@ -187,53 +187,62 @@ export class TelegramDownloadManager {
 		const active = this.telegramDb.getActiveDownloads();
 		if (active.length === 0) return;
 
-		const client = this.getClient();
-		if (!client) return;
-
 		logger.info(`Resuming ${active.length} active downloads...`);
 
 		for (const row of active) {
-			// Skip if already in memory
-			if (this.activeDownloads.has(row.hash)) continue;
+			this.resumeActiveDownload(row);
+		}
+	}
 
-			try {
-				const messages = await client.getMessages(row.chat_id, { ids: [row.message_id] });
-				if (!messages || messages.length === 0) continue;
+	/**
+	 * Internal method to resume a single active download from DB record.
+	 * Used for retry and initial resume on startup.
+	 * @param row
+	 * @returns
+	 */
+	private async resumeActiveDownload(row: ActiveDownloadRow) {
+		const client = this.getClient();
+		if (!client) return;
+		// Skip if already in memory
+		if (this.activeDownloads.has(row.hash)) return;
 
-				const message = messages[0];
-				if (!message.media || !(message.media instanceof Api.MessageMediaDocument)) continue;
+		try {
+			const messages = await client.getMessages(row.chat_id, { ids: [row.message_id] });
+			if (!messages || messages.length === 0) return;
 
-				const doc = message.media.document as Api.Document;
+			const message = messages[0];
+			if (!message.media || !(message.media instanceof Api.MessageMediaDocument)) return;
 
-				const status: DownloadStatus = {
-					hash: row.hash,
-					fileName: row.file_name,
-					size: row.file_size,
-					downloaded: row.downloaded_bytes,
-					speed: 0,
-					status: 'downloading',
-					startTime: Date.now(),
-					lastUpdate: Date.now(),
-					lastBytes: row.downloaded_bytes,
-				};
-				this.activeDownloads.set(row.hash, status);
+			const doc = message.media.document as Api.Document;
 
-				const control: DownloadControl = {
-					cancelled: false,
-					paused: false,
-					pausePromise: null,
-					pauseResolve: null,
-				};
-				this.downloadControls.set(row.hash, control);
+			const status: DownloadStatus = {
+				hash: row.hash,
+				fileName: row.file_name,
+				size: row.file_size,
+				downloaded: row.downloaded_bytes,
+				speed: 0,
+				status: 'downloading',
+				startTime: Date.now(),
+				lastUpdate: Date.now(),
+				lastBytes: row.downloaded_bytes,
+			};
+			this.activeDownloads.set(row.hash, status);
 
-				this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
+			const control: DownloadControl = {
+				cancelled: false,
+				paused: false,
+				pausePromise: null,
+				pauseResolve: null,
+			};
+			this.downloadControls.set(row.hash, control);
 
-				if (row.status === 'paused') {
-					this.pauseDownload(row.hash);
-				}
-			} catch (err) {
-				logger.error(`Error resuming download ${row.file_name}:`, err);
+			this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
+
+			if (row.status === 'paused') {
+				this.pauseDownload(row.hash);
 			}
+		} catch (err) {
+			logger.error(`Error resuming download ${row.file_name}:`, err);
 		}
 	}
 
@@ -440,7 +449,12 @@ export class TelegramDownloadManager {
 			setTimeout(() => {
 				if (control.cancelled) return;
 				logger.info(`Retrying download after error: ${fileName}`);
-				this.runIterDownload(hash, doc, outPath, fileName);
+				const row = this.telegramDb.getActiveDownload(hash);
+				if (!row) {
+					logger.error(`No DB record found for retry of ${fileName}`);
+					return;
+				}
+				this.resumeActiveDownload(row);
 			}, 10000);
 		} finally {
 			this.downloadControls.delete(hash);

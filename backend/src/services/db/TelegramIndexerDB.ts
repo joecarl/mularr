@@ -411,6 +411,10 @@ export class TelegramIndexerDB {
 		return this.db.prepare('SELECT * FROM active_downloads').all() as ActiveDownloadRow[];
 	}
 
+	public getActiveDownload(hash: string) {
+		return this.db.prepare<[string], ActiveDownloadRow>('SELECT * FROM active_downloads WHERE hash = ?').get(hash);
+	}
+
 	public close() {
 		this.db.close();
 	}

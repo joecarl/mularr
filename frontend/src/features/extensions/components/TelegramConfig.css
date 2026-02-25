@@ -11,7 +11,6 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		background: white;
 	}
 
 	.error-banner {
@@ -27,7 +26,7 @@
 		display: flex;
 		gap: 5px;
 		border-top: 1px solid var(--ui-input-border-color);
-		background: #f0f8ff;
+		background: #9dd1ff0f;
 
 		.ui-btn {
 			min-width: 80px;
@@ -88,51 +87,20 @@
 		}
 
 		.ui-list {
-			width: 100%;
-			border-collapse: collapse;
-
 			thead {
-				background: var(--ui-face);
-				position: sticky;
-				top: 0;
-
 				th {
 					padding: 4px;
 					text-align: left;
-					border-bottom: 1px solid var(--ui-shadow);
 				}
 			}
 
 			tbody {
-				background: white;
-
 				tr {
-					border-bottom: 1px solid #eee;
-
 					td {
 						padding: 4px;
-
-						.ui-btn {
-							padding: 1px 6px;
-							font-size: 11px;
-						}
 					}
 				}
 			}
-		}
-	}
-
-	.ui-input {
-		background-color: var(--ui-input-bg, white);
-		border: var(--ui-input-border, 1px solid #999);
-		padding: 3px 6px;
-		font-family: inherit;
-		font-size: 13px;
-		box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
-
-		&:focus {
-			outline: none;
-			border-color: var(--ui-hl);
 		}
 	}
 
