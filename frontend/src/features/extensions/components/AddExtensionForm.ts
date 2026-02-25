@@ -1,8 +1,8 @@
-import { bindControlledSelect, component, SelectOption, signal } from 'chispa';
+import { bindControlledInput, bindControlledSelect, component, SelectOption, signal } from 'chispa';
 import { ExtensionType } from '../../../services/ExtensionsApiService';
 import tpl from './AddExtensionForm.html';
 
-const extensionTypes: SelectOption[] = [
+const EXTENSION_TYPE_OPTIONS: SelectOption[] = [
 	{ label: 'Validator', value: 'validator' },
 	{ label: 'Enhanced Search', value: 'enhanced_search' },
 	{ label: 'Webhook', value: 'webhook' },
@@ -16,17 +16,18 @@ export interface AddExtensionFormProps {
 
 export const AddExtensionForm = component<AddExtensionFormProps>(({ onSave, onCancel }) => {
 	const extensionType = signal<ExtensionType>('validator');
+	const url = signal('');
 
 	const handleSubmit = (e: Event) => {
 		e.preventDefault();
 		const form = e.target as HTMLFormElement;
 		const formData = new FormData(form);
 		const type = extensionType.get(); // formData.get('type') as ExtensionType;
-		const url = (formData.get('url') as string) || '';
+		const urlValue = url.get(); // formData.get('url') as string;
 
 		onSave({
 			name: formData.get('name') as string,
-			url: url,
+			url: urlValue,
 			type: type,
 			enabled: formData.get('enabled') ? 1 : 0,
 		});
@@ -36,9 +37,17 @@ export const AddExtensionForm = component<AddExtensionFormProps>(({ onSave, onCa
 		form: {
 			onsubmit: handleSubmit,
 		},
+		urlFormGroup: {
+			style: { display: () => (extensionType.get() === 'telegram_indexer' ? 'none' : '') },
+		},
+		url: {
+			_ref: (el) => {
+				bindControlledInput(el, url);
+			},
+		},
 		extensionType: {
 			_ref: (el) => {
-				bindControlledSelect(el, extensionType, signal(extensionTypes));
+				bindControlledSelect(el, extensionType, EXTENSION_TYPE_OPTIONS);
 			},
 		},
 		btnCancel: {
