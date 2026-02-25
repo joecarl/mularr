@@ -1,13 +1,42 @@
 import { computed, componentList } from 'chispa';
+import { services } from '../../services/container/ServiceContainer';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { Transfer } from '../../services/MediaApiService';
+import { ExtensionsApiService } from '../../services/ExtensionsApiService';
+import { ContextMenuService } from '../../services/ContextMenuService';
 import { getFileIcon } from '../../utils/icons';
+import { isVideoFile } from '../../utils/files';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { RowSelectionManager } from '../../utils/ListManager';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
 export const DEFAULT_VALUE = 'default';
+
+async function buildTransferActions(transfer: Transfer) {
+	const extensionsApi = services.get(ExtensionsApiService);
+	const actions = [];
+	const popupProps = 'width=1280,height=720,toolbar=no,menubar=no,location=no,status=no';
+
+	const filePath = transfer.filePath;
+	if (filePath && isVideoFile(filePath)) {
+		try {
+			const allExtensions = await extensionsApi.getExtensions();
+			const previewers = allExtensions.filter((x) => x.type === 'media_previewer' && x.enabled);
+			for (const previewer of previewers) {
+				const baseUrl = previewer.url.replace(/\/$/, '');
+				actions.push({
+					label: `Open in ${previewer.name}`,
+					icon: '🎬',
+					onClick: () => window.open(`${baseUrl}?file=${encodeURIComponent(filePath)}`, '_blank', popupProps),
+				});
+			}
+		} catch {
+			// silently ignore if extensions can't be fetched
+		}
+	}
+	return actions;
+}
 
 const statusMap: Record<number, string> = {
 	0: 'Downloading',
@@ -32,6 +61,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 	(t, i, l, props) => {
 		const selectionMgr = props!.selectionMgr;
 		const onRowClick = props!.onRowClick;
+		const ctxMenu = services.get(ContextMenuService);
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(t.get().hash || ''));
 		const addedOn = computed(() => {
 			const dt = t.get().addedOn;
@@ -45,6 +75,20 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				if (!hash) return;
 				selectionMgr.handleRowSelection(e, hash, l.get());
 				onRowClick(hash);
+			},
+			oncontextmenu: async (e: MouseEvent) => {
+				e.preventDefault();
+				const hash = t.get().hash;
+				if (hash) {
+					selectionMgr.handleRowSelection(e, hash, l.get());
+					onRowClick(hash);
+				}
+				const transfer = t.get();
+				const actions = await buildTransferActions(transfer);
+
+				if (actions.length > 0) {
+					ctxMenu.show(e, actions);
+				}
 			},
 			nodes: {
 				nameCol: {

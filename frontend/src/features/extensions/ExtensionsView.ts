@@ -1,6 +1,6 @@
 import { component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { ExtensionsApiService, Extension, ExtensionType } from '../../services/ExtensionsApiService';
+import { ExtensionsApiService, Extension, EXTENSION_TYPES } from '../../services/ExtensionsApiService';
 import { DialogService } from '../../services/DialogService';
 import { TelegramConfig } from './components/TelegramConfig';
 import { AddExtensionForm } from './components/AddExtensionForm';
@@ -113,7 +113,7 @@ export const ExtensionsView = component(() => {
 								},
 							},
 							urlCol: { inner: v.url },
-							typeCol: { inner: v.type },
+							typeCol: { inner: () => EXTENSION_TYPES[v.type]?.label ?? v.type },
 							enabledCol: { inner: v.enabled ? 'Yes' : 'No' },
 
 							btnConfigure: {

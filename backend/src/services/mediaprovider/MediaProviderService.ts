@@ -7,6 +7,7 @@ import { AmuledService } from '../AmuledService';
 import { MainDB } from '../db/MainDB';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
+import { TelegramDownloadDirectoryHelper } from '../TelegramDownloadManager';
 import type { IMediaProvider, MediaTransfer, MediaSearchResult, MediaTransfersResponse, MediaSearchResponse, MediaSearchStatusResponse } from './types';
 
 export class MediaProviderService {
@@ -56,6 +57,23 @@ export class MediaProviderService {
 		let categories: AmuleCategory[] = [];
 		try {
 			categories = await container.get(AmuleService).getCategories();
+		} catch (_e) {}
+
+		// Enrich each transfer with its resolved absolute file path
+		try {
+			const incomingDir = await this.getIncomingDir();
+
+			for (const transfer of combined) {
+				if (!transfer.name) continue;
+				if (transfer.isCompleted) {
+					const cat = transfer.categoryName ? categories.find((c) => c.name === transfer.categoryName) : undefined;
+					transfer.filePath = this.resolveFilePath(transfer.name, cat?.path, incomingDir);
+				} else if (transfer.provider === 'telegram') {
+					const tgDirHelper = new TelegramDownloadDirectoryHelper();
+					transfer.filePath = nodePath.join(await tgDirHelper.getDownloadTempDir(), transfer.name);
+				}
+				// amule in-progress: temp files are hash-named .part files — not useful(?)
+			}
 		} catch (_e) {}
 
 		return { raw: `Downloads (${combined.length})`, list: combined, categories };

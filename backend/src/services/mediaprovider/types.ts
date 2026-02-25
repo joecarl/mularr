@@ -24,6 +24,8 @@ export interface MediaTransfer {
 	categoryName?: string | null;
 	addedOn?: string | null;
 	provider?: string;
+	/** Resolved absolute path to the file on disk. Populated by MediaProviderService. */
+	filePath?: string;
 }
 
 export interface MediaSearchResult {

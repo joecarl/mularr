@@ -33,24 +33,12 @@ interface DownloadControl {
 	pauseResolve: (() => void) | null;
 }
 
-export class TelegramDownloadManager {
-	private activeDownloads: Map<string, DownloadStatus> = new Map();
-	private completedDownloads: Map<string, DownloadStatus> = new Map();
-	private downloadControls: Map<string, DownloadControl> = new Map();
-
+export class TelegramDownloadDirectoryHelper {
 	private readonly amuleService = container.get(AmuleService);
 	private readonly amuledService = container.get(AmuledService);
 	private readonly mainDb = container.get(MainDB);
 
-	constructor(
-		private readonly getClient: () => TelegramClient | null,
-		private readonly getAuthStatus: () => AuthStatus,
-		private readonly telegramDb: TelegramIndexerDB
-	) {}
-
-	// -- Directory helpers --
-
-	private async getDownloadTempDir() {
+	public async getDownloadTempDir() {
 		const cfg = await this.amuledService.getConfig();
 		const tempDir = cfg.tempDir || cfg.incomingDir || path.dirname(this.mainDb.dbPath);
 		const tgTempDir = path.join(tempDir, 'telegram-temp');
@@ -60,7 +48,7 @@ export class TelegramDownloadManager {
 		return tgTempDir;
 	}
 
-	private async getDownloadDir(hash: string) {
+	public async getDownloadDir(hash: string) {
 		const cfg = await this.amuledService.getConfig();
 		const ctgs = await this.amuleService.getCategories();
 		const dl = this.mainDb.getDownload(hash);
@@ -72,6 +60,21 @@ export class TelegramDownloadManager {
 		}
 		return cfg.incomingDir;
 	}
+}
+
+export class TelegramDownloadManager {
+	private activeDownloads: Map<string, DownloadStatus> = new Map();
+	private completedDownloads: Map<string, DownloadStatus> = new Map();
+	private downloadControls: Map<string, DownloadControl> = new Map();
+	private readonly dirHelper = new TelegramDownloadDirectoryHelper();
+
+	private readonly mainDb = container.get(MainDB);
+
+	constructor(
+		private readonly getClient: () => TelegramClient | null,
+		private readonly getAuthStatus: () => AuthStatus,
+		private readonly telegramDb: TelegramIndexerDB
+	) {}
 
 	// -- Status queries --
 
@@ -151,7 +154,7 @@ export class TelegramDownloadManager {
 			};
 			this.activeDownloads.set(hash, status);
 
-			const outPath = path.join(await this.getDownloadTempDir(), fileName);
+			const outPath = path.join(await this.dirHelper.getDownloadTempDir(), fileName);
 			logger.info(`Starting download: ${fileName} -> ${outPath}`);
 
 			// Save to DB for persistence
@@ -416,7 +419,7 @@ export class TelegramDownloadManager {
 				}
 				logger.info(`Download completed: ${fileName}`);
 
-				const finalDir = await this.getDownloadDir(hash);
+				const finalDir = await this.dirHelper.getDownloadDir(hash);
 				if (!fs.existsSync(finalDir)) fs.mkdirSync(finalDir, { recursive: true });
 				const finalPath = path.join(finalDir, fileName);
 

@@ -113,6 +113,8 @@ export interface Transfer extends AmuleFile {
 	addedOn?: number;
 	isCompleted?: boolean;
 	provider?: string;
+	/** Resolved absolute path to the file on disk. */
+	filePath?: string;
 }
 
 export interface AmuleUpDownClient {

@@ -1,13 +1,8 @@
 import { bindControlledInput, bindControlledSelect, component, SelectOption, signal } from 'chispa';
-import { ExtensionType } from '../../../services/ExtensionsApiService';
+import { EXTENSION_TYPES, ExtensionType } from '../../../services/ExtensionsApiService';
 import tpl from './AddExtensionForm.html';
 
-const EXTENSION_TYPE_OPTIONS: SelectOption[] = [
-	{ label: 'Validator', value: 'validator' },
-	{ label: 'Enhanced Search', value: 'enhanced_search' },
-	{ label: 'Webhook', value: 'webhook' },
-	{ label: 'Telegram Indexer', value: 'telegram_indexer' },
-];
+const EXTENSION_TYPE_OPTIONS: SelectOption[] = Object.entries(EXTENSION_TYPES).map(([k, v]) => ({ label: v.label, value: k }));
 
 export interface AddExtensionFormProps {
 	onSave: (data: { name: string; url: string; type: ExtensionType; enabled: number }) => void;
@@ -15,7 +10,7 @@ export interface AddExtensionFormProps {
 }
 
 export const AddExtensionForm = component<AddExtensionFormProps>(({ onSave, onCancel }) => {
-	const extensionType = signal<ExtensionType>('validator');
+	const extensionType = signal<ExtensionType>('media_previewer');
 	const url = signal('');
 
 	const handleSubmit = (e: Event) => {
