@@ -285,6 +285,10 @@ export class AmuleApiService extends BaseApiService {
 		return this.request<SharedResponse>('/shared');
 	}
 
+	async deleteSharedFile(hash: string): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>(`/shared/${hash}`, { method: 'DELETE' });
+	}
+
 	async search(query: string, type: string): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>('/search', {
 			method: 'POST',

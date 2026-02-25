@@ -291,7 +291,11 @@ export class TelegramDownloadManager {
 
 	private async runIterDownload(hash: string, doc: Api.Document, outPath: string, fileName: string) {
 		const client = this.getClient()!;
-		const control = this.downloadControls.get(hash)!;
+		const control = this.downloadControls.get(hash);
+		if (!control) {
+			logger.error(`No control found for download ${fileName}`);
+			return;
+		}
 		let fileStream: fs.WriteStream | undefined;
 
 		try {

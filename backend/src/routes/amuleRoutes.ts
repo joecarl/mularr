@@ -13,6 +13,7 @@ export const amuleRoutes = () => {
 	router.get('/transfers', controller.getTransfers);
 	router.post('/transfers/clear-completed', controller.clearCompletedTransfers);
 	router.get('/shared', controller.getSharedFiles);
+	router.delete('/shared/:hash', controller.deleteSharedFile);
 	router.post('/search', controller.search);
 	router.get('/search/results', controller.getSearchResults);
 	router.get('/search/status', controller.getSearchStatus);

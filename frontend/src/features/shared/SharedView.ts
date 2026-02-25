@@ -1,22 +1,27 @@
-import { component, signal, computed, componentList, WritableSignal, effect } from 'chispa';
+import { component, computed, componentList } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
+import { ListManager } from '../../utils/ListManager';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import { smartPoll } from '../../utils/scheduling';
 import tpl from './SharedView.html';
 import './SharedView.css';
 
-const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<string | null> }>(
+const SharedRows = componentList<AmuleFile, { mgr: ListManager<AmuleFile, keyof AmuleFile> }>(
 	(t, i, l, props) => {
-		const selectedHash = props!.selectedHash;
-		const isSelected = computed(() => selectedHash.get() === t.get().hash);
+		const mgr = props!.mgr;
+		const isSelected = computed(() => mgr.selectedHashes.get().has(t.get().hash!));
 
 		return tpl.sharedRow({
 			classes: { selected: isSelected },
-			onclick: () => selectedHash.set(t.get().hash || null),
+			onclick: (e) => {
+				const hash = t.get().hash;
+				if (!hash) return;
+				mgr.handleRowSelection(e, hash, l.get());
+			},
 			nodes: {
 				nameCol: {
 					nodes: {
@@ -43,65 +48,57 @@ const SharedRows = componentList<AmuleFile, { selectedHash: WritableSignal<strin
 	(t) => t.hash
 );
 
+const MOBILE_SORT_OPTIONS: any[] = [];
+
 export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
 
-	const sharedList = signal<AmuleFile[]>([]);
-	const selectedHash = signal<string | null>(null);
-
-	const initialSort = prefs.getSort<keyof AmuleFile>('shared', 'name');
-	const sortColumn = signal(initialSort.column);
-	const sortDirection = signal(initialSort.direction);
-
-	effect(() => {
-		prefs.setSort('shared', sortColumn.get(), sortDirection.get());
+	const mgr = new ListManager<AmuleFile, keyof AmuleFile>({
+		defaultColumn: 'name',
+		numericColumns: ['size', 'getRating', 'getRequests', 'getCompleteSources', 'getXferred'],
+		mobileSortOptions: MOBILE_SORT_OPTIONS,
+		prefs: { service: prefs, key: 'shared' },
 	});
 
-	const isDisabled = computed(() => !selectedHash.get());
+	const isDisabled = computed(() => mgr.selectedHashes.get().size === 0);
 
 	const loadShared = smartPoll(async () => {
 		const data = await apiService.getSharedFiles();
-		sharedList.set(data.list || []);
+		mgr.items.set(data.list || []);
 	}, 2000);
 
-	const sort = (col: keyof AmuleFile) => {
-		if (sortColumn.get() === col) {
-			sortDirection.set(sortDirection.get() === 'asc' ? 'desc' : 'asc');
-		} else {
-			sortColumn.set(col);
-			sortDirection.set('asc');
-		}
-	};
-
-	const executeCommand = async (cmd: 'pause' | 'resume' | 'stop' | 'cancel') => {
-		const hash = selectedHash.get();
-		if (!hash) return;
+	const deleteSharedFiles = async () => {
+		const hashes = [...mgr.selectedHashes.get()];
+		if (hashes.length === 0) return;
 		try {
-			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel this download?', 'Cancel Download'))) {
-				return;
-			}
-			await apiService.sendDownloadCommand(hash, cmd);
-			if (cmd === 'cancel') selectedHash.set(null);
+			if (!(await dialogService.confirm('Are you sure you want to delete the selected shared files from disk?', 'Delete Files'))) return;
+			await Promise.all(hashes.map((hash) => apiService.deleteSharedFile(hash)));
+			mgr.clearSelection();
 			loadShared();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Error');
 		}
 	};
 
-	const sharedListLength = computed(() => sharedList.get().length);
-
 	return tpl.fragment({
+		thName: { onclick: () => mgr.sort('name') },
+		thSize: { onclick: () => mgr.sort('size') },
+		thRating: { onclick: () => mgr.sort('getRating') },
+		thRequests: { onclick: () => mgr.sort('getRequests') },
+		thTransferred: { onclick: () => mgr.sort('getXferred') },
+		thCompleteSources: { onclick: () => mgr.sort('getCompleteSources') },
+
 		refreshBtn: { onclick: loadShared },
 
 		cancelBtn: {
 			disabled: isDisabled,
-			onclick: () => executeCommand('cancel'),
+			onclick: () => deleteSharedFiles(),
 		},
 
 		sharedListContainer: {
-			inner: () => (sharedListLength.get() === 0 ? tpl.noSharedRow({}) : SharedRows(sharedList, { selectedHash })),
+			inner: () => (!mgr.hasItems.get() ? tpl.noSharedRow({}) : SharedRows(mgr.sortedItems, { mgr })),
 		},
 	});
 });

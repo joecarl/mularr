@@ -61,6 +61,7 @@ export class ListManager<T extends { hash?: string }, K extends keyof T & string
 	readonly lastClickedHash: WritableSignal<string | null>;
 	readonly selectionCount: Signal<number>;
 	readonly hasSelection: Signal<boolean>;
+	readonly hasItems: Signal<boolean>;
 
 	/** Bound to the mobile sort <select>. Drives sortColumn/sortDirection via effect. */
 	readonly mobileSortValue: WritableSignal<string>;
@@ -79,6 +80,7 @@ export class ListManager<T extends { hash?: string }, K extends keyof T & string
 		this.lastClickedHash = signal<string | null>(null);
 		this.selectionCount = computed(() => this.selectedHashes.get().size);
 		this.hasSelection = computed(() => this.selectedHashes.get().size > 0);
+		this.hasItems = computed(() => this.items.get().length > 0);
 
 		this.sortedItems = computed(() => {
 			const list = [...this.items.get()];

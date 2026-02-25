@@ -81,6 +81,17 @@ export class AmuleController {
 		}
 	};
 
+	deleteSharedFile = async (req: Request, res: Response) => {
+		try {
+			const hash = req.params.hash as string;
+			await this.amuleService.deleteSharedFile(hash);
+			await container.get(MediaProviderService).cleanDeadDownloadRecords();
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	search = async (req: Request, res: Response) => {
 		try {
 			const { query, type } = req.body;

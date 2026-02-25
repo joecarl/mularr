@@ -1,6 +1,8 @@
 import { AmuleClient, AmuleFile, SearchType, type AmuleCategory } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
+import fs from 'fs/promises';
+import path from 'path';
 import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
 import { AmulecmdService } from './AmulecmdService';
@@ -203,6 +205,17 @@ export class AmuleService {
 			console.error('EC Client Shared Files Error:', error);
 		}
 		return { raw: 'Error getting shared files', list: [] };
+	}
+
+	async deleteSharedFile(hash: string): Promise<void> {
+		const files = await this.client.getSharedFiles();
+		const file = findByHash(files, hash);
+		if (!file) throw new Error(`Shared file with hash ${hash} not found`);
+		if (!file.filePath || !file.fileName) throw new Error(`No path available for shared file with hash ${hash}`);
+		const filePath = path.join(file.filePath, file.fileName);
+		await fs.unlink(filePath);
+		this.client.reloadSharedFiles();
+		console.log(`Deleted shared file from disk: ${filePath}`);
 	}
 
 	async getTransfers(): Promise<{ raw: string; list: Download[]; categories: AmuleCategory[] }> {

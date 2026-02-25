@@ -172,6 +172,36 @@ export class MediaProviderService {
 		return { moved, errors };
 	}
 
+	// ---- Maintenance ----------------------------------------------------------
+
+	/**
+	 * Scan all completed download records and remove any whose file no longer
+	 * exists on disk. Works for every provider because it resolves the path the
+	 * same way the rest of the service does (category dir or incomingDir + name).
+	 */
+	async cleanDeadDownloadRecords(): Promise<number> {
+		const completedRecords = this.db.getAllDownloads().filter((r) => r.is_completed === 1);
+		if (completedRecords.length === 0) return 0;
+
+		const incomingDir = await this.getIncomingDir();
+		const categories = await this.getCategories();
+
+		let deleted = 0;
+		for (const record of completedRecords) {
+			if (!record.name) continue;
+			const cat = record.category_name ? categories.find((c) => c.name === record.category_name) : undefined;
+			const filePath = this.resolveFilePath(record.name, cat?.path, incomingDir);
+			if (!nodePath.isAbsolute(filePath)) continue; // safety guard
+			if (!fs.existsSync(filePath)) {
+				this.db.deleteDownload(record.hash);
+				deleted++;
+				console.log(`[cleanDeadDownloadRecords] Removed dead record: ${record.name} (${record.hash})`);
+			}
+		}
+		if (deleted > 0) console.log(`[cleanDeadDownloadRecords] Cleaned ${deleted} dead record(s) from DB`);
+		return deleted;
+	}
+
 	// ---- Private helpers -------------------------------------------------------
 
 	private async moveFile(srcPath: string, destPath: string): Promise<boolean> {
