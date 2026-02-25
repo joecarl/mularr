@@ -329,12 +329,34 @@
 
 	.sidebar-footer {
 		margin-top: auto;
-		padding-top: 1rem;
+		padding-top: 0.4em;
 		display: flex;
 		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		gap: 0.7em;
 		color: white;
 		.sidebar-version {
 			font-size: 0.85rem;
+		}
+
+		.gh-link {
+			display: inline-flex;
+			align-items: center;
+			vertical-align: middle;
+			color: var(--ui-text-muted);
+			opacity: 0.5;
+			transition: opacity 0.15s;
+
+			&:hover {
+				opacity: 1;
+			}
+		}
+
+		.gh-icon {
+			width: 20px;
+			height: 20px;
+			fill: currentColor;
 		}
 	}
 }
