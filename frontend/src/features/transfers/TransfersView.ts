@@ -169,6 +169,8 @@ export const TransfersView = component(() => {
 		return opts;
 	});
 
+	const noItems = computed(() => mgr.items.get().length === 0);
+
 	return tpl.fragment({
 		refreshBtn: { onclick: loadTransfers },
 		pauseBtn: {
@@ -241,7 +243,7 @@ export const TransfersView = component(() => {
 
 		transferListContainer: {
 			inner: () =>
-				mgr.sortedItems.get().length === 0
+				noItems.get()
 					? tpl.noTransferRow({})
 					: TransfersRows(mgr.sortedItems, {
 							selectionMgr: mgr,

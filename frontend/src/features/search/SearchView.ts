@@ -7,6 +7,7 @@ import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
+import { BulkDownloadDialog } from './BulkDownloadDialog';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
@@ -33,6 +34,13 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 		const selectionMgr = props!.selectionMgr;
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(res.get().hash || ''));
 		const isDownloading = computed(() => downloadingHashes.get().has(res.get().hash || ''));
+		const isDisabled = computed(() => isDownloading.get() || res.get().downloadStatus === 1 || res.get().downloadStatus === 2);
+		const downloadBtnLabel = computed(() => {
+			const s = res.get().downloadStatus;
+			if (s === 1) return 'Downloaded';
+			if (s === 2) return 'In Queue';
+			return 'Download';
+		});
 
 		return tpl.resultRow({
 			classes: {
@@ -62,7 +70,8 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 								e.stopPropagation();
 								onDownload(res.get().hash);
 							},
-							disabled: isDownloading,
+							disabled: isDisabled,
+							inner: downloadBtnLabel,
 						},
 					},
 				},
@@ -88,7 +97,8 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 						e.stopPropagation();
 						onDownload(res.get().hash);
 					},
-					disabled: isDownloading,
+					disabled: isDisabled,
+					inner: downloadBtnLabel,
 				},
 			},
 		});
@@ -274,6 +284,23 @@ export const SearchView = component(() => {
 			},
 		},
 		downloadBtn: { onclick: () => download() },
+		bulkDownloadBtn: {
+			onclick: () => {
+				dialogService.open({
+					title: 'Bulk Import ED2K Links',
+					width: '500px',
+					render: (close) =>
+						BulkDownloadDialog({
+							onConfirm: async (links) => {
+								close();
+								await Promise.allSettled(links.map((l) => apiService.addDownload(l)));
+								statusLog.set(`Queued ${links.length} download(s).`);
+							},
+							onCancel: close,
+						}),
+				});
+			},
+		},
 		downloadSelectedBtn: {
 			disabled: () => !mgr.hasSelection.get(),
 			onclick: downloadSelected,

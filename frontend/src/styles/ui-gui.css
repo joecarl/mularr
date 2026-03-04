@@ -228,7 +228,9 @@ body {
 input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='file']),
 select,
 textarea {
-	height: 23px;
+	&:not(textarea) {
+		height: 23px;
+	}
 	border-style: var(--ui-input-border-style);
 	border-width: var(--ui-input-border-width);
 	border-color: var(--ui-input-border-color);
