@@ -62,27 +62,72 @@ export class AmuledService {
 	async restartDaemon(): Promise<void> {
 		console.log('Restarting aMule daemon...');
 		try {
-			// Kill existing
+			// Graceful shutdown first
 			try {
-				await execPromise('pkill amuled');
+				await execPromise('pkill -TERM amuled');
 			} catch (e) {
-				// Ignore if not running
+				// Not running — nothing to kill
 			}
 
-			// Wait a moment
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			// Poll until the process is confirmed dead (up to 8 s)
+			const killed = await this.waitForProcessDead(8000);
+			if (!killed) {
+				console.warn('amuled did not stop gracefully, sending SIGKILL...');
+				try {
+					await execPromise('pkill -KILL amuled');
+				} catch (e) {
+					// Ignore
+				}
+				// Give the kernel a moment to reap it
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
 
-			// Start new
+			// Start new instance
 			const child = spawn('amuled', ['-c', this.configDir, '-f'], {
 				detached: true,
 				stdio: 'ignore',
 			});
 			child.unref();
 
-			console.log('aMule daemon restart triggered.');
+			// Verify it actually started (up to 5 s)
+			const started = await this.waitForProcessUp(5000);
+			if (started) {
+				console.log('aMule daemon restarted successfully.');
+			} else {
+				console.error('aMule daemon may not have started — process not detected after restart.');
+			}
 		} catch (e) {
 			console.error('Failed to restart amuled:', e);
 		}
+	}
+
+	private async waitForProcessDead(timeoutMs: number): Promise<boolean> {
+		const interval = 300;
+		const deadline = Date.now() + timeoutMs;
+		while (Date.now() < deadline) {
+			try {
+				await execPromise('pgrep amuled');
+				// Still running — keep waiting
+				await new Promise((resolve) => setTimeout(resolve, interval));
+			} catch {
+				return true; // pgrep exit code 1 → no process found
+			}
+		}
+		return false;
+	}
+
+	private async waitForProcessUp(timeoutMs: number): Promise<boolean> {
+		const interval = 300;
+		const deadline = Date.now() + timeoutMs;
+		while (Date.now() < deadline) {
+			try {
+				await execPromise('pgrep amuled');
+				return true;
+			} catch {
+				await new Promise((resolve) => setTimeout(resolve, interval));
+			}
+		}
+		return false;
 	}
 
 	async isDaemonRunning(): Promise<boolean> {

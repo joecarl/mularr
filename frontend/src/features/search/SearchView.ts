@@ -92,6 +92,7 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 						return `${((c / s) * 100).toFixed(0)}% (${c})`;
 					},
 				},
+				sourceInfoCol: { inner: () => res.get().sourceName || '' },
 				downloadMiniBtn: {
 					onclick: (e: MouseEvent) => {
 						e.stopPropagation();
@@ -254,6 +255,7 @@ export const SearchView = component(() => {
 	return tpl.fragment({
 		thName: { onclick: () => mgr.sort('name') },
 		thProvider: { onclick: () => mgr.sort('provider') },
+		thSourceInfo: { onclick: () => mgr.sort('sourceName') },
 		thSize: { onclick: () => mgr.sort('size') },
 		thSources: { onclick: () => mgr.sort('sources') },
 		thCompleted: { onclick: () => mgr.sort('completeSources') },

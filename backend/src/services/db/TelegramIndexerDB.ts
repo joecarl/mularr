@@ -302,7 +302,12 @@ export class TelegramIndexerDB {
 	}
 
 	public getMessage(chatId: string, messageId: number): MessageRow | undefined {
-		return this.db.prepare('SELECT * FROM messages_content WHERE chat_id = ? AND message_id = ?').get(chatId, messageId) as MessageRow | undefined;
+		return this.db.prepare('SELECT * FROM messages_view WHERE chat_id = ? AND message_id = ?').get(chatId, messageId) as MessageRow | undefined;
+	}
+
+	public getChatTitle(chatId: string): string | undefined {
+		const row = this.db.prepare('SELECT title FROM chats WHERE id = ?').get(chatId) as Pick<Chat, 'title'> | undefined;
+		return row?.title || undefined;
 	}
 
 	/**

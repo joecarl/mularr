@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:24-alpine AS frontend-builder
+FROM node:24-trixie AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -13,7 +13,7 @@ COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM node:24-alpine AS backend-builder
+FROM node:24-trixie AS backend-builder
 
 WORKDIR /app/backend
 
@@ -27,13 +27,23 @@ COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 3: Production Image
-FROM node:24-alpine
+FROM node:24-trixie-slim
 
 WORKDIR /app
 
-# Install production dependencies for backend
-# better-sqlite3 requires some build tools during install if no prebuilt binary is available for Alpine
-RUN apk add --no-cache python3 make g++ bash amule --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+# Configurar Locales para soportar UTF-8 (tildes, ñ, etc)
+RUN apt-get update && apt-get install -y --no-install-recommends locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+# Compile and install aMule from source
+COPY build-amule.sh /tmp/build-amule.sh
+RUN chmod +x /tmp/build-amule.sh && /tmp/build-amule.sh && rm /tmp/build-amule.sh
 
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --omit=dev

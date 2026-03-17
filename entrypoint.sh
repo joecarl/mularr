@@ -37,8 +37,16 @@ else
     fi
 fi
 
-echo "Starting amule daemon..."
+echo "Starting amule daemon in background..."
+# Run amuled with:
+# -c : config directory
+# -f : foreground mode (no self-daemonizing)
+# -o : output to stdout (useful for docker logs)
+# &  : run in background so we can start the node backend
 amuled -c "$CONF_DIR" -f
+
+# Give it a few seconds to initialize
+sleep 3
 
 echo "Starting Mularr backend..."
 exec "$@"

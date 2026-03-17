@@ -1,5 +1,5 @@
 import { container } from '../../container/ServiceContainer';
-import { TelegramIndexerSearchResult, TelegramIndexerService } from '../../TelegramIndexerService';
+import { type TelegramIndexerSearchResult, TelegramIndexerService } from '../../TelegramIndexerService';
 import { MainDB, DownloadDbRecord } from '../../db/MainDB';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer } from '../types';
 import { DownloadStatus } from '../../TelegramDownloadManager';
@@ -69,6 +69,8 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		// Indexer might not be ready
 	}
 
+	const parts = dbRecord.hash.split(':');
+
 	return {
 		rawLine: `> ${dbRecord.name} [Telegram] ${statusText}`,
 		name: dbRecord.name,
@@ -89,6 +91,13 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		categoryName: dbRecord.category_name,
 		isCompleted: !!dbRecord.is_completed,
 		provider: 'telegram',
+		sourceName: (() => {
+			if (parts.length < 2) return undefined;
+			const msg = parts.length >= 3 ? indexer.getFileInfo(parts[1], parseInt(parts[2])) : undefined;
+			const chatTitle = msg?.chat_title || indexer.getChatTitle(parts[1]);
+			const topicName = msg?.topic_name || undefined;
+			return chatTitle ? (topicName ? `${chatTitle} › ${topicName}` : chatTitle) : undefined;
+		})(),
 	};
 }
 
@@ -144,6 +153,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 				downloadStatus: toAmuleDownloadStatus(this.indexer.getDownloadStatus(r.hash)),
 				type: r.type || '',
 				provider: 'telegram',
+				sourceName: r.chatTitle ? (r.topicName ? `${r.chatTitle} › ${r.topicName}` : r.chatTitle) : undefined,
 			};
 		});
 	}

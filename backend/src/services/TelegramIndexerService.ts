@@ -23,6 +23,8 @@ export interface TelegramIndexerSearchResult {
 	name: string;
 	size: number;
 	chatId: string;
+	chatTitle?: string;
+	topicName?: string;
 	messageId: number;
 	type: string;
 }
@@ -427,7 +429,13 @@ export class TelegramIndexerService {
 
 					messagesToInsert.push({
 						chatId: chatId,
-						topicId: msg.replyTo?.replyToTopId ?? 0,
+						// In Telegram forum supergroups two cases exist:
+						// 1) Reply to a specific message inside the topic:
+						//    replyToTopId = topic ID, replyToMsgId = the replied-to message.
+						// 2) Message posted directly to the topic (no specific reply):
+						//    forumTopic = true, replyToTopId NOT set, replyToMsgId = topic ID.
+						// Using only replyToTopId causes case 2 to be stored as topic 0.
+						topicId: msg.replyTo?.replyToTopId ?? (msg.replyTo?.forumTopic ? msg.replyTo!.replyToMsgId : undefined) ?? 0,
 						messageId: msg.id,
 						senderId: msg.senderId ? msg.senderId.toString() : 'unknown',
 						date: msg.date,
@@ -508,6 +516,10 @@ export class TelegramIndexerService {
 		return this.db.getMessage(chatId, messageId);
 	}
 
+	public getChatTitle(chatId: string): string | undefined {
+		return this.db.getChatTitle(chatId);
+	}
+
 	public async search(query: string, limit: number = 50, cursorId: number = 0) {
 		const ext = this.mainDb.getExtensionByType('telegram_indexer');
 		if (!ext || !ext.enabled) {
@@ -524,6 +536,8 @@ export class TelegramIndexerService {
 					size: msg.file_size || 0,
 					hash: hash,
 					chatId: msg.chat_id,
+					chatTitle: msg.chat_title || undefined,
+					topicName: msg.topic_name || undefined,
 					messageId: msg.message_id,
 					type: msg.media_type || '',
 				} as TelegramIndexerSearchResult;

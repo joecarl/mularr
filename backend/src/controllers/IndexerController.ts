@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
-import { AmuleService } from '../services/AmuleService';
 import { hashToFakeMagnet } from './qbittorrentMappings';
+import { MediaProviderService, MediaSearchResult } from '../services/mediaprovider';
 
 /**
  * IndexerController provides a Torznab-compatible API for Sonarr and Radarr.
  */
 export class IndexerController {
-	private readonly amuleService = container.get(AmuleService);
+	private readonly mediaProviderService = container.get(MediaProviderService);
 
 	handle = async (req: Request, res: Response) => {
 		const { t, q, season, ep, offset, limit, cat, imdbid, rid, director, year } = req.query;
@@ -25,12 +25,12 @@ export class IndexerController {
 				const fakeItem = [
 					{
 						name: 'Mularr Test Item',
-						size: '0.01',
-						sizeBytes: 10240,
+						size: 10240,
 						sources: 0,
 						link: 'http://localhost:8940/dummy',
 						hash: '00000000000000000000000000000000',
-					},
+						provider: 'Mularr',
+					} as MediaSearchResult,
 				];
 				return this.renderRss(res, fakeItem, cat as string);
 			}
@@ -59,7 +59,16 @@ export class IndexerController {
 			}
 
 			try {
-				const results = await this.amuleService.searchSynchronous(queryStr);
+				await this.mediaProviderService.startSearch(queryStr);
+
+				while (true) {
+					const searchStatus = await this.mediaProviderService.getSearchStatus();
+					console.log(`[Indexer] Search progress: ${Math.floor(searchStatus.progress * 100)}%`);
+					await new Promise((r) => setTimeout(r, 1000));
+					if (searchStatus.progress >= 1) break;
+				}
+
+				const results = await this.mediaProviderService.getSearchResults();
 
 				// Apply offset and limit
 				let list = results.list;
@@ -102,7 +111,7 @@ export class IndexerController {
 		res.send(caps);
 	}
 
-	private renderRss(res: Response, results: any[], requestedCat?: string) {
+	private renderRss(res: Response, results: MediaSearchResult[], requestedCat?: string) {
 		res.header('Content-Type', 'application/xml');
 
 		const category = requestedCat || '2000';
@@ -111,7 +120,6 @@ export class IndexerController {
 
 		let itemsXml = '';
 		for (const item of results) {
-			const sizeBytes = item.sizeBytes || Math.floor(parseFloat(item.size) * 1024 * 1024);
 			const title = this.escapeXml(item.name);
 			const hash = item.hash;
 			//const downloadUrl = this.escapeXml(item.link);
@@ -124,8 +132,8 @@ export class IndexerController {
       <link>${downloadUrl}</link>
       <category>${category}</category>
       <pubDate>${new Date().toUTCString()}</pubDate>
-      <size>${sizeBytes}</size>
-      <enclosure url="${downloadUrl}" length="${sizeBytes}" type="application/x-bittorrent" />
+      <size>${item.size}</size>
+      <enclosure url="${downloadUrl}" length="${item.size}" type="application/x-bittorrent" />
       <torznab:attr name="seeders" value="${item.sources || 0}" />
       <torznab:attr name="peers" value="${item.sources || 0}" />
       <torznab:attr name="infohash" value="${hash}" />

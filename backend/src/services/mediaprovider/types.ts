@@ -26,6 +26,8 @@ export interface MediaTransfer {
 	provider?: string;
 	/** Resolved absolute path to the file on disk. Populated by MediaProviderService. */
 	filePath?: string;
+	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
+	sourceName?: string;
 }
 
 export interface MediaSearchResult {
@@ -37,6 +39,8 @@ export interface MediaSearchResult {
 	downloadStatus?: number;
 	type?: string;
 	provider: string;
+	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
+	sourceName?: string;
 }
 
 export interface MediaTransfersResponse {

@@ -115,6 +115,8 @@ export interface Transfer extends AmuleFile {
 	provider?: string;
 	/** Resolved absolute path to the file on disk. */
 	filePath?: string;
+	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
+	sourceName?: string;
 }
 
 export interface AmuleUpDownClient {
@@ -220,6 +222,8 @@ export interface SearchResult {
 	downloadStatus?: number;
 	completeSources?: string;
 	provider?: string;
+	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
+	sourceName?: string;
 }
 
 export interface SearchResultsResponse {

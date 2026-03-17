@@ -43,6 +43,7 @@ export const TransfersView = component(() => {
 		defaultColumn: 'name',
 		skipSort: (list) => list.length === 1 && !list[0].name && !!list[0].rawLine,
 		mobileSortOptions: MOBILE_SORT_OPTIONS,
+		numericColumns: ['size', 'progress', 'sources', 'priority', 'remaining'],
 		prefs: { service: prefs, key: 'transfers' },
 	});
 
@@ -232,6 +233,7 @@ export const TransfersView = component(() => {
 		thSize: { onclick: () => mgr.sort('size') },
 		thProvider: { onclick: () => mgr.sort('provider') },
 		thCategory: { onclick: () => mgr.sort('categoryName') },
+		thSourceInfo: { onclick: () => mgr.sort('sourceName') },
 		thCompleted: { onclick: () => mgr.sort('completed') },
 		thSpeed: { onclick: () => mgr.sort('speed') },
 		thProgress: { onclick: () => mgr.sort('progress') },
