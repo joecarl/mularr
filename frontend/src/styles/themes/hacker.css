@@ -54,8 +54,7 @@
 	--ui-th-bg-image: none;
 	--ui-th-hover-bg: #004400;
 	--ui-th-hover-image: none;
-	--ui-th-border-right: 1px solid #003300;
-	--ui-th-border-bottom: 1px solid #003300;
+	--ui-th-box-shadow: inset -1px 0 0 0 #003300, inset 0 -1px 0 0 #003300, inset 1px 1px 0 var(--ui-light);
 	--ui-table-border: 1px solid #00ff00;
 
 	--ui-modal-radius: 0;

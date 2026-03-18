@@ -52,21 +52,17 @@
 	--ui-th-bg-image: none;
 	--ui-th-hover-bg: #d4d0c8;
 	--ui-th-hover-image: none;
-	--ui-th-box-shadow: inset -1px -1px 0 0 #808080;
+	/* Classic 3D Table Header: all borders + inner shadow combined as inset box-shadows.
+	   Outer frame (1px): white top/left, #404040 bottom/right.
+	   Inner secondary layer (1px inside): #808080 at bottom/right — uses 2px offset so it
+	   sits behind the outer #404040 layer and is visible as the next pixel inward. */
+	--ui-th-box-shadow:
+		inset 1px 0 0 0 #ffffff, inset 0 1px 0 0 #ffffff, inset -1px 0 0 0 #404040, inset 0 -1px 0 0 #404040, inset -2px 0 0 0 #808080, inset 0 -2px 0 0 #808080;
 	--ui-th-font-weight: normal;
 
-	/* Classic 3D Table Header Borders */
-	--ui-th-border-top: 1px solid #ffffff;
-	--ui-th-border-left: 1px solid #ffffff;
-	--ui-th-border-right: 1px solid #404040;
-	--ui-th-border-bottom: 1px solid #404040;
-
-	/* Table Header Active (Pressed) */
+	/* Table Header Active (Pressed): reversed outer borders only, no secondary layer. */
 	--ui-th-active-padding: 3px 4px 1px 6px; /* Shift text */
-	--ui-th-active-border-top: 1px solid #404040;
-	--ui-th-active-border-left: 1px solid #404040;
-	--ui-th-active-border-right: 1px solid #ffffff;
-	--ui-th-active-border-bottom: 1px solid #ffffff;
+	--ui-th-active-box-shadow: inset 1px 0 0 0 #404040, inset 0 1px 0 0 #404040, inset -1px 0 0 0 #ffffff, inset 0 -1px 0 0 #ffffff;
 
 	--ui-modal-radius: 0;
 

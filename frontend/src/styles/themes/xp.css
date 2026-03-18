@@ -88,8 +88,7 @@
 	--ui-table-border: 1px solid #7f9db9;
 	--ui-odd-row: #ffffff;
 	--ui-even-row: #ffffff;
-	--ui-th-border-right: 1px solid var(--ui-shadow);
-	--ui-th-border-bottom: 1px solid var(--ui-shadow);
+	--ui-th-box-shadow: inset -1px 0 0 0 var(--ui-shadow), inset 0 -1px 0 0 var(--ui-shadow), inset 1px 1px 0 var(--ui-light);
 	--ui-th-padding: 2px 5px;
 	--ui-th-bg: #ece9d8;
 	--ui-th-bg-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="%23ece9d8"/></linearGradient><rect width="100%" height="100%" fill="url(%23g)"/></svg>');

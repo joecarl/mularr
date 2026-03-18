@@ -171,20 +171,19 @@ body {
 .ui-list th {
 	background-color: var(--ui-th-bg);
 	background-image: var(--ui-th-bg-image);
-	border-right: var(--ui-th-border-right);
-	border-bottom: var(--ui-th-border-bottom);
-	border-top: var(--ui-th-border-top, none);
-	border-left: var(--ui-th-border-left, none);
 	padding: var(--ui-th-padding, 2px 5px);
 	text-align: left;
 	font-weight: var(--ui-th-font-weight, normal);
 	position: sticky;
 	z-index: 99;
 	top: 0;
-	box-shadow: var(--ui-th-box-shadow, 1px 1px 0 var(--ui-light) inset);
+	/* Borders are simulated via inset box-shadow to avoid the sticky repaint bug where
+	   CSS borders disappear during scroll while the th remains fixed in position. */
+	box-shadow: var(--ui-th-box-shadow, inset 1px 1px 0 var(--ui-light));
 	color: var(--ui-text);
 	font-family: var(--ui-font);
 	cursor: default;
+	height: 19px;
 }
 
 .ui-list th:hover {
@@ -193,11 +192,8 @@ body {
 }
 
 .ui-list th:active {
-	padding: var(--ui-th-active-padding, var(--ui-th-padding));
-	border-top: var(--ui-th-active-border-top, var(--ui-th-border-top));
-	border-left: var(--ui-th-active-border-left, var(--ui-th-border-left));
-	border-right: var(--ui-th-active-border-right, var(--ui-th-border-right));
-	border-bottom: var(--ui-th-active-border-bottom, var(--ui-th-border-bottom));
+	padding: var(--ui-th-active-padding, var(--ui-th-padding, 2px 5px));
+	box-shadow: var(--ui-th-active-box-shadow, var(--ui-th-box-shadow, inset 1px 1px 0 var(--ui-light)));
 	background-color: var(--ui-th-active-bg, var(--ui-th-hover-bg));
 	background-image: var(--ui-th-active-image, var(--ui-th-hover-image));
 }
@@ -222,6 +218,10 @@ body {
 .ui-list tr.selected td {
 	color: var(--ui-hl-text);
 	border-right-color: transparent;
+}
+
+.ui-list tr:not(.selected) td {
+	box-shadow: inset -1px 0 0 0 #0000000f;
 }
 
 /* Common inputs */
