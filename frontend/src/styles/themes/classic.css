@@ -63,6 +63,7 @@
 	/* Table Header Active (Pressed): reversed outer borders only, no secondary layer. */
 	--ui-th-active-padding: 3px 4px 1px 6px; /* Shift text */
 	--ui-th-active-box-shadow: inset 1px 0 0 0 #404040, inset 0 1px 0 0 #404040, inset -1px 0 0 0 #ffffff, inset 0 -1px 0 0 #ffffff;
+	--ui-td-border-color: #d2d2d2;
 
 	--ui-modal-radius: 0;
 

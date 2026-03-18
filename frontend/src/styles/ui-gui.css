@@ -199,9 +199,7 @@ body {
 }
 
 .ui-list td {
-	padding: 2px 5px;
-	border-right: 1px dotted var(--ui-shadow);
-	border-bottom: 1px solid transparent;
+	padding: 2.5px 5px;
 	cursor: default;
 	white-space: nowrap;
 	overflow: hidden;
@@ -217,11 +215,10 @@ body {
 
 .ui-list tr.selected td {
 	color: var(--ui-hl-text);
-	border-right-color: transparent;
 }
 
 .ui-list tr:not(.selected) td {
-	box-shadow: inset -1px 0 0 0 #0000000f;
+	box-shadow: inset -1px 0 0 0 var(--ui-td-border-color, var(--ui-shadow));
 }
 
 /* Common inputs */
