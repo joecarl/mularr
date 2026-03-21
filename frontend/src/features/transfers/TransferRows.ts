@@ -50,6 +50,8 @@ const statusMap: Record<number, string> = {
 	8: 'Completing',
 	9: 'Completed',
 	10: 'Allocating',
+	// Custom statuses for other providers like Telegram downloads
+	11: 'Queued',
 };
 
 interface TransferListProps {

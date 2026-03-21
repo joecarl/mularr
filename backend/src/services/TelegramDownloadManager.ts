@@ -14,13 +14,15 @@ const logger = {
 	warn: (msg: string) => console.warn(`[TelegramDownload] ${msg}`),
 };
 
+const MAX_SIMULTANEOUS_DOWNLOADS = 5;
+
 export interface DownloadStatus {
 	hash: string;
 	fileName: string;
 	size: number;
 	downloaded: number;
 	speed: number;
-	status: 'downloading' | 'completed' | 'error' | 'stopped' | 'paused';
+	status: 'downloading' | 'completed' | 'error' | 'stopped' | 'paused' | 'queued';
 	startTime: number;
 	lastUpdate?: number;
 	lastBytes?: number;
@@ -67,6 +69,15 @@ export class TelegramDownloadManager {
 	private completedDownloads: Map<string, DownloadStatus> = new Map();
 	private downloadControls: Map<string, DownloadControl> = new Map();
 	private readonly dirHelper = new TelegramDownloadDirectoryHelper();
+	private readonly downloadQueue: Array<{ hash: string; startFn: () => void }> = [];
+
+	private get runningDownloads() {
+		let count = 0;
+		for (const s of this.activeDownloads.values()) {
+			if (s.status === 'downloading') count++;
+		}
+		return count;
+	}
 
 	private readonly mainDb = container.get(MainDB);
 
@@ -141,13 +152,14 @@ export class TelegramDownloadManager {
 
 			const fileSize = doc.size.toJSNumber();
 
+			// Start as queued; will be promoted to 'downloading' only when a slot is confirmed
 			const status: DownloadStatus = {
 				hash,
 				fileName,
 				size: fileSize,
 				downloaded: 0,
 				speed: 0,
-				status: 'downloading',
+				status: 'queued',
 				startTime: Date.now(),
 				lastUpdate: Date.now(),
 				lastBytes: 0,
@@ -169,15 +181,32 @@ export class TelegramDownloadManager {
 				status: 'downloading',
 			});
 
-			const control: DownloadControl = {
-				cancelled: false,
-				paused: false,
-				pausePromise: null,
-				pauseResolve: null,
-			};
-			this.downloadControls.set(hash, control);
-
-			this.runIterDownload(hash, doc, outPath, fileName);
+			if (this.runningDownloads >= MAX_SIMULTANEOUS_DOWNLOADS) {
+				this.downloadQueue.push({
+					hash,
+					startFn: () => {
+						const control: DownloadControl = {
+							cancelled: false,
+							paused: false,
+							pausePromise: null,
+							pauseResolve: null,
+						};
+						this.downloadControls.set(hash, control);
+						this.runIterDownload(hash, doc, outPath, fileName);
+					},
+				});
+				logger.info(`Download queued (${this.downloadQueue.length} in queue): ${fileName}`);
+			} else {
+				status.status = 'downloading';
+				const control: DownloadControl = {
+					cancelled: false,
+					paused: false,
+					pausePromise: null,
+					pauseResolve: null,
+				};
+				this.downloadControls.set(hash, control);
+				this.runIterDownload(hash, doc, outPath, fileName);
+			}
 
 			return true;
 		} catch (err) {
@@ -206,8 +235,16 @@ export class TelegramDownloadManager {
 	private async resumeActiveDownload(row: ActiveDownloadRow) {
 		const client = this.getClient();
 		if (!client) return;
-		// Skip if already in memory
-		if (this.activeDownloads.has(row.hash)) return;
+
+		// Skip if already in memory and not in error state (to allow retry of errored downloads)
+		const active = this.activeDownloads.get(row.hash);
+		if (active) {
+			if (active.status === 'error') {
+				console.warn(`Download ${row.file_name} is in error state, attempting retry...`);
+			} else {
+				return;
+			}
+		}
 
 		try {
 			const messages = await client.getMessages(row.chat_id, { ids: [row.message_id] });
@@ -218,31 +255,41 @@ export class TelegramDownloadManager {
 
 			const doc = message.media.document as Api.Document;
 
+			// Start as queued; will be promoted to 'downloading' only when a slot is confirmed
 			const status: DownloadStatus = {
 				hash: row.hash,
 				fileName: row.file_name,
 				size: row.file_size,
 				downloaded: row.downloaded_bytes,
 				speed: 0,
-				status: 'downloading',
+				status: 'queued',
 				startTime: Date.now(),
 				lastUpdate: Date.now(),
 				lastBytes: row.downloaded_bytes,
 			};
 			this.activeDownloads.set(row.hash, status);
 
-			const control: DownloadControl = {
-				cancelled: false,
-				paused: false,
-				pausePromise: null,
-				pauseResolve: null,
+			const shouldPause = row.status === 'paused';
+			const startFn = () => {
+				const ctrl: DownloadControl = {
+					cancelled: false,
+					paused: false,
+					pausePromise: null,
+					pauseResolve: null,
+				};
+				this.downloadControls.set(row.hash, ctrl);
+				this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
+				if (shouldPause) {
+					this.pauseDownload(row.hash);
+				}
 			};
-			this.downloadControls.set(row.hash, control);
 
-			this.runIterDownload(row.hash, doc, row.out_path, row.file_name);
-
-			if (row.status === 'paused') {
-				this.pauseDownload(row.hash);
+			if (this.runningDownloads >= MAX_SIMULTANEOUS_DOWNLOADS) {
+				this.downloadQueue.push({ hash: row.hash, startFn });
+				logger.info(`Download queued on resume (${this.downloadQueue.length} in queue): ${row.file_name}`);
+			} else {
+				status.status = 'downloading';
+				startFn();
 			}
 		} catch (err) {
 			logger.error(`Error resuming download ${row.file_name}:`, err);
@@ -262,11 +309,44 @@ export class TelegramDownloadManager {
 			status.speed = 0;
 			this.telegramDb.updateDownloadProgress(hash, status.downloaded, 'paused');
 		}
+		// Status is now 'paused' — getter no longer counts this; processQueue can fill the freed slot
+		this.processQueue();
 	}
 
 	public resumeDownload(hash: string) {
 		const control = this.downloadControls.get(hash);
 		if (!control || !control.paused) return;
+
+		// If there's no free slot, re-queue instead of resuming immediately
+		if (this.runningDownloads >= MAX_SIMULTANEOUS_DOWNLOADS) {
+			const status = this.activeDownloads.get(hash);
+			if (status) {
+				status.status = 'queued';
+				this.telegramDb.updateDownloadProgress(hash, status.downloaded, 'downloading');
+			}
+			// Move to end of queue so it resumes when a slot is free
+			this.downloadQueue.push({
+				hash,
+				startFn: () => {
+					control.paused = false;
+					if (control.pauseResolve) {
+						control.pauseResolve();
+						control.pauseResolve = null;
+						control.pausePromise = null;
+					}
+					const s = this.activeDownloads.get(hash);
+					if (s && s.status === 'queued') {
+						s.status = 'downloading';
+						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'downloading');
+					}
+					// runningDownloads is incremented by processQueue via the slot it already accounted for
+				},
+			});
+			logger.info(`Resume queued (no free slot): ${hash}`);
+			return;
+		}
+
+		// Slot available: unblock the loop (it will reclaim the slot itself)
 		control.paused = false;
 		if (control.pauseResolve) {
 			control.pauseResolve();
@@ -281,6 +361,15 @@ export class TelegramDownloadManager {
 	}
 
 	public cancelDownload(hash: string) {
+		// Handle queued downloads that haven't started yet
+		const queueIdx = this.downloadQueue.findIndex((q) => q.hash === hash);
+		if (queueIdx !== -1) {
+			this.downloadQueue.splice(queueIdx, 1);
+			this.activeDownloads.delete(hash);
+			this.telegramDb.removeActiveDownload(hash);
+			return;
+		}
+
 		const control = this.downloadControls.get(hash);
 		if (control) {
 			control.cancelled = true;
@@ -296,6 +385,20 @@ export class TelegramDownloadManager {
 			status.status = 'stopped';
 			status.speed = 0;
 			this.telegramDb.removeActiveDownload(hash);
+		}
+	}
+
+	private processQueue() {
+		while (this.downloadQueue.length > 0 && this.runningDownloads < MAX_SIMULTANEOUS_DOWNLOADS) {
+			const item = this.downloadQueue.shift()!;
+			const status = this.activeDownloads.get(item.hash);
+			if (status && status.status === 'queued') {
+				status.status = 'downloading';
+				status.startTime = Date.now();
+				status.lastUpdate = Date.now();
+			}
+			logger.info(`Starting queued download: ${item.hash} (${this.downloadQueue.length} remaining in queue)`);
+			item.startFn();
 		}
 	}
 
@@ -355,11 +458,7 @@ export class TelegramDownloadManager {
 				// Suspend iteration while paused
 				if (control.paused && control.pausePromise) {
 					await control.pausePromise;
-					const s = this.activeDownloads.get(hash);
-					if (s && !control.cancelled) {
-						s.status = 'downloading';
-						this.telegramDb.updateDownloadProgress(hash, s.downloaded, 'downloading');
-					}
+					// Status has been set back to 'downloading' by resumeDownload/processQueue before unblocking
 				}
 
 				// Re-check after potential resume
@@ -460,6 +559,9 @@ export class TelegramDownloadManager {
 				this.resumeActiveDownload(row);
 			}, 10000);
 		} finally {
+			// Status is already updated (completed/error/stopped) before reaching finally;
+			// processQueue uses the getter which reflects the new status automatically
+			this.processQueue();
 			this.downloadControls.delete(hash);
 		}
 	}

@@ -16,6 +16,8 @@ function toAmuleStatusId(status: string): number {
 			return 7;
 		case 'error':
 			return 4;
+		case 'queued':
+			return 11;
 		default:
 			return 6; // default to 'Unknown'
 	}
@@ -30,6 +32,8 @@ function toAmuleDownloadStatus(downloadStatus?: DownloadStatus): number {
 		case 'paused':
 			return 2;
 		case 'stopped':
+			return 2;
+		case 'queued':
 			return 2;
 		default:
 			return 0; // default to 'Unknown'
