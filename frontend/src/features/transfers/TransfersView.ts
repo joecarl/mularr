@@ -1,11 +1,12 @@
-import { component, signal, computed, bindControlledSelect } from 'chispa';
+import { component, signal, computed, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleUpDownClient } from '../../services/AmuleApiService';
 import { MediaApiService, Transfer, Category } from '../../services/MediaApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
+import { WsService } from '../../services/WsService';
 import { fbytes } from '../../utils/formats';
-import { smartPoll } from '../../utils/scheduling';
+import { smartLoad } from '../../utils/scheduling';
 import { ListManager } from '../../utils/ListManager';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
@@ -38,6 +39,7 @@ export const TransfersView = component(() => {
 	const mediaService = services.get(MediaApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
+	const ws = services.get(WsService);
 
 	const mgr = new ListManager<Transfer, keyof Transfer>({
 		defaultColumn: 'name',
@@ -50,6 +52,26 @@ export const TransfersView = component(() => {
 	const uploadQueue = signal<AmuleUpDownClient[]>([]);
 	const categories = signal<Category[]>([]);
 	const selectCategoryName = signal(NULL_VALUE);
+
+	// Sync transfers and upload queue from WebSocket
+	effect(() => {
+		const t = ws.transfers.get();
+		if (t) {
+			mgr.items.set(t.list || []);
+			categories.set(t.categories || []);
+		}
+	});
+	effect(() => {
+		const q = ws.uploadQueue.get();
+		if (q) uploadQueue.set(q.list || []);
+	});
+
+	// Manual refresh via REST (used after user actions for immediate feedback)
+	const loadTransfers = smartLoad(async () => {
+		const data = await mediaService.getTransfers();
+		mgr.items.set(data.list || []);
+		categories.set(data.categories || []);
+	}, 'transfers');
 
 	const isDisabled = computed(() => !mgr.hasSelection.get());
 
@@ -88,17 +110,6 @@ export const TransfersView = component(() => {
 		const t = selectedTransfersSingle.get();
 		return !!t?.isCompleted;
 	});
-
-	const loadTransfers = smartPoll(async () => {
-		const data = await mediaService.getTransfers();
-		mgr.items.set(data.list || []);
-		categories.set(data.categories || []);
-	}, 2000);
-
-	const loadUploadQueue = smartPoll(async () => {
-		const data = await apiService.getUploadQueue();
-		uploadQueue.set(data.list || []);
-	}, 2000);
 
 	const executeCommand = async (cmd: 'pause' | 'resume' | 'stop' | 'cancel') => {
 		const hashes = [...mgr.selectedHashes.get()];

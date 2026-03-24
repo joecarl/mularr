@@ -2,6 +2,7 @@ import { component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { CategoriesApiService, Category } from '../../services/CategoriesApiService';
 import { DialogService } from '../../services/DialogService';
+import { smartLoad } from '../../utils/scheduling';
 import { CategoryFormModal } from './components/CategoryFormModal';
 import tpl from './CategoriesView.html';
 
@@ -17,14 +18,10 @@ export const CategoriesView = component(() => {
 	const dialogService = services.get(DialogService);
 	const categories = signal<Category[]>([]);
 
-	const loadCategories = async () => {
-		try {
-			const data = await apiService.getAll();
-			categories.set(data);
-		} catch (e: any) {
-			console.error('Error loading categories:', e);
-		}
-	};
+	const loadCategories = smartLoad(async () => {
+		const data = await apiService.getAll();
+		categories.set(data);
+	}, 'categories');
 
 	loadCategories();
 

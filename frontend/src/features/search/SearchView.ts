@@ -2,6 +2,7 @@ import { component, signal, bindControlledInput, bindControlledSelect, onUnmount
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import { ListManager, RowSelectionManager } from '../../utils/ListManager';
+import { smartLoad } from '../../utils/scheduling';
 import { services } from '../../services/container/ServiceContainer';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
@@ -146,17 +147,12 @@ export const SearchView = component(() => {
 		}
 	};
 
-	const loadSearchStatus = async () => {
-		try {
-			const status = await apiService.getSearchStatus();
-			// Progress comes as 0 to 1 from backend
-			searchProgress.set(status.progress);
-			return status.progress;
-		} catch (e: any) {
-			console.error('Error loading search status:', e);
-			return 1; // Stop polling on error
-		}
-	};
+	const loadSearchStatus = smartLoad(async () => {
+		const status = await apiService.getSearchStatus();
+		// Progress comes as 0 to 1 from backend
+		searchProgress.set(status.progress);
+		return status.progress;
+	}, 'search-status');
 
 	const loadResults = async () => {
 		try {
@@ -184,7 +180,7 @@ export const SearchView = component(() => {
 			const progress = await loadSearchStatus();
 			await loadResults();
 
-			if (progress >= 1 || progress === 0) {
+			if (progress == null || progress >= 1 || progress === 0) {
 				stopPolling();
 				// Final load to ensure we have the latest results
 				setTimeout(() => {

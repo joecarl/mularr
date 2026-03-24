@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -16,6 +17,7 @@ import { MularrMonitoringService } from './services/MularrMonitoringService';
 import { MediaProviderService } from './services/mediaprovider';
 import { ExtensionsService } from './services/ExtensionsService';
 import { SpeedHistoryService } from './services/SpeedHistoryService';
+import { WsBroadcastService } from './services/WsBroadcastService';
 import { amuleRoutes } from './routes/amuleRoutes';
 import { systemRoutes } from './routes/systemRoutes';
 import { qbittorrentRoutes } from './routes/qbittorrentRoutes';
@@ -86,6 +88,10 @@ const speedHistoryService = new SpeedHistoryService();
 container.register(SpeedHistoryService, speedHistoryService);
 speedHistoryService.start();
 
+// Initialize WebSocket broadcast service
+const wsBroadcastService = new WsBroadcastService();
+container.register(WsBroadcastService, wsBroadcastService);
+
 // -- Setup routes -------------------------------------------------------------
 
 app.use('/api/system', systemRoutes());
@@ -122,8 +128,12 @@ app.use((req, res, next) => {
 	next();
 });
 
-// -- Start the server ---------------------------------------------------------
+// -- Start the server (HTTP + WebSocket on the same port) --------------------
 
-app.listen(port, () => {
+const httpServer = http.createServer(app);
+wsBroadcastService.setup(httpServer);
+wsBroadcastService.start();
+
+httpServer.listen(port, () => {
 	console.log(`Server is running at http://localhost:${port}`);
 });

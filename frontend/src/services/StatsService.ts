@@ -1,44 +1,11 @@
-import { signal } from 'chispa';
+import { signal, computed } from 'chispa';
 import { services } from './container/ServiceContainer';
-import { AmuleApiService, type StatsResponse } from './AmuleApiService';
+import { WsService } from './WsService';
+import type { StatsResponse } from './AmuleApiService';
 
 export class StatsService {
-	private apiService = services.get(AmuleApiService);
+	private ws = services.get(WsService);
 
-	// Signal publico con los stats
-	public stats = signal<StatsResponse | null>(null);
-
-	private prevRequestFinished = true;
-
-	constructor() {
-		setTimeout(() => {
-			this.startPolling();
-		}, 1000);
-	}
-
-	private startPolling() {
-		// Primera llamada inmediata
-		this.poll();
-		// Polling cada 4 segundos
-		setInterval(() => this.poll(), 4000);
-	}
-
-	private async poll() {
-		if (!this.prevRequestFinished) {
-			return;
-		}
-		this.prevRequestFinished = false;
-		try {
-			//const test = await this.apiService.getUpdate();
-			//console.log('Update check:', test);
-
-			const data = await this.apiService.getStatus();
-			this.stats.set(data);
-		} catch (e) {
-			console.error('Failed to fetch stats', e);
-			// Podríamos setear un estado de error si fuera necesario
-		} finally {
-			this.prevRequestFinished = true;
-		}
-	}
+	/** Reactive aMule status – updated via WebSocket. */
+	public readonly stats = computed<StatsResponse | null>(() => this.ws.amuleStatus.get());
 }

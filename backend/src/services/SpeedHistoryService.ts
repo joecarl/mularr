@@ -32,6 +32,12 @@ export class SpeedHistoryService {
 	/** Circular buffer stored as a plain array (oldest first). */
 	private history: SpeedSample[] = [];
 	private intervalId: NodeJS.Timeout | null = null;
+	private sampleCallbacks: ((sample: SpeedSample) => void)[] = [];
+
+	/** Register a callback that is invoked each time a new sample is recorded. */
+	public onSample(cb: (sample: SpeedSample) => void): void {
+		this.sampleCallbacks.push(cb);
+	}
 
 	// Lazy-resolve services so the service can be constructed before they are registered
 	private get mediaProvider(): MediaProviderService {
@@ -118,6 +124,15 @@ export class SpeedHistoryService {
 				this.history.shift();
 			}
 			this.history.push(sample);
+
+			// Notify listeners
+			for (const cb of this.sampleCallbacks) {
+				try {
+					cb(sample);
+				} catch {
+					/* ignore listener errors */
+				}
+			}
 		} catch (err) {
 			console.error('[SpeedHistory] Unexpected error during poll:', err);
 		}

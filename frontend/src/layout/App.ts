@@ -3,6 +3,7 @@ import { services } from '../services/container/ServiceContainer';
 import { AmuleInfo, AmuleApiService } from '../services/AmuleApiService';
 import { StatsService } from '../services/StatsService';
 import { formatSpeed } from '../utils/formats';
+import { smartLoad } from '../utils/scheduling';
 import { Sidebar } from './Sidebar';
 import tpl from './App.html';
 
@@ -15,15 +16,11 @@ export const App = component<IAppProps>(({ routes }) => {
 	const amuleInfo = signal<AmuleInfo | null>(null);
 	const isSidebarOpen = signal(false);
 
-	const loadAmuleInfo = async () => {
-		try {
-			const info = await apiService.getInfo();
-			amuleInfo.set(info);
-			console.log('aMule Info:', info);
-		} catch (e) {
-			console.error('Failed to load aMule info', e);
-		}
-	};
+	const loadAmuleInfo = smartLoad(async () => {
+		const info = await apiService.getInfo();
+		amuleInfo.set(info);
+		console.log('aMule Info:', info);
+	}, 'amule-info');
 	loadAmuleInfo();
 
 	return tpl.fragment({

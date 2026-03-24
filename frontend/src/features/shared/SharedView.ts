@@ -1,12 +1,13 @@
-import { component, computed, componentList } from 'chispa';
+import { component, computed, componentList, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
+import { WsService } from '../../services/WsService';
 import { ListManager } from '../../utils/ListManager';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
-import { smartPoll } from '../../utils/scheduling';
+import { smartLoad } from '../../utils/scheduling';
 import tpl from './SharedView.html';
 import './SharedView.css';
 
@@ -54,6 +55,7 @@ export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
+	const ws = services.get(WsService);
 
 	const mgr = new ListManager<AmuleFile, keyof AmuleFile>({
 		defaultColumn: 'name',
@@ -64,10 +66,17 @@ export const SharedView = component(() => {
 
 	const isDisabled = computed(() => mgr.selectedHashes.get().size === 0);
 
-	const loadShared = smartPoll(async () => {
+	// Sync shared files from WebSocket
+	effect(() => {
+		const s = ws.sharedFiles.get();
+		if (s) mgr.items.set(s.list || []);
+	});
+
+	// Manual refresh after destructive actions
+	const loadShared = smartLoad(async () => {
 		const data = await apiService.getSharedFiles();
 		mgr.items.set(data.list || []);
-	}, 2000);
+	}, 'shared');
 
 	const deleteSharedFiles = async () => {
 		const hashes = [...mgr.selectedHashes.get()];

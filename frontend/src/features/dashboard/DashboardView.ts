@@ -1,10 +1,9 @@
 import { component, componentList, signal, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { DashboardApiService, type SpeedSample } from '../../services/DashboardApiService';
+import type { SpeedSample } from '../../services/DashboardApiService';
 import type { Transfer } from '../../services/MediaApiService';
-import { MediaApiService } from '../../services/MediaApiService';
+import { WsService } from '../../services/WsService';
 import { formatSpeed, fbytes, formatRemaining } from '../../utils/formats';
-import { smartPoll } from '../../utils/scheduling';
 import { getProviderIcon } from '../../services/ProvidersApiService';
 import { drawSpeedChart, drawChartOverlay, type ChartSeries, type ChartLayout } from '../../utils/speedChart';
 import tpl from './DashboardView.html';
@@ -115,12 +114,9 @@ const ActiveRows = componentList<Transfer>(
 // ── DashboardView ─────────────────────────────────────────────────────────────
 
 export const DashboardView = component(() => {
-	const dashApi = services.get(DashboardApiService);
-	const mediaApi = services.get(MediaApiService);
+	const ws = services.get(WsService);
 
 	// ── Data signals ──────────────────────────────────────────────────────
-	const samples = signal<SpeedSample[]>([]);
-	let lastTs: number | undefined = undefined;
 	const activeTransfers = signal<Transfer[]>([]);
 
 	// ── Canvas + value rows (built imperatively, never re-created) ─────────
@@ -137,12 +133,12 @@ export const DashboardView = component(() => {
 
 	// ── Signal-agnostic helpers ────────────────────────────────────────────
 	const latest = (): SpeedSample | null => {
-		const s = samples.get();
+		const s = ws.speedSamples.get();
 		return s.length ? s[s.length - 1] : null;
 	};
 
 	const chartSamples = (): SpeedSample[] => {
-		const s = samples.get();
+		const s = ws.speedSamples.get();
 		return s.length > MAX_CHART_POINTS ? s.slice(s.length - MAX_CHART_POINTS) : s;
 	};
 
@@ -152,7 +148,7 @@ export const DashboardView = component(() => {
 	};
 
 	const estimateIntervalMs = (): number => {
-		const s = samples.get();
+		const s = ws.speedSamples.get();
 		if (s.length < 2) return 5000;
 		const recent = s.slice(-10);
 		const diffs = recent.slice(1).map((p, i) => p.ts - recent[i].ts);
@@ -220,39 +216,12 @@ export const DashboardView = component(() => {
 	attachHoverEvents(dlCanvas, dlLayoutRef, DL_DEFS, dlValueItems, dlHoverRef);
 	attachHoverEvents(ulCanvas, ulLayoutRef, UL_DEFS, ulValueItems, ulHoverRef);
 
-	// ── Polling ───────────────────────────────────────────────────────────
-	const loadHistory = async () => {
-		try {
-			const resp = await dashApi.getSpeedHistory();
-			if (resp.samples.length) {
-				samples.set(resp.samples);
-				lastTs = resp.samples[resp.samples.length - 1].ts;
-			}
-		} catch (e) {
-			console.error('[Dashboard] Failed to load speed history:', e);
-		}
-	};
-	loadHistory();
-
-	smartPoll(async () => {
-		try {
-			const since = lastTs;
-			const [histResp, transfersResp] = await Promise.all([dashApi.getSpeedHistory(since), mediaApi.getTransfers()]);
-
-			if (histResp.samples.length) {
-				const current = samples.get();
-				const merged = [...current, ...histResp.samples];
-				const capped = merged.length > 10_000 ? merged.slice(merged.length - 10_000) : merged;
-				samples.set(capped);
-				lastTs = histResp.samples[histResp.samples.length - 1].ts;
-			}
-
-			const active = (transfersResp.list ?? []).filter((t) => !t.isCompleted && !t.stopped);
-			activeTransfers.set(active);
-		} catch (e) {
-			console.error('[Dashboard] Polling error:', e);
-		}
-	}, 5000);
+	// ── Reactive data from WebSocket ──────────────────────────────────────
+	effect(() => {
+		const t = ws.transfers.get();
+		const active = (t?.list ?? []).filter((tf) => !tf.isCompleted && !tf.stopped);
+		activeTransfers.set(active);
+	});
 
 	// ── Chart rendering effects ───────────────────────────────────────────
 	effect(() => {

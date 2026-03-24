@@ -1,7 +1,7 @@
 import { component, componentList, computed, Signal, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { SystemApiService, SystemInfo } from '../../services/SystemApiService';
-import { smartPoll } from '../../utils/scheduling';
+import { WsService } from '../../services/WsService';
 import tpl from '../Sidebar.html';
 
 interface InfoItemProps {
@@ -86,17 +86,8 @@ const Net = component<NetworkProps>(({ systemInfo }) => {
 });
 
 export const NetworkContainer = () => {
-	const systemApiService = services.get(SystemApiService);
-	const systemInfo = signal<SystemInfo | null>(null);
-
-	smartPoll(async () => {
-		try {
-			const info = await systemApiService.getSystemInfo();
-			systemInfo.set(info);
-		} catch (e) {
-			console.error(e);
-		}
-	}, 60000 * 5);
+	const ws = services.get(WsService);
+	const systemInfo = ws.systemInfo;
 
 	const infoAvailable = computed(() => !!systemInfo.get());
 

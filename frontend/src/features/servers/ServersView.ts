@@ -2,8 +2,9 @@ import { component, componentList, computed, effect, Signal, signal } from 'chis
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { StatsService } from '../../services/StatsService';
+import { WsService } from '../../services/WsService';
 import { formatAmount } from '../../utils/formats';
-import { smartPoll } from '../../utils/scheduling';
+import { smartLoad } from '../../utils/scheduling';
 import tpl from './ServersView.html';
 import './ServersView.css';
 
@@ -64,6 +65,7 @@ const ServersRows = componentList<Server, ServersViewProps>(
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const statsService = services.get(StatsService);
+	const ws = services.get(WsService);
 
 	// We'll treat the list as a signal of objects
 	const servers = signal<Server[]>([]);
@@ -72,21 +74,21 @@ export const ServersView = component(() => {
 	});
 	const logText = signal('Initializing...');
 
-	const fetchLog = smartPoll(async () => {
-		try {
-			const data = await apiService.getLog(100);
-			const res = data && data.lines ? data.lines.join('\n') : 'No log data';
-			logText.set(res);
-		} catch (e) {
-			console.error('Error fetching log:', e);
-			logText.set('Error fetching log');
-		}
-	}, 3000);
+	// Sync log and servers from WebSocket
+	effect(() => {
+		const log = ws.amuleLog.get();
+		logText.set(log.length ? log.join('\n') : 'No log data');
+	});
+	effect(() => {
+		const s = ws.servers.get();
+		if (s) servers.set(s.list || []);
+	});
 
-	const loadServers = smartPoll(async () => {
+	// Manual refresh for post-action use
+	const loadServers = smartLoad(async () => {
 		const data = await apiService.getServers();
 		servers.set(data.list || []);
-	}, 10000);
+	}, 'servers');
 
 	const connectToServer = async (s?: Server) => {
 		// logText.set(`Connecting to ${s.name ?? s.ip}...`);
