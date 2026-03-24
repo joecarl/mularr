@@ -126,7 +126,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 					inner: () => getProviderIcon(t.get().provider),
 					title: () => getProviderName(t.get().provider),
 				},
-				sourceInfoCol: { inner: () => t.get().sourceName || '' },
+				sourceInfoCol: { inner: () => t.get().sourceName || '', title: () => t.get().sourceName || '' },
 				sizeCol: { inner: () => fbytes(t.get().size) },
 				categoryCol: { inner: () => (t.get().categoryName === DEFAULT_VALUE ? '-' : (t.get().categoryName ?? '-')) },
 				completedCol: { inner: () => fbytes(t.get().completed) },
