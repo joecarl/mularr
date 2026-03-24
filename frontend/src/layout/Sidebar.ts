@@ -1,6 +1,7 @@
 import { component, computed, Link, pathMatches } from 'chispa';
 import { services } from '../services/container/ServiceContainer';
 import { StatsService } from '../services/StatsService';
+import { AuthApiService } from '../services/AuthApiService';
 import { StatsContainer } from './panels/Stats';
 import { NetworkContainer } from './panels/Network';
 import tpl from './Sidebar.html';
@@ -24,6 +25,12 @@ export interface SidebarProps {
 
 export const Sidebar = component<SidebarProps>((props) => {
 	const statsService = services.get(StatsService);
+	const authService = services.get(AuthApiService);
+
+	const handleLogout = () => {
+		authService.logout();
+		window.location.reload();
+	};
 
 	const linksData: LinkData[] = [
 		{ to: '/dashboard', icon: '/assets/icons/Statistics.ico', label: 'Dashboard' },
@@ -109,5 +116,9 @@ export const Sidebar = component<SidebarProps>((props) => {
 		networkContainer: NetworkContainer(),
 		statsContainer: StatsContainer(),
 		appVersion: { inner: `v${__APP_MANIFEST__.version}` },
+		logoutBtn: {
+			onclick: handleLogout,
+			style: { display: () => (authService.isLoggedIn() ? '' : 'none') },
+		},
 	});
 });

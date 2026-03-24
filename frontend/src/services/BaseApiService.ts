@@ -10,13 +10,24 @@ export abstract class BaseApiService {
 		const url = new URL(`${this.baseUrl}${path}`, window.location.origin);
 		url.searchParams.append('_', Date.now().toString());
 
+		const token = localStorage.getItem('mularr.auth.token');
+		const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
 		const response = await fetch(url.toString(), {
 			...options,
 			headers: {
 				'Content-Type': 'application/json',
+				...authHeader,
 				...options.headers,
 			},
 		});
+
+		if (response.status === 401) {
+			// Token expired or invalid — clear it and reload so main.ts will show LoginView
+			localStorage.removeItem('mularr.auth.token');
+			window.location.reload();
+			throw new Error('Session expired');
+		}
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({ error: 'Unknown error' }));

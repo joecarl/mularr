@@ -26,6 +26,9 @@ import { extensionsRoutes } from './routes/extensionsRoutes';
 import { telegramRoutes } from './routes/telegramRoutes';
 import { mediaProviderRoutes } from './routes/mediaProviderRoutes';
 import { statsRoutes } from './routes/statsRoutes';
+import { authRoutes } from './routes/authRoutes';
+import { authMiddleware } from './middleware/authMiddleware';
+import { AuthService } from './services/AuthService';
 
 console.log(`Starting Mularr v${__APP_MANIFEST__.version}...`);
 
@@ -37,6 +40,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // -- Initialize & register services in container ------------------------------
+
+// Initialize Auth Service (must be first so middleware can use it)
+const authService = new AuthService();
+container.register(AuthService, authService);
+if (authService.isAuthEnabled()) {
+	console.log('[Auth] Authentication is enabled.');
+} else {
+	console.log('[Auth] No credentials configured — running in open-access mode.');
+}
 
 // Initialize Main DB
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../dev-data/database.sqlite');
@@ -94,14 +106,23 @@ container.register(WsBroadcastService, wsBroadcastService);
 
 // -- Setup routes -------------------------------------------------------------
 
-app.use('/api/system', systemRoutes());
-app.use('/api/amule', amuleRoutes());
-app.use('/api/media', mediaProviderRoutes());
-app.use('/api/stats', statsRoutes());
-app.use('/api/extensions', extensionsRoutes());
-app.use('/api/telegram', telegramRoutes());
-app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // qBittorrent compatibility for Sonarr/Radarr
-app.use('/api/as-torznab-indexer', indexerRoutes()); // Torznab indexer for Sonarr/Radarr
+// Wraps a router with authMiddleware so all its routes are protected
+const withAuth = (router: express.Router): express.Router => {
+	const wrapper = express.Router();
+	wrapper.use(authMiddleware);
+	wrapper.use(router);
+	return wrapper;
+};
+
+app.use('/api/auth', authRoutes());
+app.use('/api/system', withAuth(systemRoutes()));
+app.use('/api/amule', withAuth(amuleRoutes()));
+app.use('/api/media', withAuth(mediaProviderRoutes()));
+app.use('/api/stats', withAuth(statsRoutes()));
+app.use('/api/extensions', withAuth(extensionsRoutes()));
+app.use('/api/telegram', withAuth(telegramRoutes()));
+app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // manages its own auth internally
+app.use('/api/as-torznab-indexer', withAuth(indexerRoutes())); // Torznab indexer for Sonarr/Radarr
 
 // -- Serve static files from the 'public' folder ------------------------------
 

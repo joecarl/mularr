@@ -337,7 +337,7 @@
 		gap: 0.7em;
 		color: white;
 		.sidebar-version {
-			font-size: 0.85rem;
+			font-size: 0.8rem;
 		}
 
 		.gh-link {
@@ -357,6 +357,26 @@
 			width: 20px;
 			height: 20px;
 			fill: currentColor;
+		}
+
+		.sidebar-logout-btn {
+			margin-bottom: 0.5em;
+			background: none;
+			border: 1px solid var(--sidebar-border-light, #cce3ff);
+			border-radius: 6px;
+			color: var(--sidebar-text-muted, #666);
+			cursor: pointer;
+			font-size: 1rem;
+			padding: 0.15em 0.5em;
+			opacity: 0.6;
+			transition:
+				opacity 0.15s,
+				color 0.15s;
+
+			&:hover {
+				opacity: 1;
+				color: #d61b1b;
+			}
 		}
 	}
 }

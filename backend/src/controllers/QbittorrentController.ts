@@ -4,6 +4,7 @@ import { AmuleService, getCatByName } from '../services/AmuleService';
 import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
+import { AuthService } from '../services/AuthService';
 import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
 
 /**
@@ -17,9 +18,31 @@ export class QbittorrentController {
 
 	// qBittorrent API: POST /api/v2/auth/login
 	login = async (req: Request, res: Response) => {
-		// We don't implement full auth yet, just return Ok and a dummy cookie
-		console.log('[QbittorrentController] Login requested (dummy implementation)');
-		res.setHeader('Set-Cookie', 'SID=mularr_dummy_session; HttpOnly; Path=/');
+		const authService = container.get(AuthService);
+		const { username, password } = req.body;
+
+		// If auth is not enabled, always succeed (open mode)
+		if (!authService.isAuthEnabled()) {
+			res.setHeader('Set-Cookie', 'SID=mularr_open; HttpOnly; Path=/');
+			res.send('Ok.');
+			return;
+		}
+
+		// Accept username/password matching AUTH credentials, or API_KEY as password
+		const validCredentials = authService.validateCredentials(username ?? '', password ?? '');
+		const validApiKey = authService.validateApiKey(password ?? '');
+
+		if (!validCredentials && !validApiKey) {
+			res.send('Fails.');
+			return;
+		}
+
+		// Always generate a JWT as SID so the cookie value is always a safe,
+		// consistent format regardless of whether login was via credentials or API key.
+		const session = authService.generateToken(validCredentials ? username : '__apikey__');
+
+		console.log('[QbittorrentController] Login successful for Sonarr/Radarr');
+		res.setHeader('Set-Cookie', `SID=${session}; HttpOnly; Path=/`);
 		res.send('Ok.');
 	};
 
