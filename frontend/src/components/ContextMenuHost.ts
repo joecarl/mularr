@@ -9,40 +9,54 @@ export interface ContextMenuAction {
 	onClick: () => void;
 }
 
+export interface ContextMenuSeparator {
+	separator: true;
+}
+
+export type ContextMenuItem = ContextMenuSeparator | ContextMenuAction;
+
+function isSeparator(item: ContextMenuItem): item is ContextMenuSeparator {
+	return 'separator' in item;
+}
+
 export interface IContextMenuProps {
 	x: number;
 	y: number;
-	actions: ContextMenuAction[];
+	items: ContextMenuItem[];
 	onClose: () => void;
 }
 
-export const ContextMenuHost = component<IContextMenuProps>(({ x, y, actions, onClose }) => {
+export const ContextMenuHost = component<IContextMenuProps>(({ x, y, items, onClose }) => {
 	const buildItems = () =>
-		actions.map((action) =>
-			tpl.menuItem({
-				classes: { 'ctx-menu-item-disabled': () => !!action.disabled },
-				onclick: !action.disabled
+		items.map((item) => {
+			if (isSeparator(item)) {
+				return tpl.menuSeparator({});
+			}
+			return tpl.menuItem({
+				classes: { 'ctx-menu-item-disabled': () => !!item.disabled },
+				onclick: !item.disabled
 					? (e: MouseEvent) => {
 							e.stopPropagation();
-							action.onClick();
+							item.onClick();
 							onClose();
 						}
 					: undefined,
 				nodes: {
 					menuItemIcon: {
-						inner: action.icon ?? '',
-						style: { display: action.icon ? '' : 'none' },
+						inner: item.icon ?? '',
+						style: { display: item.icon ? '' : 'none' },
 					},
 					menuItemLabel: {
-						inner: action.label,
+						inner: item.label,
 					},
 				},
-			})
-		);
+			});
+		});
 
 	// Adjust position so menu stays within viewport
+	const itemCount = items.filter((a) => !isSeparator(a)).length;
 	const adjustedX = Math.min(x, window.innerWidth - 180);
-	const adjustedY = Math.min(y, window.innerHeight - actions.length * 34 - 10);
+	const adjustedY = Math.min(y, window.innerHeight - itemCount * 34 - 10);
 
 	return tpl.fragment({
 		overlay: {

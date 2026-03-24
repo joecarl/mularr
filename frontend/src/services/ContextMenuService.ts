@@ -1,18 +1,18 @@
-import { ContextMenuHost, type ContextMenuAction } from '../components/ContextMenuHost';
+import { ContextMenuHost, type ContextMenuItem } from '../components/ContextMenuHost';
 
-export type { ContextMenuAction };
+export type { ContextMenuItem };
 
 export class ContextMenuService {
 	private currentMenu: ReturnType<typeof ContextMenuHost> | null = null;
 
-	show(event: MouseEvent, actions: ContextMenuAction[]): void {
+	show(event: MouseEvent, items: ContextMenuItem[]): void {
 		event.preventDefault();
 		event.stopPropagation();
 
 		// Close any existing menu first
 		this.close();
 
-		if (actions.length === 0) return;
+		if (items.length === 0) return;
 
 		const x = event.clientX;
 		const y = event.clientY;
@@ -20,7 +20,7 @@ export class ContextMenuService {
 		const menuInstance = ContextMenuHost({
 			x,
 			y,
-			actions,
+			items: items,
 			onClose: () => this.close(),
 		});
 

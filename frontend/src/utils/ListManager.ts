@@ -9,6 +9,7 @@ export interface RowSelectionManager {
 	selectedHashes: WritableSignal<Set<string>>;
 	lastClickedHash: WritableSignal<string | null>;
 	handleRowSelection<T extends { hash?: string }>(e: MouseEvent, hash: string, list: T[]): void;
+	clearSelection(): void;
 }
 
 export interface MobileSortOption<K extends string> {

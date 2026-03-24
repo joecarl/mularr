@@ -3,7 +3,8 @@ import { services } from '../../services/container/ServiceContainer';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { Transfer } from '../../services/MediaApiService';
 import { ExtensionsApiService } from '../../services/ExtensionsApiService';
-import { ContextMenuService } from '../../services/ContextMenuService';
+import { ContextMenuService, ContextMenuItem } from '../../services/ContextMenuService';
+import { TransfersContextService } from '../../services/TransfersContextService';
 import { getFileIcon } from '../../utils/icons';
 import { isVideoFile } from '../../utils/files';
 import { fbytes, formatRemaining } from '../../utils/formats';
@@ -13,11 +14,17 @@ import './TransfersView.css';
 
 export const DEFAULT_VALUE = 'default';
 
-async function buildTransferActions(transfer: Transfer) {
+async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
 	const extensionsApi = services.get(ExtensionsApiService);
-	const actions = [];
+	const ctx = services.get(TransfersContextService);
+	const actions: ContextMenuItem[] = [];
 	const popupProps = 'width=1280,height=720,toolbar=no,menubar=no,location=no,status=no';
 
+	const hash = transfer.hash ?? '';
+	const allHashes = [...selectionMgr.selectedHashes.get()].filter(Boolean) as string[];
+	const targetHashes = allHashes.length > 0 ? allHashes : hash ? [hash] : [];
+
+	// ---- Media preview actions ----
 	const filePath = transfer.filePath;
 	if (filePath && isVideoFile(filePath)) {
 		try {
@@ -35,6 +42,56 @@ async function buildTransferActions(transfer: Transfer) {
 			// silently ignore if extensions can't be fetched
 		}
 	}
+
+	if (actions.length > 0) {
+		actions.push({ separator: true });
+	}
+
+	// ---- Transfer control actions ----
+	const canPause = !transfer.isCompleted && !transfer.stopped && transfer.statusId === 0;
+	const canResume = !transfer.isCompleted && (!!transfer.stopped || transfer.statusId === 7);
+	const canStop = transfer.provider === 'amule' && !transfer.isCompleted && !transfer.stopped;
+
+	actions.push({ label: 'Pause', icon: '⏸', disabled: !canPause, onClick: () => ctx.executeCommand(targetHashes, 'pause') });
+	actions.push({ label: 'Resume', icon: '▶', disabled: !canResume, onClick: () => ctx.executeCommand(targetHashes, 'resume') });
+	actions.push({ label: 'Stop', icon: '⏹', disabled: !canStop, onClick: () => ctx.executeCommand(targetHashes, 'stop') });
+	actions.push({
+		label: 'Cancel Download',
+		icon: '✖',
+		onClick: async () => {
+			const ok = await ctx.executeCommand(targetHashes, 'cancel');
+			if (ok) selectionMgr.clearSelection();
+		},
+	});
+
+	// ---- Category actions (read from in-memory signal — no API call) ----
+	const categories = ctx.categories.get();
+	if (categories.length > 0) {
+		actions.push({ separator: true });
+		for (const cat of categories) {
+			const catId = cat.id;
+			const catLabel = cat.id === 0 ? 'Default' : cat.name;
+			actions.push({
+				label: `Set Category: ${catLabel}`,
+				icon: '📁',
+				onClick: () => ctx.changeCategory(targetHashes, catId),
+			});
+		}
+	}
+
+	// ---- Blacklist action ----
+	if (hash) {
+		actions.push({ separator: true });
+		actions.push({
+			label: 'Blacklist Hash…',
+			icon: '🚫',
+			onClick: async () => {
+				const ok = await ctx.blacklistHash(hash, transfer.name || '');
+				if (ok) selectionMgr.clearSelection();
+			},
+		});
+	}
+
 	return actions;
 }
 
@@ -86,11 +143,8 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 					onRowClick(hash);
 				}
 				const transfer = t.get();
-				const actions = await buildTransferActions(transfer);
-
-				if (actions.length > 0) {
-					ctxMenu.show(e, actions);
-				}
+				const actions = await buildContextMenuActions(transfer, selectionMgr);
+				ctxMenu.show(e, actions);
 			},
 			nodes: {
 				nameCol: {

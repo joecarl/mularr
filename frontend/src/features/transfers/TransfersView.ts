@@ -1,12 +1,12 @@
 import { component, signal, computed, bindControlledSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
-import { AmuleApiService, AmuleUpDownClient } from '../../services/AmuleApiService';
-import { MediaApiService, Transfer, Category } from '../../services/MediaApiService';
+import { AmuleUpDownClient } from '../../services/AmuleApiService';
+import { Transfer } from '../../services/MediaApiService';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { WsService } from '../../services/WsService';
+import { TransfersContextService } from '../../services/TransfersContextService';
 import { fbytes } from '../../utils/formats';
-import { smartLoad } from '../../utils/scheduling';
 import { ListManager } from '../../utils/ListManager';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
@@ -25,18 +25,17 @@ const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof Transfer; 
 	{ value: 'provider-desc', label: 'Provider Z→A', col: 'provider', dir: 'desc' },
 ];
 
-function hashesToTransfers(hashes: Set<string>, list: Transfer[]): Transfer[] {
-	const selected: Transfer[] = [];
+function getSelectedTransfers(hashes: Set<string>, list: Transfer[]): Transfer[] {
+	const result: Transfer[] = [];
 	for (const hash of hashes) {
 		const t = list.find((x) => x.hash === hash);
-		if (t) selected.push(t);
+		if (t) result.push(t);
 	}
-	return selected;
+	return result;
 }
 
 export const TransfersView = component(() => {
-	const apiService = services.get(AmuleApiService);
-	const mediaService = services.get(MediaApiService);
+	const ctx = services.get(TransfersContextService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
 	const ws = services.get(WsService);
@@ -50,28 +49,16 @@ export const TransfersView = component(() => {
 	});
 
 	const uploadQueue = signal<AmuleUpDownClient[]>([]);
-	const categories = signal<Category[]>([]);
 	const selectCategoryName = signal(NULL_VALUE);
 
-	// Sync transfers and upload queue from WebSocket
-	effect(() => {
-		const t = ws.transfers.get();
-		if (t) {
-			mgr.items.set(t.list || []);
-			categories.set(t.categories || []);
-		}
-	});
+	// Sync mgr (sorting/selection) from the shared context state
+	effect(() => mgr.items.set(ctx.transfers.get()));
+
+	// Upload queue comes directly from WebSocket (not part of transfers context)
 	effect(() => {
 		const q = ws.uploadQueue.get();
 		if (q) uploadQueue.set(q.list || []);
 	});
-
-	// Manual refresh via REST (used after user actions for immediate feedback)
-	const loadTransfers = smartLoad(async () => {
-		const data = await mediaService.getTransfers();
-		mgr.items.set(data.list || []);
-		categories.set(data.categories || []);
-	}, 'transfers');
 
 	const isDisabled = computed(() => !mgr.hasSelection.get());
 
@@ -83,7 +70,7 @@ export const TransfersView = component(() => {
 	});
 
 	const canPause = computed(() => {
-		const selection = hashesToTransfers(mgr.selectedHashes.get(), mgr.items.get());
+		const selection = getSelectedTransfers(mgr.selectedHashes.get(), mgr.items.get());
 		for (const t of selection) {
 			if (!t.isCompleted && !t.stopped && t.statusId === 0) return true;
 		}
@@ -91,7 +78,7 @@ export const TransfersView = component(() => {
 	});
 
 	const canResume = computed(() => {
-		const selection = hashesToTransfers(mgr.selectedHashes.get(), mgr.items.get());
+		const selection = getSelectedTransfers(mgr.selectedHashes.get(), mgr.items.get());
 		for (const t of selection) {
 			if (!t.isCompleted && (t.stopped || t.statusId === 7)) return true;
 		}
@@ -99,7 +86,7 @@ export const TransfersView = component(() => {
 	});
 
 	const canStop = computed(() => {
-		const selection = hashesToTransfers(mgr.selectedHashes.get(), mgr.items.get());
+		const selection = getSelectedTransfers(mgr.selectedHashes.get(), mgr.items.get());
 		for (const t of selection) {
 			if (t.provider === 'amule' && !t.isCompleted && !t.stopped) return true;
 		}
@@ -113,70 +100,29 @@ export const TransfersView = component(() => {
 
 	const executeCommand = async (cmd: 'pause' | 'resume' | 'stop' | 'cancel') => {
 		const hashes = [...mgr.selectedHashes.get()];
-		if (hashes.length === 0) return;
-		try {
-			if (cmd === 'cancel' && !(await dialogService.confirm('Are you sure you want to cancel the selected downloads?', 'Cancel Download'))) {
-				return;
-			}
-			await Promise.all(hashes.map((hash) => mediaService.sendDownloadCommand(hash, cmd)));
-			if (cmd === 'cancel') mgr.clearSelection();
-			loadTransfers();
-		} catch (e: any) {
-			await dialogService.alert(e.message, 'Error');
-		}
+		const ok = await ctx.executeCommand(hashes, cmd);
+		if (ok && cmd === 'cancel') mgr.clearSelection();
 	};
 
 	const changeCategory = async (catName: string) => {
 		const hashes = [...mgr.selectedHashes.get()];
 		if (hashes.length === 0 || catName === NULL_VALUE) return;
-		try {
-			const allCats = categories.get();
-			let catId: number;
-			if (catName === DEFAULT_VALUE) {
-				catId = 0;
-			} else {
-				const cat = allCats.find((c) => c.name === catName);
-				if (!cat) throw new Error('Selected category not found');
-				catId = cat.id;
-			}
-
-			// If completed files would actually change directory, ask confirmation before proceeding.
-			// Answering No aborts the entire category change.
-			let moveFiles = false;
-			const destCat = allCats.find((c) => c.id === catId);
-			const destPath = destCat?.resolvedPath ?? destCat?.path ?? '';
-			if (destPath) {
-				const completedThatMove = hashesToTransfers(new Set(hashes), mgr.items.get()).filter((t) => {
-					if (!t.isCompleted) return false;
-					const srcCat = allCats.find((c) => c.name === (t.categoryName ?? ''));
-					const srcPath = srcCat?.resolvedPath ?? srcCat?.path ?? '';
-					console.log('Comparing paths for completed file:', t.name, 'src:', srcPath, 'dest:', destPath);
-					return srcPath !== destPath;
-				});
-				if (completedThatMove.length > 0) {
-					const confirmed = await dialogService.confirm(
-						`Change category and move ${completedThatMove.length === 1 ? 'the completed file' : `${completedThatMove.length} completed files`} to the new directory?\n\nDestination: ${destPath}`,
-						'Change Category'
-					);
-					if (!confirmed) {
-						selectCategoryName.set(NULL_VALUE);
-						return;
-					}
-					moveFiles = true;
-				}
-			}
-
-			await Promise.all(hashes.map((hash) => mediaService.setFileCategory(hash, catId, moveFiles)));
-			loadTransfers();
-		} catch (e: any) {
-			await dialogService.alert(e.message, 'Error');
+		let catId: number;
+		if (catName === DEFAULT_VALUE) {
+			catId = 0;
+		} else {
+			const cat = ctx.categories.get().find((c) => c.name === catName);
+			if (!cat) return;
+			catId = cat.id;
 		}
+		const ok = await ctx.changeCategory(hashes, catId);
+		if (!ok) selectCategoryName.set(NULL_VALUE);
 	};
 
 	const ctgOptions = computed(() => {
 		const opts = [
 			{ value: NULL_VALUE, label: 'Select Category...', disabled: true },
-			...categories.get().map((c) => (c.id === 0 ? { value: DEFAULT_VALUE, label: 'Default' } : { value: c.name, label: c.name })),
+			...ctx.categories.get().map((c) => (c.id === 0 ? { value: DEFAULT_VALUE, label: 'Default' } : { value: c.name, label: c.name })),
 		];
 		return opts;
 	});
@@ -184,7 +130,7 @@ export const TransfersView = component(() => {
 	const noItems = computed(() => mgr.items.get().length === 0);
 
 	return tpl.fragment({
-		refreshBtn: { onclick: loadTransfers },
+		refreshBtn: { onclick: ctx.reload },
 		pauseBtn: {
 			disabled: () => !canPause.get(),
 			onclick: () => executeCommand('pause'),
@@ -220,17 +166,15 @@ export const TransfersView = component(() => {
 				const hashes = [...mgr.selectedHashes.get()];
 				if (hashes.length === 0) return;
 				if (await dialogService.confirm('Clear the selected completed files from the list? (The files will remain on disk)', 'Clear Selection')) {
-					await Promise.all(hashes.map((hash) => mediaService.clearCompletedTransfers([hash])));
+					await ctx.clearCompleted(hashes);
 					mgr.clearSelection();
-					loadTransfers();
 				}
 			},
 		},
 		clearCompletedBtn: {
 			onclick: async () => {
 				if (await dialogService.confirm('Clear all completed transfers from the list? (Files will remain on disk)', 'Clear All Completed')) {
-					await mediaService.clearCompletedTransfers();
-					loadTransfers();
+					await ctx.clearCompleted();
 				}
 			},
 		},
