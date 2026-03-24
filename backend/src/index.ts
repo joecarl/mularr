@@ -27,6 +27,7 @@ import { telegramRoutes } from './routes/telegramRoutes';
 import { mediaProviderRoutes } from './routes/mediaProviderRoutes';
 import { statsRoutes } from './routes/statsRoutes';
 import { authRoutes } from './routes/authRoutes';
+import { blacklistRoutes } from './routes/blacklistRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { AuthService } from './services/AuthService';
 
@@ -123,6 +124,7 @@ app.use('/api/extensions', withAuth(extensionsRoutes()));
 app.use('/api/telegram', withAuth(telegramRoutes()));
 app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // manages its own auth internally
 app.use('/api/as-torznab-indexer', withAuth(indexerRoutes())); // Torznab indexer for Sonarr/Radarr
+app.use('/api/blacklist', withAuth(blacklistRoutes()));
 
 // -- Serve static files from the 'public' folder ------------------------------
 

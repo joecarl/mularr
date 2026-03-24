@@ -27,6 +27,13 @@ export interface ValidationResult {
 	last_check: string;
 }
 
+export interface BlacklistEntry {
+	hash: string;
+	name: string;
+	reason: string | null;
+	added_at: string;
+}
+
 export class MainDB {
 	private db: Database.Database;
 	public readonly dbPath: string;
@@ -66,6 +73,13 @@ export class MainDB {
 				details TEXT,
 				last_check DATETIME DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY (file_hash, extension_id)
+			);
+
+			CREATE TABLE IF NOT EXISTS blacklist (
+				hash TEXT PRIMARY KEY,
+				name TEXT NOT NULL DEFAULT '',
+				reason TEXT,
+				added_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);
 		`);
 
@@ -207,5 +221,30 @@ export class MainDB {
 
 	public deleteValidationsForExtension(extensionId: number) {
 		this.db.prepare('DELETE FROM file_validations WHERE extension_id = ?').run(extensionId);
+	}
+
+	// ---------------------------------------------------------
+	// Blacklist
+	// ---------------------------------------------------------
+
+	public getBlacklist(): BlacklistEntry[] {
+		return this.db.prepare<[], BlacklistEntry>('SELECT * FROM blacklist ORDER BY added_at DESC').all();
+	}
+
+	public getBlacklistEntry(hash: string): BlacklistEntry | undefined {
+		return this.db.prepare<string, BlacklistEntry>('SELECT * FROM blacklist WHERE hash = ?').get(hash);
+	}
+
+	public addToBlacklist(hash: string, name: string, reason: string | null = null) {
+		this.db.prepare('INSERT OR REPLACE INTO blacklist (hash, name, reason, added_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)').run(hash, name, reason);
+	}
+
+	public removeFromBlacklist(hash: string) {
+		this.db.prepare('DELETE FROM blacklist WHERE hash = ?').run(hash);
+	}
+
+	public isBlacklisted(hash: string): boolean {
+		const row = this.db.prepare<string, { hash: string }>('SELECT hash FROM blacklist WHERE hash = ?').get(hash);
+		return !!row;
 	}
 }
