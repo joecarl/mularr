@@ -27,7 +27,7 @@ COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 3: Production Image
-FROM node:24-trixie-slim
+FROM node:24-trixie
 
 WORKDIR /app
 
@@ -41,9 +41,15 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Compile and install aMule from source
-COPY build-amule.sh /tmp/build-amule.sh
-RUN chmod +x /tmp/build-amule.sh && /tmp/build-amule.sh && rm /tmp/build-amule.sh
+# Compile and install aMule from source (disabled: using apt install above)
+# COPY build-amule.sh /tmp/build-amule.sh
+# RUN chmod +x /tmp/build-amule.sh && /tmp/build-amule.sh && rm /tmp/build-amule.sh
+
+# Install aMule from apt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    amule-daemon \
+    amule-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --omit=dev
