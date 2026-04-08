@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { Response } from 'express';
 
 export interface AuthStatus {
 	enabled: boolean;
@@ -68,5 +69,43 @@ export class AuthService {
 		} catch {
 			return false;
 		}
+	}
+
+	/**
+	 * Verifies a JWT and returns a freshly-signed token with a new expiry.
+	 * Returns null if the token is invalid or already expired.
+	 */
+	refreshToken(token: string): string | null {
+		try {
+			const payload = jwt.verify(token, this.jwtSecret) as jwt.JwtPayload;
+			return jwt.sign({ sub: payload.sub }, this.jwtSecret, { expiresIn: '7d' });
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Sets the SID cookie on the response. Max-Age is derived from the JWT
+	 * `exp` claim so the cookie lifetime always matches the token expiry.
+	 */
+	setSidCookie(res: Response, token: string): void {
+		const DEFAULT_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
+		let maxAge: number;
+		try {
+			const payload = jwt.decode(token) as jwt.JwtPayload;
+			maxAge = payload?.exp ? payload.exp - Math.floor(Date.now() / 1000) : DEFAULT_MAX_AGE;
+		} catch {
+			maxAge = DEFAULT_MAX_AGE;
+		}
+		res.setHeader('Set-Cookie', `SID=${token}; HttpOnly; Path=/; Max-Age=${maxAge}`);
+	}
+
+	/** Clears the SID cookie by setting Max-Age=0. */
+	clearSidCookie(res: Response): void {
+		res.setHeader('Set-Cookie', 'SID=; HttpOnly; Path=/; Max-Age=0');
+	}
+
+	setSidCookieOpenMode(res: Response): void {
+		res.setHeader('Set-Cookie', 'SID=mularr_open; HttpOnly; Path=/; Max-Age=3600');
 	}
 }

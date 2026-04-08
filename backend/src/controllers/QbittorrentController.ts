@@ -23,7 +23,7 @@ export class QbittorrentController {
 
 		// If auth is not enabled, always succeed (open mode)
 		if (!authService.isAuthEnabled()) {
-			res.setHeader('Set-Cookie', 'SID=mularr_open; HttpOnly; Path=/');
+			authService.setSidCookieOpenMode(res);
 			res.send('Ok.');
 			return;
 		}
@@ -42,7 +42,8 @@ export class QbittorrentController {
 		const session = authService.generateToken(validCredentials ? username : '__apikey__');
 
 		console.log('[QbittorrentController] Login successful for Sonarr/Radarr');
-		res.setHeader('Set-Cookie', `SID=${session}; HttpOnly; Path=/`);
+		// Max-Age matches the JWT lifetime — cookie and token expire together.
+		authService.setSidCookie(res, session);
 		res.send('Ok.');
 	};
 
@@ -115,7 +116,6 @@ export class QbittorrentController {
 	createCategory = async (req: Request, res: Response) => {
 		console.log('[QbittorrentController] Create Category requested');
 		const { category, savePath } = req.body;
-		// In a real implementation, you'd store this category somewhere
 		console.log(`Creating category: ${category} with path: ${savePath}`);
 		this.amuleService.createCategory({
 			name: category,
@@ -123,6 +123,43 @@ export class QbittorrentController {
 		});
 		res.send('');
 	};
+
+	setCategory = async (req: Request, res: Response) => {
+		console.log('[QbittorrentController] Set Category requested');
+		const { hashes, category } = req.body;
+		if (!hashes || !category) {
+			return res.status(400).send('Hash and category are required');
+		}
+		if (hashes === 'all') {
+			return res.status(400).send('Setting category for all torrents is not supported');
+		}
+		const hashList = hashes.split('|');
+		for (const hash of hashList) {
+			if (!hash) continue;
+			await this.setCategoryForHash(hash, category);
+		}
+		res.send('');
+	};
+
+	private async setCategoryForHash(hash: string, category: string): Promise<void> {
+		const categories = await this.mediaProviderService.getCategories();
+		let categoryId: number | undefined = undefined;
+		if (category) {
+			const cat = categories.find((c) => c.name === category);
+			if (cat) {
+				categoryId = cat.id;
+			} else {
+				const newCat = await this.amuleService.createCategory({
+					name: category,
+				});
+				categoryId = newCat.id;
+			}
+		}
+
+		if (categoryId !== undefined) {
+			await this.mediaProviderService.setFileCategory(hash, categoryId, true);
+		}
+	}
 
 	// qBittorrent API: GET /api/v2/torrents/info
 	getTorrents = async (req: Request, res: Response) => {

@@ -35,8 +35,21 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
 	// 3. Cookie: SID=<key> (qBittorrent compat — used by Sonarr after qbt login)
 	const sid = parseSidCookie(req);
-	if (sid && (authService.validateApiKey(sid) || authService.validateToken(sid))) {
-		return next();
+	if (sid) {
+		// API key stored as SID — always valid, no refresh needed
+		if (authService.validateApiKey(sid)) {
+			return next();
+		}
+		// JWT stored as SID — refresh on every valid request (sliding window) so
+		// the session never expires as long as Sonarr/Radarr keep polling.
+		const refreshed = authService.refreshToken(sid);
+		if (refreshed) {
+			authService.setSidCookie(res, refreshed);
+			return next();
+		}
+		// If the token is invalid or expired, clear the cookie to prevent confusion.
+		console.log('[AuthMiddleware] Invalid or expired SID cookie, clearing it');
+		authService.clearSidCookie(res);
 	}
 
 	// 4. ?apikey=<key> query param (Torznab / Newznab compat)
@@ -48,7 +61,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 	console.warn(`[AuthMiddleware] Unauthorized request to ${req.method} ${req.path}`);
 	// DEBUG INFO
 	console.log('Headers:', req.headers);
-	console.log('Cookies:', req.cookies);
 	console.log('Query:', req.query);
 
 	res.status(401).json({ error: 'Unauthorized' });
