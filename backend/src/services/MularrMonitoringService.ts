@@ -45,6 +45,7 @@ export class MularrMonitoringService {
 	}
 
 	private async periodicRestart() {
+		if (this.amuledService.isRestarting) return;
 		const hours = this.periodicRestartIntervalHours;
 		console.log(`Performing scheduled ${hours}h aMule daemon restart...`);
 		await this.notify(`🔁 Scheduled restart of aMule daemon (every ${hours}h).`);
@@ -59,6 +60,7 @@ export class MularrMonitoringService {
 	}
 
 	private async check() {
+		if (this.amuledService.isRestarting) return;
 		try {
 			let shouldRestart = false;
 			let restartReason = '';

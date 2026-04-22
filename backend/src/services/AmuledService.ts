@@ -8,6 +8,11 @@ const execPromise = util.promisify(exec);
 
 export class AmuledService {
 	private readonly configDir = process.env.AMULE_CONFIG_DIR || path.join(process.env.HOME || '/home/node', '.aMule');
+	private _isRestarting = false;
+
+	get isRestarting(): boolean {
+		return this._isRestarting;
+	}
 
 	async updateCoreConfig(port: number): Promise<boolean> {
 		try {
@@ -61,6 +66,11 @@ export class AmuledService {
 	}
 
 	async restartDaemon(): Promise<void> {
+		if (this._isRestarting) {
+			console.warn('Restart already in progress, skipping duplicate request.');
+			return;
+		}
+		this._isRestarting = true;
 		console.log('Restarting aMule daemon...');
 		try {
 			// Graceful shutdown first
@@ -86,6 +96,8 @@ export class AmuledService {
 			await this.startDaemon();
 		} catch (e) {
 			console.error('Failed to restart amuled:', e);
+		} finally {
+			this._isRestarting = false;
 		}
 	}
 
@@ -93,13 +105,8 @@ export class AmuledService {
 		const interval = 300;
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
-			try {
-				await execPromise('pgrep amuled');
-				// Still running — keep waiting
-				await new Promise((resolve) => setTimeout(resolve, interval));
-			} catch {
-				return true; // pgrep exit code 1 → no process found
-			}
+			if (!this.isDaemonRunning()) return true; // Process is dead
+			await new Promise((resolve) => setTimeout(resolve, interval));
 		}
 		return false;
 	}
@@ -138,17 +145,26 @@ export class AmuledService {
 			console.log('aMule daemon already running, skipping start.');
 			return;
 		}
+		// Remove stale lock files that prevent amuled from starting after a hard kill
+		for (const lockFile of ['amuled.lock', 'amuled.pid', '.lock']) {
+			try {
+				fs.rmSync(path.join(this.configDir, lockFile));
+				console.log(`Removed stale lock file: ${lockFile}`);
+			} catch {
+				// File didn't exist — ignore
+			}
+		}
 		console.log('Starting aMule daemon...');
 		const child = spawn('amuled', ['-c', this.configDir, '-f'], {
 			detached: true,
 			stdio: 'ignore',
 		});
 		child.unref();
-		const started = await this.waitForEcPort(15000);
+		const started = await this.waitForEcPort(30000);
 		if (started) {
 			console.log('aMule daemon started successfully.');
 		} else {
-			console.error('aMule daemon may not have started — EC port not reachable after 15 s.');
+			console.error('aMule daemon may not have started — EC port not reachable after 30 s.');
 		}
 	}
 

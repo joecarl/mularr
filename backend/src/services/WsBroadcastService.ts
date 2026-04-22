@@ -33,6 +33,7 @@ interface WsMessage {
 export class WsBroadcastService {
 	private wss: WebSocketServer | null = null;
 	private intervals: NodeJS.Timeout[] = [];
+	private lastRestartingState = false;
 
 	private readonly amule = container.get(AmuleService);
 	private readonly amuled = container.get(AmuledService);
@@ -77,6 +78,9 @@ export class WsBroadcastService {
 
 		// System / VPN info at 5 min
 		this.intervals.push(setInterval(() => this.pollSystemInfo(), 300_000));
+
+		// Notify clients of restart state changes
+		this.intervals.push(setInterval(() => this.pollRestartingStatus(), 1000));
 	}
 
 	public stop(): void {
@@ -128,7 +132,7 @@ export class WsBroadcastService {
 	// ── Periodic broadcast handlers ────────────────────────────────────────────
 
 	private async pollFast(): Promise<void> {
-		if (this.openClientCount() === 0) return;
+		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
 		await Promise.allSettled([
 			this.media
 				.getTransfers()
@@ -146,7 +150,7 @@ export class WsBroadcastService {
 	}
 
 	private async pollLog(): Promise<void> {
-		if (this.openClientCount() === 0) return;
+		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
 		try {
 			const lines = await this.amuled.getLog(100);
 			this.broadcast({ type: 'amule:log', data: { lines } });
@@ -156,7 +160,7 @@ export class WsBroadcastService {
 	}
 
 	private async pollStatus(): Promise<void> {
-		if (this.openClientCount() === 0) return;
+		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
 		try {
 			const status = await this.amule.getStats();
 			this.broadcast({ type: 'amule:status', data: status });
@@ -166,12 +170,20 @@ export class WsBroadcastService {
 	}
 
 	private async pollServers(): Promise<void> {
-		if (this.openClientCount() === 0) return;
+		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
 		try {
 			const servers = await this.amule.getServers();
 			this.broadcast({ type: 'amule:servers', data: servers });
 		} catch (e) {
 			console.error('[WS] servers error:', (e as Error).message);
+		}
+	}
+
+	private pollRestartingStatus(): void {
+		const restarting = this.amuled.isRestarting;
+		if (restarting !== this.lastRestartingState) {
+			this.lastRestartingState = restarting;
+			this.broadcast({ type: 'amule:restarting', data: { restarting } });
 		}
 	}
 

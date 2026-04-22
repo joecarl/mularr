@@ -49,6 +49,7 @@ ENV LANG=en_US.UTF-8 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     amule-daemon \
     amule-utils \
+    tini \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./backend/
@@ -78,5 +79,6 @@ USER node
 EXPOSE 8940
 
 # Start the application
-ENTRYPOINT ["./entrypoint.sh"]
+# tini is used as PID 1 to properly reap zombie child processes (e.g. amuled after restart)
+ENTRYPOINT ["/usr/bin/tini", "--", "./entrypoint.sh"]
 CMD ["node", "backend/dist/index.js"]
