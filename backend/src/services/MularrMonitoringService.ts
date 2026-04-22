@@ -5,7 +5,9 @@ import { TelegramBotService } from './TelegramBotService';
 
 export class MularrMonitoringService {
 	private readonly checkInterval: number = 10 * 1000; // 10 seconds
+	private readonly periodicRestartIntervalHours: number = parseInt(process.env.AMULE_RESTART_INTERVAL_HOURS || '12');
 	private intervalId: NodeJS.Timeout | null = null;
+	private periodicRestartId: NodeJS.Timeout | null = null;
 	private gluetunFailures: number = 0;
 	private readonly maxGluetunFailures: number = 3;
 
@@ -25,6 +27,10 @@ export class MularrMonitoringService {
 		this.notify('🚀 Mularr Monitoring Service started');
 		this.check();
 		this.intervalId = setInterval(() => this.check(), this.checkInterval);
+		const periodicRestartInterval = this.periodicRestartIntervalHours * 60 * 60 * 1000;
+		if (periodicRestartInterval > 0) {
+			this.periodicRestartId = setInterval(() => this.periodicRestart(), periodicRestartInterval);
+		}
 	}
 
 	public stop() {
@@ -32,6 +38,17 @@ export class MularrMonitoringService {
 			clearInterval(this.intervalId);
 			this.intervalId = null;
 		}
+		if (this.periodicRestartId) {
+			clearInterval(this.periodicRestartId);
+			this.periodicRestartId = null;
+		}
+	}
+
+	private async periodicRestart() {
+		const hours = this.periodicRestartIntervalHours;
+		console.log(`Performing scheduled ${hours}h aMule daemon restart...`);
+		await this.notify(`🔁 Scheduled restart of aMule daemon (every ${hours}h).`);
+		await this.amuledService.restartDaemon();
 	}
 
 	private async notify(message: string) {
