@@ -39,7 +39,9 @@ export class QbittorrentController {
 
 		// Always generate a JWT as SID so the cookie value is always a safe,
 		// consistent format regardless of whether login was via credentials or API key.
-		const session = authService.generateToken(validCredentials ? username : '__apikey__');
+		// API-key logins get a non-expiring token so integrations like Sonarr/Radarr
+		// are never broken by token expiry (they do not re-authenticate on 401).
+		const session = authService.generateToken(validCredentials ? username : '__apikey__', validApiKey);
 
 		console.log('[QbittorrentController] Login successful for Sonarr/Radarr');
 		// Max-Age matches the JWT lifetime — cookie and token expire together.

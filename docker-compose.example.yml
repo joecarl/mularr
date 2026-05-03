@@ -40,7 +40,7 @@ services:
 
             # Gluetun integration will update the amule ports automatically if GLUETUN_ENABLED is true (if using Gluetun)
             - GLUETUN_ENABLED=false
-            - GLUETUN_API=http://gluetun:8000
+            - GLUETUN_API=http://gluetun:8000/v1
 
             # Customize the incoming and temp directory directory if needed
             - AMULE_INCOMING_DIR=/my-storage/downloads/mularr
@@ -50,5 +50,5 @@ services:
             # Auth (if no auth env vars are set, the web interface and API will be open without authentication, so make sure to set these if you are exposing the web interface or API to untrusted networks)
             - AUTH_USERNAME=admin # used to login to the mularr web interface and the qbitorrent api
             - AUTH_PASSWORD=admin # used to login to the mularr web interface and the qbitorrent api
-            - API_KEY=supersecretapikey # used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password without username for the qbittorrent api)
+            - API_KEY=supersecretapikey # used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password with the username 'apikey' for the qbittorrent api)
             - JWT_SECRET=supersecretjwtkey # used to sign JSON Web Tokens for API authentication (if not set, a random secret will be generated on startup, which means any existing tokens will become invalid after a restart)

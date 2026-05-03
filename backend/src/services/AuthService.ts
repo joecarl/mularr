@@ -58,7 +58,12 @@ export class AuthService {
 		}
 	}
 
-	generateToken(username: string): string {
+	generateToken(username: string, noExpiry = false): string {
+		if (noExpiry) {
+			// No expiry for API-key-based logins: apps like Sonarr/Radarr do not
+			// re-authenticate on 401, so expiring tokens would permanently break them.
+			return jwt.sign({ sub: username }, this.jwtSecret);
+		}
 		return jwt.sign({ sub: username }, this.jwtSecret, { expiresIn: '7d' });
 	}
 
@@ -72,30 +77,34 @@ export class AuthService {
 	}
 
 	/**
-	 * Verifies a JWT and returns a freshly-signed token with a new expiry.
-	 * Returns null if the token is invalid or already expired.
+	 * Verifies a JWT and returns a freshly-signed token.
+	 * Preserves the expiry behaviour of the original token: if it had no `exp`
+	 * claim (API-key login), the refreshed token also has no expiry.
+	 * Returns null if the token is invalid (wrong secret, malformed, etc.).
 	 */
 	refreshToken(token: string): string | null {
 		try {
 			const payload = jwt.verify(token, this.jwtSecret) as jwt.JwtPayload;
-			return jwt.sign({ sub: payload.sub }, this.jwtSecret, { expiresIn: '7d' });
+			return this.generateToken(payload.sub as string, !payload.exp);
 		} catch {
 			return null;
 		}
 	}
 
 	/**
-	 * Sets the SID cookie on the response. Max-Age is derived from the JWT
-	 * `exp` claim so the cookie lifetime always matches the token expiry.
+	 * Sets the SID cookie on the response. Max-Age is derived from the JWT `exp`
+	 * claim so credential-based sessions expire with the token. For API-key tokens
+	 * (no `exp` claim) a 10-year fallback is used so integrations like Sonarr/Radarr
+	 * are never broken by cookie expiry.
 	 */
 	setSidCookie(res: Response, token: string): void {
-		const DEFAULT_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
+		const NO_EXPIRY_MAX_AGE = 60 * 60 * 24 * 365 * 10; // 10 years in seconds
 		let maxAge: number;
 		try {
 			const payload = jwt.decode(token) as jwt.JwtPayload;
-			maxAge = payload?.exp ? payload.exp - Math.floor(Date.now() / 1000) : DEFAULT_MAX_AGE;
+			maxAge = payload?.exp ? payload.exp - Math.floor(Date.now() / 1000) : NO_EXPIRY_MAX_AGE;
 		} catch {
-			maxAge = DEFAULT_MAX_AGE;
+			maxAge = NO_EXPIRY_MAX_AGE;
 		}
 		res.setHeader('Set-Cookie', `SID=${token}; HttpOnly; Path=/; Max-Age=${maxAge}`);
 	}

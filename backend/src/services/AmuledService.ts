@@ -105,7 +105,7 @@ export class AmuledService {
 		const interval = 300;
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
-			if (!this.isDaemonRunning()) return true; // Process is dead
+			if (!await this.isDaemonRunning()) return true; // Process is dead
 			await new Promise((resolve) => setTimeout(resolve, interval));
 		}
 		return false;
@@ -146,7 +146,7 @@ export class AmuledService {
 			return;
 		}
 		// Remove stale lock files that prevent amuled from starting after a hard kill
-		for (const lockFile of ['amuled.lock', 'amuled.pid', '.lock']) {
+		for (const lockFile of ['amuled.lock', 'amuled.pid', '.lock', 'muleLock']) {
 			try {
 				fs.rmSync(path.join(this.configDir, lockFile));
 				console.log(`Removed stale lock file: ${lockFile}`);

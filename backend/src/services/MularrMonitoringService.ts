@@ -105,7 +105,11 @@ export class MularrMonitoringService {
 			if (shouldRestart) {
 				console.log(`${restartReason}. Restarting/Starting aMule daemon...`);
 				await this.notify(`${restartReason}. Restarting aMule...`);
-				await this.amuledService.restartDaemon();
+				if (isRunning) {
+					await this.amuledService.restartDaemon();
+				} else {
+					await this.amuledService.startDaemon();
+				}
 			}
 		} catch (error: any) {
 			console.error('Mularr Monitoring Service Error:', error.message);
