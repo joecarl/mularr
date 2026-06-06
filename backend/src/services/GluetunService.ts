@@ -1,4 +1,5 @@
 import axios from 'axios';
+import fs from 'fs';
 
 export class GluetunService {
 	private readonly apiBase: string;
@@ -33,8 +34,18 @@ export class GluetunService {
 	}
 
 	public async getPortForwarded(): Promise<number | null> {
+		const portFile = process.env.GLUETUN_PORT_FILE;
+		if (portFile) {
+			try {
+				const content = fs.readFileSync(portFile, 'utf-8').trim();
+				const port = parseInt(content);
+				if (!isNaN(port) && port > 0) return port;
+			} catch (e) {
+				// fall through to API
+			}
+		}
 		try {
-			const res = await axios.get(`${this.apiBase}/portforward`);
+			const res = await axios.get(`${this.apiBase}/portforward`, { timeout: 5000 });
 			return res.data?.port || null;
 		} catch (error) {
 			return null;
