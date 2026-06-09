@@ -45,11 +45,12 @@ ENV LANG=en_US.UTF-8 \
 # COPY build-amule.sh /tmp/build-amule.sh
 # RUN chmod +x /tmp/build-amule.sh && /tmp/build-amule.sh && rm /tmp/build-amule.sh
 
-# Install aMule from apt
+# Install tini; install aMule 3.0.0 via shared script
+COPY install-amule-gh-release.sh /tmp/install-amule.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    amule-daemon \
-    amule-utils \
     tini \
+    && bash /tmp/install-amule.sh 3.0.0 \
+    && rm /tmp/install-amule.sh \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./backend/

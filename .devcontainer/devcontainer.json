@@ -12,5 +12,5 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash ./.devcontainer/install-amule.sh && cd frontend && npm install && cd ../backend && npm install"
+	"postCreateCommand": "bash ./.devcontainer/setup-amule.sh && cd frontend && npm install && cd ../backend && npm install"
 }

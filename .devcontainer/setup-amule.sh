@@ -9,13 +9,16 @@ if [ -f /etc/alpine-release ]; then
     exit 0
 fi
 
-echo "Installing aMule for development..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AMULE_VERSION="3.0.0"
 
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
-sudo apt-get install -y amule-daemon amule-utils
+# sudo apt-get install -y amule-daemon amule-utils
+# For now, install from GitHub release to ensure we have the latest version.
+sudo bash "${SCRIPT_DIR}/../install-amule-gh-release.sh" "${AMULE_VERSION}"
 
-echo "aMule installation complete."
+echo "aMule ${AMULE_VERSION} installation complete."
 
 # -- Configuration Setup --
 # Dev uses default home directory for config
