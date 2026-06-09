@@ -8,9 +8,10 @@ import { WsService } from '../../services/WsService';
 import { TransfersContextService } from '../../services/TransfersContextService';
 import { fbytes } from '../../utils/formats';
 import { ListManager } from '../../utils/ListManager';
+import { Ed2kDownloadForm } from '../search/Ed2kDownloadForm';
+import { DEFAULT_VALUE, TransfersRows } from './TransferRows';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
-import { DEFAULT_VALUE, TransfersRows } from './TransferRows';
 
 export const NULL_VALUE = '-1';
 
@@ -237,5 +238,7 @@ export const TransfersView = component(() => {
 				});
 			},
 		},
+
+		ed2kForm: Ed2kDownloadForm({}),
 	});
 });

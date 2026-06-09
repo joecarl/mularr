@@ -8,7 +8,7 @@ import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
-import { BulkDownloadDialog } from './BulkDownloadDialog';
+import { Ed2kDownloadForm } from './Ed2kDownloadForm';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
@@ -24,7 +24,7 @@ const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof SearchResu
 ];
 
 interface ResultsRowsProps {
-	onDownload: (linkOrHash: string) => void;
+	onDownload: (hash: string) => void;
 	downloadingHashes: Signal<Set<string>>;
 	selectionMgr: RowSelectionManager;
 }
@@ -116,7 +116,6 @@ export const SearchView = component(() => {
 	const statusLog = signal('');
 	const searchQuery = signal('');
 	const searchType = signal(prefs.get('search.type', 'Global'));
-	const downloadLink = signal('');
 
 	const mgr = new ListManager<SearchResult, keyof SearchResult>({
 		defaultColumn: 'name',
@@ -203,29 +202,23 @@ export const SearchView = component(() => {
 	// Initial load: check if a search is already in progress
 	startPolling();
 
-	const download = async (linkOrHash?: string) => {
-		const targetLink = linkOrHash || downloadLink.get();
-		if (!targetLink) return;
-		const isHashDownload = !!linkOrHash;
+	const download = async (hash?: string) => {
+		if (!hash) return;
 		try {
-			if (isHashDownload) {
-				const s = new Set(downloadingHashes.get());
-				s.add(linkOrHash);
-				downloadingHashes.set(s);
-			}
-			await apiService.addDownload(targetLink);
+			const s = new Set(downloadingHashes.get());
+			s.add(hash);
+			downloadingHashes.set(s);
+
+			await apiService.addDownload(hash);
 			console.log('Download added successfully');
 			loadResults();
-			if (!isHashDownload) downloadLink.set('');
-			if (isHashDownload) mgr.clearSelection();
+			mgr.clearSelection();
 		} catch (e: any) {
 			await dialogService.alert('Error adding download: ' + e.message, 'Download Error');
 		} finally {
-			if (isHashDownload) {
-				const s = new Set(downloadingHashes.get());
-				s.delete(linkOrHash);
-				downloadingHashes.set(s);
-			}
+			const s = new Set(downloadingHashes.get());
+			s.delete(hash);
+			downloadingHashes.set(s);
 		}
 	};
 
@@ -274,31 +267,9 @@ export const SearchView = component(() => {
 		refreshBtn: { onclick: loadResults },
 		resultsList: { inner: statusLog },
 		resultsContainer: {
-			inner: () => ResultsRows(mgr.sortedItems, { onDownload: (linkOrHash) => download(linkOrHash), downloadingHashes, selectionMgr: mgr }),
+			inner: () => ResultsRows(mgr.sortedItems, { onDownload: (hash) => download(hash), downloadingHashes, selectionMgr: mgr }),
 		},
-		downloadInput: {
-			_ref: (el) => {
-				bindControlledInput(el, downloadLink);
-			},
-		},
-		downloadBtn: { onclick: () => download() },
-		bulkDownloadBtn: {
-			onclick: () => {
-				dialogService.open({
-					title: 'Bulk Import ED2K Links',
-					width: '500px',
-					render: (close) =>
-						BulkDownloadDialog({
-							onConfirm: async (links) => {
-								close();
-								await Promise.allSettled(links.map((l) => apiService.addDownload(l)));
-								statusLog.set(`Queued ${links.length} download(s).`);
-							},
-							onCancel: close,
-						}),
-				});
-			},
-		},
+		ed2kForm: Ed2kDownloadForm({ onAdded: loadResults }),
 		downloadSelectedBtn: {
 			disabled: () => !mgr.hasSelection.get(),
 			onclick: downloadSelected,
