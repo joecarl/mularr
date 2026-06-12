@@ -4,24 +4,40 @@ import { hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaProviderService, MediaSearchResult } from '../services/mediaprovider';
 
 /**
- * IndexerController provides a Torznab-compatible API for Sonarr and Radarr.
+ * IndexerController provides a Torznab-compatible API for Sonarr, Radarr and Lidarr.
  */
 export class IndexerController {
 	private readonly mediaProviderService = container.get(MediaProviderService);
 
 	handle = async (req: Request, res: Response) => {
-		const { t, q, season, ep, offset, limit, cat, imdbid, rid, director, year } = req.query;
+		const { t, q, season, ep, offset, limit, cat, imdbid, rid, director, year, artist, album } = req.query;
 
-		console.log(`[Indexer] Action: ${t}, Query: ${q}, IMDB: ${imdbid}, Cat: ${cat}`);
+		console.log(`[Indexer] Action: ${t}, Query: ${q}, IMDB: ${imdbid}, Artist: ${artist}, Album: ${album}, Cat: ${cat}`);
 
 		if (t === 'caps') {
 			return this.getCapabilities(res);
 		}
 
-		if (t === 'search' || t === 'tvsearch' || t === 'movie') {
-			// If `t` is missing, return a single fake item so clients (Radarr/Sonarr) receive at least one result.
-			if (!q && !imdbid) {
-				console.log('[Indexer] No query `q` nor `imdbid` provided — returning one fake item for compatibility');
+		if (t === 'search' || t === 'tvsearch' || t === 'movie' || t === 'music') {
+			// Music search (Lidarr): build the query from the structured
+			// artist/album params (Lidarr prefers them over free-text `q`
+			// when the caps advertise audio-search support). Values are
+			// trimmed; for self-titled albums Lidarr sends artist == album,
+			// deduped case-insensitively to avoid "X X" queries.
+			let musicQuery = '';
+			if (t === 'music') {
+				const parts = [artist, album]
+					.flat()
+					.filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+					.map((v) => v.trim());
+				musicQuery = parts.filter((p, i) => parts.findIndex((x) => x.toLowerCase() === p.toLowerCase()) === i).join(' ');
+			}
+
+			// If no search terms at all, return a single fake item so clients
+			// (Radarr/Sonarr/Lidarr) receive at least one result: their
+			// connection Test fails hard on an empty feed.
+			if (!q && !imdbid && !musicQuery) {
+				console.log('[Indexer] No search terms provided (q/imdbid/artist/album) — returning one fake item for compatibility');
 				const fakeItem = [
 					{
 						name: 'Mularr Test Item',
@@ -36,6 +52,12 @@ export class IndexerController {
 			}
 
 			let queryStr = (q as string) || '';
+
+			// Lidarr sends a literal empty `q=` alongside artist/album —
+			// fall back to the structured params whenever q is blank.
+			if (t === 'music' && !queryStr.trim()) {
+				queryStr = musicQuery;
+			}
 
 			// If no 'q' but has metadata (Radarr/Sonarr often do this first)
 			if (!queryStr && imdbid) {
@@ -90,13 +112,27 @@ export class IndexerController {
 
 	private getCapabilities(res: Response) {
 		res.header('Content-Type', 'application/xml');
+		// The search elements MUST live inside <searching> — the *arr caps
+		// parsers (shared NzbDrone.Core lineage) read xmlRoot.Element("searching")
+		// and ignore search elements placed anywhere else, silently falling
+		// back to their built-in defaults. Element names per those parsers:
+		// Lidarr reads "audio-search" (NOT "music-search" — kept below as the
+		// Jackett-convention alias for other consumers), Sonarr "tv-search",
+		// Radarr "movie-search". movie-search deliberately advertises only
+		// "q" (we return empty for imdbid-only queries, so advertising imdbid
+		// would make Radarr prefer an always-empty search tier); tv-search
+		// omits "rid" for the same reason.
 		const caps = `<?xml version="1.0" encoding="UTF-8"?>
 <caps>
-  <server title="Mularr" description="aMule Indexer for Sonarr/Radarr" />
+  <server title="Mularr" description="aMule Indexer for Sonarr/Radarr/Lidarr" />
   <limits max="100" default="50" />
-  <search available="yes" supportedParams="q" />
-  <tv-search available="yes" supportedParams="q,season,ep" />
-  <movie-search available="yes" supportedParams="q,imdbid" />
+  <searching>
+    <search available="yes" supportedParams="q" />
+    <tv-search available="yes" supportedParams="q,season,ep" />
+    <movie-search available="yes" supportedParams="q" />
+    <audio-search available="yes" supportedParams="q,artist,album" />
+    <music-search available="yes" supportedParams="q,artist,album" />
+  </searching>
   <categories>
     <category id="2000" name="Movies">
       <subcat id="2010" name="Foreign" />
@@ -105,6 +141,11 @@ export class IndexerController {
     <category id="5000" name="TV">
       <subcat id="5030" name="Foreign" />
       <subcat id="5040" name="HD" />
+    </category>
+    <category id="3000" name="Audio">
+      <subcat id="3010" name="MP3" />
+      <subcat id="3030" name="Audiobook" />
+      <subcat id="3040" name="Lossless" />
     </category>
   </categories>
 </caps>`;
@@ -147,7 +188,7 @@ export class IndexerController {
 <rss version="2.0" xmlns:torznab="http://torznab.com/schemas/2015/feed">
   <channel>
     <title>Mularr Indexer</title>
-    <description>aMule search results for Sonarr/Radarr</description>
+    <description>aMule search results for Sonarr/Radarr/Lidarr</description>
     <torznab:response offset="${offset}" total="${total}" />
     ${itemsXml}
   </channel>
