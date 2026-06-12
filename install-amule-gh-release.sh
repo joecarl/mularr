@@ -32,6 +32,13 @@ apt-get install -y --no-install-recommends wget
 wget -q --show-progress -O "${APPIMAGE_PATH}" "${APPIMAGE_URL}"
 chmod +x "${APPIMAGE_PATH}"
 
+# AppImages set magic bytes "AI\x02" at ELF header offset 8. Native kernels
+# ignore them, but they break binfmt_misc matching under QEMU (buildx
+# cross-builds fail with "cannot execute binary file: Exec format error").
+# Zero them before executing — the runtime doesn't need them, and this is a
+# no-op for correctness on native builds too.
+dd if=/dev/zero of="${APPIMAGE_PATH}" bs=1 seek=8 count=3 conv=notrunc status=none
+
 # Extract without FUSE
 cd /tmp && "${APPIMAGE_PATH}" --appimage-extract > /dev/null
 rm -rf "${INSTALL_DIR}"
