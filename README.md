@@ -1,6 +1,8 @@
 # Mularr
 
-**Mularr** is a powerful integration for **aMule** that provides a functional web interface with a nostalgia-infused retro touch. It bridges the gap between classic P2P and modern automation tools by offering **qBittorrent-compatible APIs** and **Torznab indexers**, making it seamless to use aMule with modern apps like Sonarr and Radarr.
+[![Docker Image](https://ghcr-badge.egpl.dev/joecarl/mularr/latest_tag?trim=major&label=ghcr.io%2Fjoecarl%2Fmularr&color=blue)](https://github.com/joecarl/mularr/pkgs/container/mularr)
+
+**Mularr** is a powerful integration for **aMule** that provides a functional web interface with a nostalgia-infused retro touch. It bridges the gap between classic P2P and modern automation tools by offering **qBittorrent-compatible APIs** and **Torznab indexers**, making it seamless to use aMule with apps like Sonarr and Radarr.
 
 It also includes an extension to use the **Telegram Network** as a download provider. This requires a real account (not a bot) to access groups/channels with media files.
 
@@ -18,7 +20,7 @@ It also includes an extension to use the **Telegram Network** as a download prov
 
 ---
 
-## 🚀 Quick Start with Docker
+## Quick Start with Docker 🐳
 
 The easiest way to get Mularr running is using Docker Compose:
 
@@ -46,7 +48,7 @@ Access the web UI at `http://localhost:8940`.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="https://games.copinstar.com/img/mularr/mularr01.png" alt="Transfers">
@@ -59,6 +61,9 @@ Access the web UI at `http://localhost:8940`.
 
 You can configure Mularr as both an indexer and a download client.
 
+> [!TIP]
+> In Sonarr/Radarr's configuration forms, click **Show Advanced** to reveal all required fields.
+
 To configure as indexer use the following settings:
 
 - **Type**: Torznab
@@ -69,7 +74,7 @@ To configure as download client use the following settings:
 - **Type**: qBittorrent
 - **URL Base**: `/api/as-qbittorrent`
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 Mularr is built primarily with TypeScript.
 
@@ -81,7 +86,7 @@ Mularr is built primarily with TypeScript.
 
 ---
 
-## Development Setup
+## 💻 Development Setup
 
 If you want to contribute or run Mularr you need docker & VS Code devcontainers.
 Open the project in the devcontainer and it automatically installs the needed dependencies.
