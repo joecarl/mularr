@@ -225,6 +225,16 @@ export class QbittorrentController {
 					added_on: Math.floor(Date.now() / 1000),
 					eta: t.timeLeft || 0,
 					category: t.categoryName,
+					// Report a "seed limit reached" ratio so Sonarr can remove the
+					// download after import (Completed Download Handling → Remove).
+					// Sonarr only removes a torrent when state is pausedUP/stoppedUP
+					// AND HasReachedSeedLimit: ratio_limit>=0 && (ratio_limit-ratio)
+					// <=0.001. ratio_limit defaults to -2 (use-global) which never
+					// trips since we expose no global max-ratio, so report 0/0
+					// explicitly. (Only consulted for completed pausedUP items —
+					// the state gate short-circuits this for in-progress downloads.)
+					ratio: 0,
+					ratio_limit: 0,
 				};
 			});
 
@@ -381,7 +391,13 @@ export class QbittorrentController {
 			case 7: // Paused
 				return 'pausedDL';
 			case 9: // Completed
-				return 'uploading';
+				// pausedUP (completed + not actively seeding), NOT uploading:
+				// both map to Sonarr's "Completed" so import still fires, but
+				// only pausedUP/stoppedUP lets Sonarr remove the download after
+				// import (with Remove Completed Downloads on). 'uploading' tells
+				// Sonarr it's still seeding, so it never removes it. aMule keeps
+				// sharing the file on eD2k regardless of what we report here.
+				return 'pausedUP';
 			case 3: // Hashing
 			case 2: // Waiting for Hash
 				return 'checkingDL';
