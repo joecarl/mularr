@@ -1,8 +1,28 @@
 import { createHash } from 'crypto';
 
 export function hashToBtih(hash: string): string {
-	const btih = createHash('sha1').update(hash).digest('hex'); // 40 chars hex
+	// Normalize to lowercase before hashing so the btih is identical whether it
+	// is computed from a search-result hash (used to build the magnet Sonarr
+	// grabs) or from a transfer hash (reported in torrents/info). Both must hash
+	// to the same 40-hex id or Sonarr cannot reconcile the grab with the
+	// download. No-op for the existing magnet path, whose input is already
+	// lowercase hex.
+	const btih = createHash('sha1').update(hash.toLowerCase()).digest('hex'); // 40 chars hex
 	return btih;
+}
+
+/**
+ * True if `clientHash` — a hash received from a qBittorrent API client such as
+ * Sonarr/Radarr — refers to the transfer identified by eD2k hash `ed2kHash`.
+ * Clients only ever know the fake 40-hex btih we advertise (sha1 of the eD2k
+ * hash), which is one-way, so the match is done forward: the client hash
+ * matches if it equals the eD2k hash directly (32-hex — internal/legacy
+ * callers) or its btih (40-hex). Case-insensitive.
+ */
+export function clientHashMatchesEd2k(ed2kHash: string | undefined, clientHash: string): boolean {
+	if (!ed2kHash || !clientHash) return false;
+	const c = clientHash.toLowerCase();
+	return ed2kHash.toLowerCase() === c || hashToBtih(ed2kHash) === c;
 }
 
 export function hashToFakeMagnet(hash: string): string {

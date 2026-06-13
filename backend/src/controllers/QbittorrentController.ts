@@ -5,7 +5,7 @@ import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
 import { AuthService } from '../services/AuthService';
-import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
+import { hashToBtih, extractHashFromMagnet, clientHashMatchesEd2k } from './qbittorrentMappings';
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
@@ -86,7 +86,8 @@ export class QbittorrentController {
 		const config = await this.amuledService.getConfig();
 		const categories = await this.amuleService.getCategories();
 		const transfers = await this.mediaProviderService.getTransfers();
-		const tr = transfers.list.find((t) => t.hash === hash);
+		// Sonarr sends the 40-hex btih we advertised; match it back to the eD2k transfer.
+		const tr = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
 
 		if (tr) {
 			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || config.incomingDir;
@@ -136,9 +137,12 @@ export class QbittorrentController {
 			return res.status(400).send('Setting category for all torrents is not supported');
 		}
 		const hashList = hashes.split('|');
+		// Resolve the btih(s) Sonarr sends back to eD2k hashes (one transfers fetch).
+		const transfers = await this.mediaProviderService.getTransfers();
 		for (const hash of hashList) {
 			if (!hash) continue;
-			await this.setCategoryForHash(hash, category);
+			const match = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+			await this.setCategoryForHash(match?.hash ?? hash, category);
 		}
 		res.send('');
 	};
@@ -201,7 +205,12 @@ export class QbittorrentController {
 				}
 
 				return {
-					hash: t.hash || 'unknown',
+					// Report the 40-hex btih (sha1 of the eD2k hash), NOT the raw
+					// eD2k hash: it must equal the infohash in the magnet Sonarr
+					// grabbed, or Sonarr can't match this download to its queue
+					// entry (→ no progress, no import). The validator calls above
+					// still use the real eD2k t.hash internally.
+					hash: t.hash ? hashToBtih(t.hash) : 'unknown',
 					name: t.name || 'Unknown',
 					size: t.size || 0,
 					progress: t.progress || 0,
@@ -235,7 +244,7 @@ export class QbittorrentController {
 
 		try {
 			const transfers = await this.mediaProviderService.getTransfers();
-			const tr = transfers.list.find((t) => t.hash === hash);
+			const tr = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
 			if (!tr) {
 				return res.status(404).send('Torrent not found');
 			}
@@ -323,10 +332,14 @@ export class QbittorrentController {
 			if (!hashes) return res.status(400).send('No hashes provided');
 
 			const hashList = hashes.split('|');
+			// Resolve the btih(s) Sonarr sends back to eD2k hashes. Fall back to
+			// the input when no current transfer matches (already eD2k, or the
+			// download is already gone — cancel is then a harmless no-op).
+			const transfers = await this.mediaProviderService.getTransfers();
 			for (const hash of hashList) {
-				if (hash) {
-					await this.mediaProviderService.sendDownloadCommand(hash, 'cancel');
-				}
+				if (!hash) continue;
+				const match = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+				await this.mediaProviderService.sendDownloadCommand(match?.hash ?? hash, 'cancel');
 			}
 			res.send('Ok.');
 		} catch (e: any) {
