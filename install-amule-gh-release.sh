@@ -25,8 +25,8 @@ INSTALL_DIR="/opt/amule"
 
 echo "Installing aMule ${AMULE_VERSION} (${AMULE_ARCH})..."
 
-# Ensure wget is available
-apt-get install -y --no-install-recommends wget
+# Ensure wget and ca-certificates are available (needed for HTTPS download)
+apt-get install -y --no-install-recommends ca-certificates wget
 
 # Download AppImage
 wget -q --show-progress -O "${APPIMAGE_PATH}" "${APPIMAGE_URL}"
@@ -56,5 +56,19 @@ for bin in amuled amulecmd; do
         exit 1
     fi
 done
+
+# Remove unnecessary files from the extracted AppImage to reduce image size
+rm -rf \
+    "${INSTALL_DIR}/usr/share/doc" \
+    "${INSTALL_DIR}/usr/share/man" \
+    "${INSTALL_DIR}/usr/share/locale" \
+    "${INSTALL_DIR}/usr/share/icons" \
+    "${INSTALL_DIR}/usr/share/applications" \
+    "${INSTALL_DIR}/usr/share/pixmaps" \
+    "${INSTALL_DIR}"/*.desktop \
+    "${INSTALL_DIR}"/.DirIcon
+
+# Remove wget and ca-certificates; they were only needed for the download
+apt-get purge -y --auto-remove ca-certificates wget
 
 echo "aMule ${AMULE_VERSION} installed."

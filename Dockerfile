@@ -31,27 +31,13 @@ FROM node:24-trixie
 
 WORKDIR /app
 
-# Configurar Locales para soportar UTF-8 (tildes, ñ, etc)
-RUN apt-get update && apt-get install -y --no-install-recommends locales \
-    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
-    && locale-gen en_US.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
-
-# Compile and install aMule from source (disabled: using apt install above)
-# COPY build-amule.sh /tmp/build-amule.sh
-# RUN chmod +x /tmp/build-amule.sh && /tmp/build-amule.sh && rm /tmp/build-amule.sh
-
 # Install tini; install aMule 3.0.0 via shared script
 COPY install-amule-gh-release.sh /tmp/install-amule.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tini \
-    && bash /tmp/install-amule.sh 3.0.0 \
-    && rm /tmp/install-amule.sh \
-    && rm -rf /var/lib/apt/lists/*
+	tini \
+	&& bash /tmp/install-amule.sh 3.0.0 \
+	&& rm /tmp/install-amule.sh \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --omit=dev
