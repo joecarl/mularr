@@ -68,6 +68,46 @@ rm -rf \
     "${INSTALL_DIR}"/*.desktop \
     "${INSTALL_DIR}"/.DirIcon
 
+# Remove GUI-only binaries (only amuled and amulecmd are needed in headless mode)
+rm -f \
+    "${INSTALL_DIR}/usr/bin/amule" \
+    "${INSTALL_DIR}/usr/bin/amulegui" \
+    "${INSTALL_DIR}/usr/bin/amuleweb" \
+    "${INSTALL_DIR}/usr/bin/wxcas" \
+    "${INSTALL_DIR}/usr/bin/alc" \
+    "${INSTALL_DIR}/usr/bin/alcc" \
+    "${INSTALL_DIR}/usr/bin/cas"
+
+# Remove GUI-only libraries not needed by amuled/amulecmd
+rm -f \
+    "${INSTALL_DIR}/usr/lib/libgtk-3.so"* \
+    "${INSTALL_DIR}/usr/lib/libgdk-3.so"* \
+    "${INSTALL_DIR}/usr/lib/librsvg-2.so"* \
+    "${INSTALL_DIR}/usr/lib/libicudata.so"* \
+    "${INSTALL_DIR}/usr/lib/libicuuc.so"* \
+    "${INSTALL_DIR}/usr/lib/libepoxy.so"* \
+    "${INSTALL_DIR}/usr/lib/libcairo.so"* \
+    "${INSTALL_DIR}/usr/lib/libcairo-gobject.so"* \
+    "${INSTALL_DIR}/usr/lib/libpango"* \
+    "${INSTALL_DIR}/usr/lib/libatk"* \
+    "${INSTALL_DIR}/usr/lib/libatspi.so"* \
+    "${INSTALL_DIR}/usr/lib/libgdk_pixbuf"* \
+    "${INSTALL_DIR}/usr/lib/libX"* \
+    "${INSTALL_DIR}/usr/lib/libwayland"* \
+    "${INSTALL_DIR}/usr/lib/libxkbcommon.so"* \
+    "${INSTALL_DIR}/usr/lib/libxcb"* \
+    "${INSTALL_DIR}/usr/lib/libayatana"* \
+    "${INSTALL_DIR}/usr/lib/libdbusmenu"* \
+    "${INSTALL_DIR}/usr/lib/libcolord.so"* \
+    "${INSTALL_DIR}/usr/lib/libcups.so"* \
+    "${INSTALL_DIR}/usr/lib/libgd.so"* \
+    "${INSTALL_DIR}/usr/lib/libwebp.so"* \
+    "${INSTALL_DIR}/usr/lib/libtiff.so"* \
+    "${INSTALL_DIR}/usr/lib/libjpeg.so"* \
+    "${INSTALL_DIR}/usr/lib/libpng16.so"* \
+    "${INSTALL_DIR}/usr/lib/libgraphite2.so"*
+rm -rf "${INSTALL_DIR}/usr/lib/girepository-1.0"
+
 # Remove wget and ca-certificates; they were only needed for the download
 apt-get purge -y --auto-remove ca-certificates wget
 
