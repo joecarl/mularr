@@ -26,6 +26,9 @@ COPY backend/ ./
 COPY app-manifest.json ../
 RUN npm run build
 
+# Remove devDependencies from node_modules before copying to production image
+RUN npm prune --omit=dev
+
 # Stage 3: Production Image
 FROM node:24-trixie-slim
 
@@ -41,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install --omit=dev
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 
 # Copy backend build results
 COPY --from=backend-builder /app/backend/dist ./backend/dist
