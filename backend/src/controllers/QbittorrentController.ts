@@ -273,10 +273,19 @@ export class QbittorrentController {
 		console.log('[QbittorrentController] Add torrent requested');
 		try {
 			// qBittorrent transmits URLs in a field called 'urls'
-			const { urls, category, paused } = req.body;
+			const { urls, category, paused, stopped } = req.body;
 			if (!urls) {
 				return res.status(400).send('No URLs provided');
 			}
+
+			// Sonarr/Radarr send the initial-state flag as a urlencoded form
+			// value, i.e. the STRING "false"/"true" (param name "paused" pre
+			// qBit API 2.11, "stopped" after). A bare `if (paused)` treats the
+			// string "false" as truthy and pauses every download — they then
+			// sit in aMule's queue paused forever, since the *arr client added
+			// them as Start and never calls resume. Only pause on an explicit
+			// true (boolean or string).
+			const shouldPause = paused === true || paused === 'true' || stopped === true || stopped === 'true';
 
 			const urlList = typeof urls === 'string' ? urls.split('\n') : urls;
 
@@ -311,7 +320,7 @@ export class QbittorrentController {
 					await this.amuleService.setFileCategory(hash, categoryId || 0);
 				}
 
-				if (paused) {
+				if (shouldPause) {
 					console.log(`[QbittorrentController] Pausing download for hash ${hash}`);
 					await this.amuleService.pauseDownload(hash);
 				}
