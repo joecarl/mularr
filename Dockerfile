@@ -27,7 +27,7 @@ COPY app-manifest.json ../
 RUN npm run build
 
 # Stage 3: Production Image
-FROM node:24-trixie
+FROM node:24-trixie-slim
 
 WORKDIR /app
 
@@ -35,6 +35,7 @@ WORKDIR /app
 COPY install-amule-gh-release.sh /tmp/install-amule.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	tini \
+	procps \
 	&& bash /tmp/install-amule.sh 3.0.0 \
 	&& rm /tmp/install-amule.sh \
 	&& rm -rf /var/lib/apt/lists/*
