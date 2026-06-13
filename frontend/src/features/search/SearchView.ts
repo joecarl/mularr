@@ -8,9 +8,23 @@ import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
+import { ContextMenuItem, ContextMenuService } from '../../services/ContextMenuService';
 import { Ed2kDownloadForm } from './Ed2kDownloadForm';
 import tpl from './SearchView.html';
 import './SearchView.css';
+
+async function buildContextMenuActions(result: SearchResult, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
+	const actions: ContextMenuItem[] = [];
+	if (result.provider === 'amule' && result.link) {
+		const ed2kLink = result.link;
+		actions.push({
+			label: 'Copy ed2k Link',
+			icon: '🔗',
+			onClick: () => navigator.clipboard.writeText(ed2kLink),
+		});
+	}
+	return actions;
+}
 
 const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof SearchResult; dir: 'asc' | 'desc' }[] = [
 	{ value: 'name-asc', label: 'Name A→Z', col: 'name', dir: 'asc' },
@@ -33,6 +47,7 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 		const onDownload = props!.onDownload;
 		const downloadingHashes = props!.downloadingHashes;
 		const selectionMgr = props!.selectionMgr;
+		const ctxMenu = services.get(ContextMenuService);
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(res.get().hash || ''));
 		const isDownloading = computed(() => downloadingHashes.get().has(res.get().hash || ''));
 		const isDisabled = computed(() => isDownloading.get() || res.get().downloadStatus === 1 || res.get().downloadStatus === 2);
@@ -48,6 +63,16 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 				'status-downloaded': () => res.get().downloadStatus === 1,
 				'status-queued': () => res.get().downloadStatus === 2,
 				selected: isSelected,
+			},
+			oncontextmenu: async (e: MouseEvent) => {
+				e.preventDefault();
+				const result = res.get();
+				const hash = result.hash;
+				if (hash) {
+					selectionMgr.handleRowSelection(e, hash, l.get());
+				}
+				const actions = await buildContextMenuActions(result, selectionMgr);
+				ctxMenu.show(e, actions);
 			},
 			onclick: (e: MouseEvent) => {
 				const hash = res.get().hash;

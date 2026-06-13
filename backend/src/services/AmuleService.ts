@@ -261,6 +261,7 @@ export class AmuleService {
 					const sizeFull = dbRecord.size || 0;
 					const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
 					//console.log('File marked as completed in DB:', dbRecord.hash, dbRecord);
+					const link = AmuleService.buildEd2kLink(dbRecord.name, sizeFull, dbRecord.hash);
 
 					return {
 						rawLine: `> ${dbRecord.name} [${mbSize} MB] Completed 100%`,
@@ -271,7 +272,7 @@ export class AmuleService {
 						statusId: 9, // Completed
 						stopped: false,
 						hash: dbRecord.hash,
-						link: '',
+						link: link,
 						completed: sizeFull,
 						speed: 0,
 						sources: 0,
@@ -399,9 +400,12 @@ export class AmuleService {
 		return results;
 	}
 
-	// static buildEd2kLink(name: string, size: number, hash: string): string {
-	// 	return `ed2k://|file|${encodeURIComponent(name)}|${size}|${hash}|/`;
-	// }
+	/**
+	 * Construct a proper ed2k link: ed2k://|file|NAME|SIZE|HASH|/
+	 */
+	static buildEd2kLink(name: string, size: number, hash: string): string {
+		return `ed2k://|file|${encodeURIComponent(name)}|${size}|${hash.toUpperCase()}|/`;
+	}
 
 	async getSearchResults() {
 		try {
@@ -410,8 +414,7 @@ export class AmuleService {
 			if (results && results.files) {
 				const list = results.files.map((file) => {
 					const hash = file.hash.toString('hex');
-					// Construct a proper ed2k link: ed2k://|file|NAME|SIZE|HASH|/
-					//const ed2k = AmuleService.buildEd2kLink(file.fileName, file.sizeFull, hash);
+					const ed2k = AmuleService.buildEd2kLink(file.fileName, file.sizeFull, hash);
 
 					return {
 						name: file.fileName,
@@ -420,7 +423,7 @@ export class AmuleService {
 						completeSources: file.completeSourceCount,
 						downloadStatus: file.downloadStatus,
 						type: '',
-						//link: ed2k,
+						link: ed2k,
 						hash: hash,
 						provider: 'amule',
 					};

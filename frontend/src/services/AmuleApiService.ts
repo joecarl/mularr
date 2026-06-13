@@ -113,6 +113,7 @@ export interface Transfer extends AmuleFile {
 	addedOn?: number;
 	isCompleted?: boolean;
 	provider?: string;
+	link?: string;
 	/** Resolved absolute path to the file on disk. */
 	filePath?: string;
 	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
@@ -217,6 +218,7 @@ export interface SearchResult {
 	name: string;
 	size: number;
 	hash: string;
+	link?: string;
 	type?: string;
 	sources?: string;
 	downloadStatus?: number;

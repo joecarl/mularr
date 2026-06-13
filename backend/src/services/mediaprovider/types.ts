@@ -34,6 +34,7 @@ export interface MediaSearchResult {
 	name: string;
 	size: number;
 	hash: string;
+	link?: string;
 	sources?: number;
 	completeSources?: number;
 	downloadStatus?: number;

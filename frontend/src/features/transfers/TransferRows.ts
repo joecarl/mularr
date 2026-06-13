@@ -92,6 +92,17 @@ async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSele
 		});
 	}
 
+	// ---- ed2k link action (amule only) ----
+	if (transfer.provider === 'amule' && transfer.link) {
+		const ed2kLink = transfer.link;
+		actions.push({ separator: true });
+		actions.push({
+			label: 'Copy ed2k Link',
+			icon: '🔗',
+			onClick: () => navigator.clipboard.writeText(ed2kLink),
+		});
+	}
+
 	return actions;
 }
 
@@ -137,12 +148,12 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 			},
 			oncontextmenu: async (e: MouseEvent) => {
 				e.preventDefault();
-				const hash = t.get().hash;
+				const transfer = t.get();
+				const hash = transfer.hash;
 				if (hash) {
 					selectionMgr.handleRowSelection(e, hash, l.get());
 					onRowClick(hash);
 				}
-				const transfer = t.get();
 				const actions = await buildContextMenuActions(transfer, selectionMgr);
 				ctxMenu.show(e, actions);
 			},

@@ -20,6 +20,7 @@ export class AmuleMediaProvider implements IMediaProvider {
 				name: f.name,
 				size: f.size,
 				hash: f.hash,
+				link: f.link,
 				sources: f.sources,
 				completeSources: f.completeSources,
 				downloadStatus: f.downloadStatus,
