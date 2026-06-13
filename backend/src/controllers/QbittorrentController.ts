@@ -317,7 +317,14 @@ export class QbittorrentController {
 
 				if (categoryId) {
 					console.log(`[QbittorrentController] Setting category ID ${categoryId} for hash ${hash}`);
-					await this.amuleService.setFileCategory(hash, categoryId || 0);
+					// Use MediaProviderService (not amuleService) so the category
+					// is persisted to mularr's DB, not only set in aMule over EC.
+					// getTransfers reports categoryName from the DB record, so
+					// without this the download surfaces under the DEFAULT
+					// category and Sonarr's torrents/info?category=<TvCat> filter
+					// drops it — it never enters Sonarr's queue. Mirrors what the
+					// setCategory endpoint already does.
+					await this.mediaProviderService.setFileCategory(hash, categoryId);
 				}
 
 				if (shouldPause) {
