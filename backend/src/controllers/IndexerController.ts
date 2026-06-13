@@ -68,11 +68,21 @@ export class IndexerController {
 				return this.renderRss(res, [], cat as string);
 			}
 
-			// If it's a TV search, add season/ep to query
-			if (t === 'tvsearch') {
-				if (season) queryStr += ` S${season.toString().padStart(2, '0')}`;
-				if (ep) queryStr += ` E${ep.toString().padStart(2, '0')}`;
-			}
+			// tvsearch: search by the title Sonarr put in `q` and nothing
+			// else. season/ep arrive as separate Torznab params, NOT inside
+			// `q` — appending them to the eD2k query (in any token form)
+			// only narrows it against the network's inconsistent episode
+			// naming and loses real content. The episode, language and
+			// quality matching is Sonarr's job: it parses each returned
+			// release name and rejects what doesn't fit (verified against
+			// Sonarr's search decision specs). So leave `q` as formatted and
+			// let the candidates flow back. (season/ep stay destructured for
+			// logging/clarity but are intentionally unused.)
+			//
+			// Trade-off: a tvsearch returns every episode's releases for the
+			// show. Automatic search is unaffected (only matches are grabbed);
+			// interactive search shows the non-matching ones greyed-out with a
+			// "Wrong episode" rejection — noisier list, but never grabbable.
 
 			// Radarr/Sonarr "Test" often sends 't=movie' or 't=search' without 'q'.
 			if (!queryStr.trim()) {
@@ -83,11 +93,40 @@ export class IndexerController {
 			try {
 				await this.mediaProviderService.startSearch(queryStr);
 
-				while (true) {
-					const searchStatus = await this.mediaProviderService.getSearchStatus();
-					console.log(`[Indexer] Search progress: ${Math.floor(searchStatus.progress * 100)}%`);
-					await new Promise((r) => setTimeout(r, 1000));
-					if (searchStatus.progress >= 1) break;
+				// Gather results until the set stops growing, not just until
+				// the EC "progress" hits 100%. progress reaches 1 as soon as
+				// the search is dispatched and the first responses land, but a
+				// global eD2k search keeps trickling results back for many
+				// seconds after that — returning at progress>=1 yields a small,
+				// non-deterministic early snapshot (observed: ~17 vs ~126 for
+				// the same query given more time), which silently drops
+				// long-tail releases (minority languages, rarer rips).
+				//
+				// Tuned for completeness ("fuller" over "faster"): poll the
+				// accumulating result set and only stop once its size has been
+				// stable across STABLE_POLLS consecutive polls AND the search
+				// reports done, or once MAX_WAIT_MS elapses. No early-exit on a
+				// result-count threshold — we want the full set, accepting up
+				// to ~MAX_WAIT_MS of latency on interactive searches (well
+				// within Sonarr/Radarr's request timeout).
+				const POLL_MS = 1500;
+				const MAX_WAIT_MS = 12000;
+				const STABLE_POLLS = 3;
+				const startedAt = Date.now();
+				let lastCount = -1;
+				let stable = 0;
+				while (Date.now() - startedAt < MAX_WAIT_MS) {
+					await new Promise((r) => setTimeout(r, POLL_MS));
+					const status = await this.mediaProviderService.getSearchStatus();
+					const current = (await this.mediaProviderService.getSearchResults()).list.length;
+					if (current === lastCount) {
+						stable++;
+						if (status.progress >= 1 && stable >= STABLE_POLLS) break;
+					} else {
+						stable = 0;
+					}
+					lastCount = current;
+					console.log(`[Indexer] Search progress: ${Math.floor(status.progress * 100)}%, results so far: ${current}`);
 				}
 
 				const results = await this.mediaProviderService.getSearchResults();
