@@ -5,7 +5,7 @@ import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
 import { AuthService } from '../services/AuthService';
-import { hashToBtih, extractHashFromMagnet } from './qbittorrentMappings';
+import { hashToBtih, extractHashFromMagnet, clientHashMatchesMularrHash } from './qbittorrentMappings';
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
@@ -86,7 +86,8 @@ export class QbittorrentController {
 		const config = await this.amuledService.getConfig();
 		const categories = await this.amuleService.getCategories();
 		const transfers = await this.mediaProviderService.getTransfers();
-		const tr = transfers.list.find((t) => t.hash === hash);
+		// Sonarr sends the 40-hex btih we advertised; match it back to the transfer.
+		const tr = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 
 		if (tr) {
 			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || config.incomingDir;
@@ -136,9 +137,12 @@ export class QbittorrentController {
 			return res.status(400).send('Setting category for all torrents is not supported');
 		}
 		const hashList = hashes.split('|');
+		// Resolve the btih(s) Sonarr sends back to transfer hashes (one fetch).
+		const transfers = await this.mediaProviderService.getTransfers();
 		for (const hash of hashList) {
 			if (!hash) continue;
-			await this.setCategoryForHash(hash, category);
+			const match = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
+			await this.setCategoryForHash(match?.hash ?? hash, category);
 		}
 		res.send('');
 	};
@@ -201,7 +205,12 @@ export class QbittorrentController {
 				}
 
 				return {
-					hash: t.hash || 'unknown',
+					// Report the 40-hex btih (sha1 of the transfer hash), not the
+					// raw hash: it must equal the infohash in the magnet Sonarr
+					// grabbed, or Sonarr can't match this download to its queue
+					// entry (no progress, no import). The validator calls above
+					// still use the real t.hash internally.
+					hash: t.hash ? hashToBtih(t.hash) : 'unknown',
 					name: t.name || 'Unknown',
 					size: t.size || 0,
 					progress: t.progress || 0,
@@ -216,6 +225,14 @@ export class QbittorrentController {
 					added_on: Math.floor(Date.now() / 1000),
 					eta: t.timeLeft || 0,
 					category: t.categoryName,
+					// Report a "seed limit reached" ratio so Sonarr removes the
+					// download after import. Sonarr only removes when state is
+					// pausedUP/stoppedUP AND HasReachedSeedLimit (ratio_limit>=0
+					// && ratio_limit-ratio<=0.001); its -2 (use-global) default
+					// never trips since we expose no global max-ratio, so report
+					// 0/0. Only consulted for completed pausedUP items.
+					ratio: 0,
+					ratio_limit: 0,
 				};
 			});
 
@@ -235,7 +252,7 @@ export class QbittorrentController {
 
 		try {
 			const transfers = await this.mediaProviderService.getTransfers();
-			const tr = transfers.list.find((t) => t.hash === hash);
+			const tr = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 			if (!tr) {
 				return res.status(404).send('Torrent not found');
 			}
@@ -264,10 +281,18 @@ export class QbittorrentController {
 		console.log('[QbittorrentController] Add torrent requested');
 		try {
 			// qBittorrent transmits URLs in a field called 'urls'
-			const { urls, category, paused } = req.body;
+			const { urls, category, paused, stopped } = req.body;
 			if (!urls) {
 				return res.status(400).send('No URLs provided');
 			}
+
+			// Sonarr/Radarr send the initial-state flag as a urlencoded STRING
+			// "false"/"true" (param "paused" pre qBit API 2.11, "stopped" after).
+			// A bare `if (paused)` treats the string "false" as truthy and pauses
+			// every download — they then sit paused in aMule's queue forever,
+			// since the *arr client added them as Start and never resumes. So
+			// pause only on an explicit true (boolean or string).
+			const shouldPause = paused === true || paused === 'true' || stopped === true || stopped === 'true';
 
 			const urlList = typeof urls === 'string' ? urls.split('\n') : urls;
 
@@ -299,10 +324,16 @@ export class QbittorrentController {
 
 				if (categoryId) {
 					console.log(`[QbittorrentController] Setting category ID ${categoryId} for hash ${hash}`);
-					await this.amuleService.setFileCategory(hash, categoryId || 0);
+					// Use MediaProviderService (not amuleService) so the category
+					// persists to mularr's DB, not only in aMule over EC.
+					// getTransfers reads categoryName from the DB record, so
+					// without this the download surfaces under the DEFAULT
+					// category and Sonarr's torrents/info?category= filter drops
+					// it — it never enters the queue. Mirrors the setCategory endpoint.
+					await this.mediaProviderService.setFileCategory(hash, categoryId);
 				}
 
-				if (paused) {
+				if (shouldPause) {
 					console.log(`[QbittorrentController] Pausing download for hash ${hash}`);
 					await this.amuleService.pauseDownload(hash);
 				}
@@ -323,10 +354,14 @@ export class QbittorrentController {
 			if (!hashes) return res.status(400).send('No hashes provided');
 
 			const hashList = hashes.split('|');
+			// Resolve the btih(s) Sonarr sends back to transfer hashes, falling
+			// back to the input when no transfer matches (raw hash, or the
+			// download is already gone — cancel is then a harmless no-op).
+			const transfers = await this.mediaProviderService.getTransfers();
 			for (const hash of hashList) {
-				if (hash) {
-					await this.mediaProviderService.sendDownloadCommand(hash, 'cancel');
-				}
+				if (!hash) continue;
+				const match = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
+				await this.mediaProviderService.sendDownloadCommand(match?.hash ?? hash, 'cancel');
 			}
 			res.send('Ok.');
 		} catch (e: any) {
@@ -352,7 +387,12 @@ export class QbittorrentController {
 			case 7: // Paused
 				return 'pausedDL';
 			case 9: // Completed
-				return 'uploading';
+				// pausedUP, NOT uploading: both map to Sonarr's "Completed" so
+				// import fires, but only pausedUP/stoppedUP lets Sonarr remove
+				// the download after import (with Remove Completed Downloads on).
+				// 'uploading' reads as still seeding, so it's never removed.
+				// aMule keeps sharing the file regardless of what we report.
+				return 'pausedUP';
 			case 3: // Hashing
 			case 2: // Waiting for Hash
 				return 'checkingDL';

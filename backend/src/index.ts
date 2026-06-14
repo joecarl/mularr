@@ -125,7 +125,7 @@ async function main() {
 	app.use('/api/extensions', withAuth(extensionsRoutes()));
 	app.use('/api/telegram', withAuth(telegramRoutes()));
 	app.use('/api/as-qbittorrent/api/v2', qbittorrentRoutes()); // manages its own auth internally
-	app.use('/api/as-torznab-indexer', withAuth(indexerRoutes())); // Torznab indexer for Sonarr/Radarr
+	app.use('/api/as-torznab-indexer', withAuth(indexerRoutes())); // Torznab indexer for Sonarr/Radarr/Lidarr
 	app.use('/api/blacklist', withAuth(blacklistRoutes()));
 
 	// -- Serve static files from the 'public' folder ------------------------------

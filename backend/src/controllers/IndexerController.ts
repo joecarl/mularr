@@ -4,24 +4,38 @@ import { hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaProviderService, MediaSearchResult } from '../services/mediaprovider';
 
 /**
- * IndexerController provides a Torznab-compatible API for Sonarr and Radarr.
+ * IndexerController provides a Torznab-compatible API for Sonarr, Radarr and Lidarr.
  */
 export class IndexerController {
 	private readonly mediaProviderService = container.get(MediaProviderService);
 
 	handle = async (req: Request, res: Response) => {
-		const { t, q, season, ep, offset, limit, cat, imdbid, rid, director, year } = req.query;
+		const { t, q, season, ep, offset, limit, cat, imdbid, rid, director, year, artist, album } = req.query;
 
-		console.log(`[Indexer] Action: ${t}, Query: ${q}, IMDB: ${imdbid}, Cat: ${cat}`);
+		console.log(`[Indexer] Action: ${t}, Query: ${q}, IMDB: ${imdbid}, Artist: ${artist}, Album: ${album}, Cat: ${cat}`);
 
 		if (t === 'caps') {
 			return this.getCapabilities(res);
 		}
 
-		if (t === 'search' || t === 'tvsearch' || t === 'movie') {
-			// If `t` is missing, return a single fake item so clients (Radarr/Sonarr) receive at least one result.
-			if (!q && !imdbid) {
-				console.log('[Indexer] No query `q` nor `imdbid` provided — returning one fake item for compatibility');
+		if (t === 'search' || t === 'tvsearch' || t === 'movie' || t === 'music') {
+			// Music search (Lidarr): build the query from the structured
+			// artist/album params (Lidarr prefers them over free-text `q`).
+			// Values are trimmed and deduped case-insensitively, since
+			// self-titled albums arrive as artist == album.
+			let musicQuery = '';
+			if (t === 'music') {
+				const parts = [artist, album]
+					.flat()
+					.filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+					.map((v) => v.trim());
+				musicQuery = parts.filter((p, i) => parts.findIndex((x) => x.toLowerCase() === p.toLowerCase()) === i).join(' ');
+			}
+
+			// With no search terms, return one fake item: the *arr
+			// connection Test fails hard on an empty feed.
+			if (!q && !imdbid && !musicQuery) {
+				console.log('[Indexer] No search terms provided (q/imdbid/artist/album) — returning one fake item for compatibility');
 				const fakeItem = [
 					{
 						name: 'Mularr Test Item',
@@ -37,6 +51,12 @@ export class IndexerController {
 
 			let queryStr = (q as string) || '';
 
+			// Lidarr sends a literal empty `q=` alongside artist/album —
+			// fall back to the structured params whenever q is blank.
+			if (t === 'music' && !queryStr.trim()) {
+				queryStr = musicQuery;
+			}
+
 			// If no 'q' but has metadata (Radarr/Sonarr often do this first)
 			if (!queryStr && imdbid) {
 				// In a real eMule world, finding by IMDB directly is hard.
@@ -46,11 +66,14 @@ export class IndexerController {
 				return this.renderRss(res, [], cat as string);
 			}
 
-			// If it's a TV search, add season/ep to query
-			if (t === 'tvsearch') {
-				if (season) queryStr += ` S${season.toString().padStart(2, '0')}`;
-				if (ep) queryStr += ` E${ep.toString().padStart(2, '0')}`;
-			}
+			// tvsearch: search by the title in `q` only. season/ep arrive as
+			// separate Torznab params, not inside `q`; appending them narrows
+			// the eD2k query against the network's inconsistent episode naming
+			// and loses real content. Sonarr does the episode/language/quality
+			// matching itself, rejecting releases that don't fit, so we let all
+			// candidates flow back. (season/ep stay destructured for logging.)
+			// Trade-off: a tvsearch returns every episode's releases; automatic
+			// search only grabs matches, interactive greys out the rest.
 
 			// Radarr/Sonarr "Test" often sends 't=movie' or 't=search' without 'q'.
 			if (!queryStr.trim()) {
@@ -61,11 +84,33 @@ export class IndexerController {
 			try {
 				await this.mediaProviderService.startSearch(queryStr);
 
-				while (true) {
-					const searchStatus = await this.mediaProviderService.getSearchStatus();
-					console.log(`[Indexer] Search progress: ${Math.floor(searchStatus.progress * 100)}%`);
-					await new Promise((r) => setTimeout(r, 1000));
-					if (searchStatus.progress >= 1) break;
+				// Gather until the result set stops growing, not just until EC
+				// progress hits 100%. progress reaches 1 as soon as the first
+				// responses land, but a global eD2k search keeps trickling
+				// results for many seconds; returning early yields a small,
+				// non-deterministic snapshot (observed ~17 vs ~126) that drops
+				// long-tail releases. So poll the set and stop only once its
+				// size is stable across STABLE_POLLS polls AND the search
+				// reports done, or MAX_WAIT_MS elapses — favouring completeness
+				// over speed, within the *arr request timeout.
+				const POLL_MS = 1500;
+				const MAX_WAIT_MS = 12000;
+				const STABLE_POLLS = 3;
+				const startedAt = Date.now();
+				let lastCount = -1;
+				let stable = 0;
+				while (Date.now() - startedAt < MAX_WAIT_MS) {
+					await new Promise((r) => setTimeout(r, POLL_MS));
+					const status = await this.mediaProviderService.getSearchStatus();
+					const current = (await this.mediaProviderService.getSearchResults()).list.length;
+					if (current === lastCount) {
+						stable++;
+						if (status.progress >= 1 && stable >= STABLE_POLLS) break;
+					} else {
+						stable = 0;
+					}
+					lastCount = current;
+					console.log(`[Indexer] Search progress: ${Math.floor(status.progress * 100)}%, results so far: ${current}`);
 				}
 
 				const results = await this.mediaProviderService.getSearchResults();
@@ -90,13 +135,24 @@ export class IndexerController {
 
 	private getCapabilities(res: Response) {
 		res.header('Content-Type', 'application/xml');
+		// Search elements MUST live inside <searching> — the *arr caps parsers
+		// (shared NzbDrone.Core lineage) only read elements there and otherwise
+		// fall back to built-in defaults. Names per those parsers: Lidarr
+		// "audio-search" ("music-search" kept as a Jackett alias), Sonarr
+		// "tv-search", Radarr "movie-search". movie-search advertises only "q"
+		// (imdbid-only queries return empty, so advertising imdbid would make
+		// Radarr prefer an always-empty tier); tv-search omits "rid" likewise.
 		const caps = `<?xml version="1.0" encoding="UTF-8"?>
 <caps>
-  <server title="Mularr" description="aMule Indexer for Sonarr/Radarr" />
+  <server title="Mularr" description="aMule Indexer for Sonarr/Radarr/Lidarr" />
   <limits max="100" default="50" />
-  <search available="yes" supportedParams="q" />
-  <tv-search available="yes" supportedParams="q,season,ep" />
-  <movie-search available="yes" supportedParams="q,imdbid" />
+  <searching>
+    <search available="yes" supportedParams="q" />
+    <tv-search available="yes" supportedParams="q,season,ep" />
+    <movie-search available="yes" supportedParams="q" />
+    <audio-search available="yes" supportedParams="q,artist,album" />
+    <music-search available="yes" supportedParams="q,artist,album" />
+  </searching>
   <categories>
     <category id="2000" name="Movies">
       <subcat id="2010" name="Foreign" />
@@ -105,6 +161,11 @@ export class IndexerController {
     <category id="5000" name="TV">
       <subcat id="5030" name="Foreign" />
       <subcat id="5040" name="HD" />
+    </category>
+    <category id="3000" name="Audio">
+      <subcat id="3010" name="MP3" />
+      <subcat id="3030" name="Audiobook" />
+      <subcat id="3040" name="Lossless" />
     </category>
   </categories>
 </caps>`;
@@ -147,7 +208,7 @@ export class IndexerController {
 <rss version="2.0" xmlns:torznab="http://torznab.com/schemas/2015/feed">
   <channel>
     <title>Mularr Indexer</title>
-    <description>aMule search results for Sonarr/Radarr</description>
+    <description>aMule search results for Sonarr/Radarr/Lidarr</description>
     <torznab:response offset="${offset}" total="${total}" />
     ${itemsXml}
   </channel>
