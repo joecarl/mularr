@@ -86,10 +86,9 @@ export class AmuleService {
 	private readonly password = process.env.AMULE_PASSWORD || 'secret';
 	// timeout: hard-bound each EC round-trip. Without it a half-open socket
 	// (write ok, no reply, no FIN/RST — e.g. a VPN/container blackhole) leaves
-	// client calls pending forever, hanging the indexer's gather loop past its
-	// 12s cap and leaking the request. A timed-out call throws and is caught by
-	// the existing try/catch (falls back to amulecmd or returns progress:0/
-	// empty), so the gather loop keeps polling and its cap actually fires.
+	// calls pending forever, hanging the indexer's gather loop past its cap and
+	// leaking the request. A timed-out call throws into the existing try/catch
+	// (falls back to amulecmd or returns empty), so the loop keeps polling.
 	private readonly client = new AmuleClient({ host: this.host, port: parseInt(this.port), password: this.password, timeout: 4000 });
 	private readonly amulecmdService: AmulecmdService | null = null;
 	private db: MainDB;

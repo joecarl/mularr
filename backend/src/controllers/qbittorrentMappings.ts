@@ -1,11 +1,10 @@
 import { createHash } from 'crypto';
 
 export function hashToBtih(hash: string): string {
-	// Normalize to lowercase before hashing so the btih is identical whether it
-	// is computed from a search-result hash (used to build the magnet Sonarr
-	// grabs) or from a transfer hash (reported in torrents/info). Both must hash
-	// to the same 40-hex id or Sonarr cannot reconcile the grab with the
-	// download. No-op for the existing magnet path, whose input is already
+	// Lowercase before hashing so the btih is identical whether computed from a
+	// search-result hash (the magnet Sonarr grabs) or a transfer hash (reported
+	// in torrents/info) — both must hash to the same 40-hex id or Sonarr can't
+	// reconcile the grab with the download. No-op for the magnet path, already
 	// lowercase hex.
 	const btih = createHash('sha1').update(hash.toLowerCase()).digest('hex'); // 40 chars hex
 	return btih;
