@@ -5,7 +5,7 @@ import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
 import { AuthService } from '../services/AuthService';
-import { hashToBtih, extractHashFromMagnet, clientHashMatchesEd2k } from './qbittorrentMappings';
+import { hashToBtih, extractHashFromMagnet, clientHashMatchesMularrHash } from './qbittorrentMappings';
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
@@ -87,7 +87,7 @@ export class QbittorrentController {
 		const categories = await this.amuleService.getCategories();
 		const transfers = await this.mediaProviderService.getTransfers();
 		// Sonarr sends the 40-hex btih we advertised; match it back to the eD2k transfer.
-		const tr = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+		const tr = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 
 		if (tr) {
 			const savePath = getCatByName(categories, tr.categoryName ?? '')?.path || config.incomingDir;
@@ -141,7 +141,7 @@ export class QbittorrentController {
 		const transfers = await this.mediaProviderService.getTransfers();
 		for (const hash of hashList) {
 			if (!hash) continue;
-			const match = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+			const match = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 			await this.setCategoryForHash(match?.hash ?? hash, category);
 		}
 		res.send('');
@@ -254,7 +254,7 @@ export class QbittorrentController {
 
 		try {
 			const transfers = await this.mediaProviderService.getTransfers();
-			const tr = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+			const tr = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 			if (!tr) {
 				return res.status(404).send('Torrent not found');
 			}
@@ -364,7 +364,7 @@ export class QbittorrentController {
 			const transfers = await this.mediaProviderService.getTransfers();
 			for (const hash of hashList) {
 				if (!hash) continue;
-				const match = transfers.list.find((t) => clientHashMatchesEd2k(t.hash, hash));
+				const match = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
 				await this.mediaProviderService.sendDownloadCommand(match?.hash ?? hash, 'cancel');
 			}
 			res.send('Ok.');

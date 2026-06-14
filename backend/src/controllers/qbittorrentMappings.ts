@@ -13,16 +13,18 @@ export function hashToBtih(hash: string): string {
 
 /**
  * True if `clientHash` — a hash received from a qBittorrent API client such as
- * Sonarr/Radarr — refers to the transfer identified by eD2k hash `ed2kHash`.
- * Clients only ever know the fake 40-hex btih we advertise (sha1 of the eD2k
- * hash), which is one-way, so the match is done forward: the client hash
- * matches if it equals the eD2k hash directly (32-hex — internal/legacy
- * callers) or its btih (40-hex). Case-insensitive.
+ * Sonarr/Radarr — refers to the transfer identified by `mularrHash`. The
+ * transfer hash is provider-specific and must NOT be assumed to be eD2k: it is
+ * a 32-hex eD2k hash for aMule downloads, or a custom hash minted by mularr for
+ * Telegram (and future) providers. Clients only ever know the fake 40-hex btih
+ * we advertise (sha1 of that hash), which is one-way, so the match is done
+ * forward: the client hash matches if it equals the transfer hash directly or
+ * its 40-hex btih. Case-insensitive.
  */
-export function clientHashMatchesEd2k(ed2kHash: string | undefined, clientHash: string): boolean {
-	if (!ed2kHash || !clientHash) return false;
+export function clientHashMatchesMularrHash(mularrHash: string | undefined, clientHash: string): boolean {
+	if (!mularrHash || !clientHash) return false;
 	const c = clientHash.toLowerCase();
-	return ed2kHash.toLowerCase() === c || hashToBtih(ed2kHash) === c;
+	return mularrHash.toLowerCase() === c || hashToBtih(mularrHash) === c;
 }
 
 export function hashToFakeMagnet(hash: string): string {
