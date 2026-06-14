@@ -12,14 +12,12 @@ export function hashToBtih(hash: string): string {
 }
 
 /**
- * True if `clientHash` — a hash received from a qBittorrent API client such as
- * Sonarr/Radarr — refers to the transfer identified by `mularrHash`. The
- * transfer hash is provider-specific and must NOT be assumed to be eD2k: it is
- * a 32-hex eD2k hash for aMule downloads, or a custom hash minted by mularr for
- * Telegram (and future) providers. Clients only ever know the fake 40-hex btih
- * we advertise (sha1 of that hash), which is one-way, so the match is done
- * forward: the client hash matches if it equals the transfer hash directly or
- * its 40-hex btih. Case-insensitive.
+ * True if `clientHash` (from a qBittorrent client like Sonarr/Radarr) refers to
+ * the transfer `mularrHash`. The transfer hash is provider-specific — a 32-hex
+ * eD2k hash for aMule, or a custom hash minted for Telegram/future providers —
+ * so never assume eD2k. Clients only know the fake 40-hex btih we advertise
+ * (sha1 of the hash, one-way), so match forward: clientHash equals the transfer
+ * hash directly or its btih. Case-insensitive.
  */
 export function clientHashMatchesMularrHash(mularrHash: string | undefined, clientHash: string): boolean {
 	if (!mularrHash || !clientHash) return false;
