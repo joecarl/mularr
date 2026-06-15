@@ -1,0 +1,93 @@
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 11px;">
+
+	<!-- File name -->
+	<div
+		style="border-bottom: 1px solid var(--ui-shadow); padding-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+		<span data-cb="fileIcon"></span>
+		<span data-cb="valName" style="font-weight: bold; word-break: break-word;"></span>
+	</div>
+
+	<!-- Details table -->
+	<table style="border-collapse: collapse; width: 100%;">
+		<colgroup>
+			<col style="width: 90px; white-space: nowrap;">
+			<col>
+			<col style="width: 90px; white-space: nowrap;">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<td class="transfer-details-label">Hash:</td>
+				<td colspan="3" data-cb="valHash"
+					style="font-family: monospace; font-size: 10px; word-break: break-all; padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Provider:</td>
+				<td style="padding: 2px 8px 2px 0;">
+					<span data-cb="valProviderIcon"></span>
+					<span data-cb="valProviderName"></span>
+				</td>
+				<td class="transfer-details-label">Status:</td>
+				<td data-cb="valStatus" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Size:</td>
+				<td data-cb="valSize" style="padding: 2px 8px 2px 0;"></td>
+				<td class="transfer-details-label">Completed:</td>
+				<td data-cb="valCompleted" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Speed:</td>
+				<td data-cb="valSpeed" style="padding: 2px 8px 2px 0;"></td>
+				<td class="transfer-details-label">Remaining:</td>
+				<td data-cb="valRemaining" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Sources:</td>
+				<td data-cb="valSources" style="padding: 2px 8px 2px 0;"></td>
+				<td class="transfer-details-label">Priority:</td>
+				<td data-cb="valPriority" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Category:</td>
+				<td data-cb="valCategory" style="padding: 2px 8px 2px 0;"></td>
+				<td class="transfer-details-label">Provider info:</td>
+				<td data-cb="valSourceInfo" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="transfer-details-label">Added On:</td>
+				<td colspan="3" data-cb="valAddedOn" style="padding: 2px 0;"></td>
+			</tr>
+			<tr data-cb="filePathRow">
+				<td class="transfer-details-label" style="vertical-align: top;">File Path:</td>
+				<td colspan="3" data-cb="valFilePath"
+					style="font-family: monospace; font-size: 10px; word-break: break-all; padding: 2px 0;"></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<!-- Progress bar -->
+	<div>
+		<div style="color: #888; margin-bottom: 3px;">Progress:</div>
+		<div class="transfer-progress-bar-container" style="height: 16px;">
+			<div data-cb="progressBar" class="transfer-progress-bar" style="width: 0%;"></div>
+			<div data-cb="progressText" class="transfer-progress-bar-text"></div>
+		</div>
+	</div>
+
+	<!-- ED2K / Download link (conditional) -->
+	<div data-cb="ed2kSection" style="display: none;">
+		<div style="color: #888; margin-bottom: 3px;">Download Link:</div>
+		<div style="display: flex; gap: 5px; align-items: flex-start;">
+			<div data-cb="valEd2kLink"
+				style="flex: 1; font-family: monospace; font-size: 10px; word-break: break-all; background: var(--ui-light); border: 1px solid var(--ui-shadow); padding: 3px 4px; max-height: 52px; overflow-y: auto; line-height: 1.5;">
+			</div>
+			<button class="ui-btn" data-cb="copyLinkBtn">Copy</button>
+		</div>
+	</div>
+
+	<!-- Footer -->
+	<div style="display: flex; justify-content: flex-end; padding-top: 4px;">
+		<button class="ui-btn" data-cb="btnClose">Close</button>
+	</div>
+</div>

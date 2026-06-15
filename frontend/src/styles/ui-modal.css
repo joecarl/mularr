@@ -47,6 +47,10 @@
 
 .ui-window-title {
 	margin-left: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-right: 1em;
 }
 
 .ui-window-controls {

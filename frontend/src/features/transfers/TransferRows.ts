@@ -5,10 +5,13 @@ import { Transfer } from '../../services/MediaApiService';
 import { ExtensionsApiService } from '../../services/ExtensionsApiService';
 import { ContextMenuService, ContextMenuItem } from '../../services/ContextMenuService';
 import { TransfersContextService } from '../../services/TransfersContextService';
+import { DialogService } from '../../services/DialogService';
 import { getFileIcon } from '../../utils/icons';
 import { isVideoFile } from '../../utils/files';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { RowSelectionManager } from '../../utils/ListManager';
+import { TransferDetailsDialog } from './TransferDetailsDialog';
+import { statusMap } from './transferStatus';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
@@ -17,12 +20,27 @@ export const DEFAULT_VALUE = 'default';
 async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
 	const extensionsApi = services.get(ExtensionsApiService);
 	const ctx = services.get(TransfersContextService);
+	const dialogService = services.get(DialogService);
 	const actions: ContextMenuItem[] = [];
 	const popupProps = 'width=1280,height=720,toolbar=no,menubar=no,location=no,status=no';
 
 	const hash = transfer.hash ?? '';
 	const allHashes = [...selectionMgr.selectedHashes.get()].filter(Boolean) as string[];
 	const targetHashes = allHashes.length > 0 ? allHashes : hash ? [hash] : [];
+
+	// ---- Details action ----
+	actions.push({
+		label: 'Details ...',
+		icon: 'ℹ️',
+		onClick: () => {
+			dialogService.open({
+				title: transfer.name || 'Transfer Details',
+				width: '580px',
+				render: (close) => TransferDetailsDialog({ transfer, onClose: close }),
+			});
+		},
+	});
+	actions.push({ separator: true });
 
 	// ---- Media preview actions ----
 	const filePath = transfer.filePath;
@@ -105,22 +123,6 @@ async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSele
 
 	return actions;
 }
-
-const statusMap: Record<number, string> = {
-	0: 'Downloading',
-	1: 'Empty',
-	2: 'Waiting for Hash',
-	3: 'Hashing',
-	4: 'Error',
-	5: 'Insufficient Space',
-	6: 'Unknown',
-	7: 'Paused',
-	8: 'Completing',
-	9: 'Completed',
-	10: 'Allocating',
-	// Custom statuses for other providers like Telegram downloads
-	11: 'Queued',
-};
 
 interface TransferListProps {
 	selectionMgr: RowSelectionManager;
