@@ -2,7 +2,8 @@ import { container } from '../../container/ServiceContainer';
 import { type TelegramIndexerSearchResult, TelegramIndexerService } from '../../TelegramIndexerService';
 import { MainDB, DownloadDbRecord } from '../../db/MainDB';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer } from '../types';
-import { DownloadStatus } from '../../TelegramDownloadManager';
+import { DownloadStatus, TelegramDownloadDirectoryHelper } from '../../TelegramDownloadManager';
+import * as nodePath from 'path';
 
 function toAmuleStatusId(status: string): number {
 	switch (status) {
@@ -44,7 +45,7 @@ function toAmuleDownloadStatus(downloadStatus?: DownloadStatus): number {
 // Helper: build a MediaTransfer from a Telegram DB record
 // ---------------------------------------------------------------------------
 
-function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramIndexerService): MediaTransfer {
+function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramIndexerService, tempDir?: string): MediaTransfer {
 	let statusText = dbRecord.is_completed ? 'completed' : '';
 	let progress = dbRecord.is_completed ? 1 : 0;
 	let completed = dbRecord.is_completed ? dbRecord.size : 0;
@@ -94,6 +95,7 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		timeLeft,
 		categoryName: dbRecord.category_name,
 		isCompleted: !!dbRecord.is_completed,
+		filePath: !dbRecord.is_completed && tempDir ? nodePath.join(tempDir, dbRecord.name) : undefined,
 		provider: 'telegram',
 		sourceName: (() => {
 			if (parts.length < 2) return undefined;
@@ -115,6 +117,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 	private searchDone = true;
 	private readonly PAGE_SIZE = 20;
 	private readonly indexer = container.get(TelegramIndexerService);
+	private readonly dirHelper = new TelegramDownloadDirectoryHelper();
 
 	canHandleDownload(link: string): boolean {
 		return link.startsWith('telegram:');
@@ -223,10 +226,20 @@ export class TelegramMediaProvider implements IMediaProvider {
 		}
 	}
 
+	async getTempDir(): Promise<string | undefined> {
+		try {
+			return await this.dirHelper.getDownloadTempDir();
+		} catch (e) {
+			console.error('[TelegramMediaProvider] getTempDir error:', e);
+			return undefined;
+		}
+	}
+
 	async getTransfers(): Promise<MediaTransfer[]> {
 		const db = container.get(MainDB);
 		const records = db.getAllDownloads().filter((r) => r.provider === 'telegram');
-		return records.map((r) => buildTelegramTransfer(r, this.indexer));
+		const tempDir = await this.getTempDir();
+		return records.map((r) => buildTelegramTransfer(r, this.indexer, tempDir));
 	}
 
 	async clearCompletedTransfers(hashes?: string[]): Promise<void> {

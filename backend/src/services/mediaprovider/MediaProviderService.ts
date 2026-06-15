@@ -7,7 +7,6 @@ import { AmuledService } from '../AmuledService';
 import { MainDB } from '../db/MainDB';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
-import { TelegramDownloadDirectoryHelper } from '../TelegramDownloadManager';
 import type { IMediaProvider, MediaTransfer, MediaSearchResult, MediaTransfersResponse, MediaSearchResponse, MediaSearchStatusResponse } from './types';
 
 export class MediaProviderService {
@@ -68,9 +67,6 @@ export class MediaProviderService {
 				if (transfer.isCompleted) {
 					const cat = transfer.categoryName ? categories.find((c) => c.name === transfer.categoryName) : undefined;
 					transfer.filePath = this.resolveFilePath(transfer.name, cat?.path, incomingDir);
-				} else if (transfer.provider === 'telegram') {
-					const tgDirHelper = new TelegramDownloadDirectoryHelper();
-					transfer.filePath = nodePath.join(await tgDirHelper.getDownloadTempDir(), transfer.name);
 				}
 				// amule in-progress: temp files are hash-named .part files — not useful(?)
 			}
@@ -104,10 +100,32 @@ export class MediaProviderService {
 				await provider.stopDownload(hash);
 				break;
 			case 'cancel':
+				await this.deleteFileForCompletedDownload(hash);
 				await provider.removeDownload(hash);
 				break;
 			default:
 				throw new Error(`Unknown command: ${command}`);
+		}
+	}
+
+	/**
+	 * Delete the file associated with a completed download record from disk.
+	 */
+	private async deleteFileForCompletedDownload(hash: string): Promise<void> {
+		try {
+			const dbRecord = this.db.getDownload(hash.toLowerCase());
+			if (!dbRecord?.name) return;
+			if (!dbRecord.is_completed) return;
+			const incomingDir = await this.getIncomingDir();
+			const categories = await this.getCategories();
+			const cat = dbRecord.category_name ? categories.find((c) => c.name === dbRecord.category_name) : undefined;
+			const targetPath = this.resolveFilePath(dbRecord.name, cat?.path, incomingDir);
+			if (targetPath && nodePath.isAbsolute(targetPath) && fs.existsSync(targetPath)) {
+				await fs.promises.unlink(targetPath);
+				console.log(`[sendDownloadCommand] Deleted file: ${targetPath}`);
+			}
+		} catch (e) {
+			console.error('[sendDownloadCommand] Error deleting file on cancel:', e);
 		}
 	}
 
