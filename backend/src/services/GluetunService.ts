@@ -1,4 +1,5 @@
 import axios from 'axios';
+import fs from 'fs';
 
 export class GluetunService {
 	private readonly apiBase: string;
@@ -34,7 +35,7 @@ export class GluetunService {
 
 	public async getPortForwarded(): Promise<number | null> {
 		try {
-			const res = await axios.get(`${this.apiBase}/portforward`);
+			const res = await axios.get(`${this.apiBase}/portforward`, { timeout: 5000 });
 			return res.data?.port || null;
 		} catch (error) {
 			return null;

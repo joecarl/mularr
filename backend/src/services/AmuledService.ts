@@ -140,10 +140,17 @@ export class AmuledService {
 	}
 
 	async startDaemon(): Promise<void> {
+		// Force kill any zombie amuled that holds the port but isn't responding
 		const running = await this.isDaemonRunning();
 		if (running) {
-			console.log('aMule daemon already running, skipping start.');
-			return;
+			const ecReachable = await this.waitForEcPort(2000);
+			if (ecReachable) {
+				console.log('aMule daemon already running, skipping start.');
+				return;
+			}
+			console.warn('amuled process found but EC port unreachable — force killing zombie...');
+			try { await execPromise('pkill -9 amuled'); } catch (e) { /* ignore */ }
+			await new Promise((resolve) => setTimeout(resolve, 1500));
 		}
 		// Remove stale lock files that prevent amuled from starting after a hard kill
 		for (const lockFile of ['amuled.lock', 'amuled.pid', '.lock', 'muleLock']) {
