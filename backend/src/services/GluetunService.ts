@@ -1,5 +1,4 @@
 import axios from 'axios';
-import fs from 'fs';
 
 export class GluetunService {
 	private readonly apiBase: string;

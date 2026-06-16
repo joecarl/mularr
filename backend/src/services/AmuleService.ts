@@ -196,7 +196,7 @@ export class AmuleService {
 		try {
 			const files = await this.client.getSharedFiles();
 			if (files.length === 0) {
-				console.log('!!!!!!!! NO Shared Files from EC Client');
+				console.log('!! NO Shared Files from EC Client');
 			}
 			const list = files.map((file) => ({
 				...file,

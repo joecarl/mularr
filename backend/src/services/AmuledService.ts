@@ -65,6 +65,15 @@ export class AmuledService {
 		return false;
 	}
 
+	async killDaemon(mode: 'TERM' | 'KILL' = 'TERM'): Promise<void> {
+		const signal = mode === 'KILL' ? '-KILL' : '-TERM';
+		try {
+			await execPromise(`pkill ${signal} amuled`);
+		} catch (e) {
+			// Not running — nothing to kill
+		}
+	}
+
 	async restartDaemon(): Promise<void> {
 		if (this._isRestarting) {
 			console.warn('Restart already in progress, skipping duplicate request.');
@@ -74,21 +83,13 @@ export class AmuledService {
 		console.log('Restarting aMule daemon...');
 		try {
 			// Graceful shutdown first
-			try {
-				await execPromise('pkill -TERM amuled');
-			} catch (e) {
-				// Not running — nothing to kill
-			}
+			await this.killDaemon('TERM');
 
 			// Poll until the process is confirmed dead (up to 8 s)
 			const killed = await this.waitForProcessDead(8000);
 			if (!killed) {
 				console.warn('amuled did not stop gracefully, sending SIGKILL...');
-				try {
-					await execPromise('pkill -KILL amuled');
-				} catch (e) {
-					// Ignore
-				}
+				await this.killDaemon('KILL');
 				// Give the kernel a moment to reap it
 				await new Promise((resolve) => setTimeout(resolve, 500));
 			}
@@ -105,7 +106,7 @@ export class AmuledService {
 		const interval = 300;
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
-			if (!await this.isDaemonRunning()) return true; // Process is dead
+			if (!(await this.isDaemonRunning())) return true; // Process is dead
 			await new Promise((resolve) => setTimeout(resolve, interval));
 		}
 		return false;
@@ -149,7 +150,7 @@ export class AmuledService {
 				return;
 			}
 			console.warn('amuled process found but EC port unreachable — force killing zombie...');
-			try { await execPromise('pkill -9 amuled'); } catch (e) { /* ignore */ }
+			await this.killDaemon('KILL');
 			await new Promise((resolve) => setTimeout(resolve, 1500));
 		}
 		// Remove stale lock files that prevent amuled from starting after a hard kill

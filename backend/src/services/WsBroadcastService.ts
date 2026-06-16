@@ -23,7 +23,7 @@ interface WsMessage {
  *   amule:status       – AmuleService.getStats()           every 4 s
  *   media:transfers    – MediaProviderService.getTransfers() every 2 s
  *   amule:upload-queue – AmuleService.getUploadQueue()     every 2 s
- *   amule:shared       – AmuleService.getSharedFiles()     every 2 s
+ *   amule:shared       – AmuleService.getSharedFiles()     every 4 s
  *   amule:log          – AmuledService.getLog()            every 3 s
  *   amule:servers      – AmuleService.getServers()         every 10 s
  *   system:info        – SystemService.getSystemInfo()     every 5 min
@@ -64,13 +64,13 @@ export class WsBroadcastService {
 			this.broadcast({ type: 'stats:speed-sample', data: sample });
 		});
 
-		// Transfers, upload-queue and shared files at 2 s
+		// Transfers and upload-queue at 2 s
 		this.intervals.push(setInterval(() => this.pollFast(), 2000));
 
 		// aMule log at 3 s
 		this.intervals.push(setInterval(() => this.pollLog(), 3000));
 
-		// aMule global status at 4 s
+		// aMule global status and shared files at 4 s
 		this.intervals.push(setInterval(() => this.pollStatus(), 4000));
 
 		// Server list at 10 s
@@ -142,10 +142,6 @@ export class WsBroadcastService {
 				.getUploadQueue()
 				.then((d) => this.broadcast({ type: 'amule:upload-queue', data: d }))
 				.catch((e) => console.error('[WS] upload-queue error:', (e as Error).message)),
-			this.amule
-				.getSharedFiles()
-				.then((d) => this.broadcast({ type: 'amule:shared', data: d }))
-				.catch((e) => console.error('[WS] shared error:', (e as Error).message)),
 		]);
 	}
 
@@ -161,12 +157,16 @@ export class WsBroadcastService {
 
 	private async pollStatus(): Promise<void> {
 		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
-		try {
-			const status = await this.amule.getStats();
-			this.broadcast({ type: 'amule:status', data: status });
-		} catch (e) {
-			console.error('[WS] status error:', (e as Error).message);
-		}
+		await Promise.allSettled([
+			this.amule
+				.getStats()
+				.then((d) => this.broadcast({ type: 'amule:status', data: d }))
+				.catch((e) => console.error('[WS] status error:', (e as Error).message)),
+			this.amule
+				.getSharedFiles()
+				.then((d) => this.broadcast({ type: 'amule:shared', data: d }))
+				.catch((e) => console.error('[WS] shared error:', (e as Error).message)),
+		]);
 	}
 
 	private async pollServers(): Promise<void> {

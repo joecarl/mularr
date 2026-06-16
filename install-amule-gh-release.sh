@@ -108,7 +108,7 @@ rm -f \
     "${INSTALL_DIR}/usr/lib/libgraphite2.so"*
 rm -rf "${INSTALL_DIR}/usr/lib/girepository-1.0"
 
-# Remove wget and ca-certificates; they were only needed for the download
-apt-get purge -y --auto-remove ca-certificates wget
+# Remove wget; it was only needed for the download
+apt-get purge -y --auto-remove wget
 
 echo "aMule ${AMULE_VERSION} installed."
