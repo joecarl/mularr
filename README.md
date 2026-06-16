@@ -1,3 +1,7 @@
+<p align="">
+  <img src="https://games.copinstar.com/img/mularr/mularr-logo.png" alt="Logo">
+</p>
+
 # Mularr
 
 [![Docker Image](https://ghcr-badge.egpl.dev/joecarl/mularr/latest_tag?trim=major&label=ghcr.io%2Fjoecarl%2Fmularr&color=blue)](https://github.com/joecarl/mularr/pkgs/container/mularr)
@@ -5,6 +9,10 @@
 **Mularr** is a powerful integration for **aMule** that provides a functional web interface with a nostalgia-infused retro touch. It bridges the gap between classic P2P and modern automation tools by offering **qBittorrent-compatible APIs** and **Torznab indexers**, making it seamless to use aMule with apps like Sonarr and Radarr.
 
 It also includes an extension to use the **Telegram Network** as a download provider. This requires a real account (not a bot) to access groups/channels with media files.
+
+<p align="center">
+  <img src="https://games.copinstar.com/img/mularr/mularr-overview.png" alt="Overview">
+</p>
 
 ---
 

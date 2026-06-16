@@ -33,12 +33,7 @@ services:
             - TELEGRAM_CHAT_ID=
             - TELEGRAM_TOPIC_ID=
 
-            # Customize the amule connection settings if needed, otherwise defaults will be used (amule running on localhost with default port and no password)
-            - AMULE_HOST=localhost
-            - AMULE_PORT=4712
-            - AMULE_PASSWORD=secret
-
-            # Gluetun integration will update the amule ports automatically if GLUETUN_ENABLED is true (if using Gluetun)
+            # Gluetun integration will update the aMule ports automatically if GLUETUN_ENABLED is true (if using Gluetun)
             - GLUETUN_ENABLED=false
             - GLUETUN_API=http://gluetun:8000/v1
 
@@ -52,3 +47,9 @@ services:
             - AUTH_PASSWORD=admin # used to login to the mularr web interface and the qbitorrent api
             - API_KEY=supersecretapikey # used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password with the username 'apikey' for the qbittorrent api)
             - JWT_SECRET=supersecretjwtkey # used to sign JSON Web Tokens for API authentication (if not set, a random secret will be generated on startup, which means any existing tokens will become invalid after a restart)
+
+            # Customize how Mularr connects to aMule via EC (most likely you don't need to set these)
+            # Set these ONLY if Mularr will connect to an external aMule instance
+            - AMULE_HOST=localhost
+            - AMULE_PORT=4712
+            - AMULE_PASSWORD=secret
