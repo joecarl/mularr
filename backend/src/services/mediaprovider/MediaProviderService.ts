@@ -12,6 +12,7 @@ import type { IMediaProvider, MediaTransfer, MediaSearchResult, MediaTransfersRe
 export class MediaProviderService {
 	private providers: IMediaProvider[] = [];
 	private readonly db = container.get(MainDB);
+	public readonly searchHistory = new SearchHistory();
 
 	constructor() {
 		// Order matters: first matching provider wins for canHandleDownload
@@ -23,13 +24,17 @@ export class MediaProviderService {
 
 	async startSearch(query: string, _type?: string): Promise<void> {
 		await Promise.allSettled(this.providers.map((p) => p.startSearch(query)));
+		this.searchHistory.addEntry(query, query);
 	}
 
 	async getSearchResults(): Promise<MediaSearchResponse> {
 		const perProvider = await Promise.allSettled(this.providers.map((p) => p.getSearchResults()));
 		const combined: MediaSearchResult[] = [];
 		for (const r of perProvider) {
-			if (r.status === 'fulfilled') combined.push(...r.value);
+			if (r.status === 'fulfilled') {
+				combined.push(...r.value);
+				this.searchHistory.pushResults(r.value);
+			}
 		}
 		return { raw: `Found ${combined.length} results`, list: combined };
 	}
@@ -275,5 +280,67 @@ export class MediaProviderService {
 	private resolveFilePath(filename: string, catPath: string | undefined, incomingDir: string): string {
 		const dir = catPath || incomingDir;
 		return nodePath.join(dir, nodePath.basename(filename));
+	}
+}
+
+type MediaSearchResultsByHash = Record<string, MediaSearchResult>;
+
+interface SearchHistoryEntry {
+	id: string;
+	query: string;
+	timestamp: number;
+	results: MediaSearchResultsByHash;
+}
+
+/**
+ * A simple in-memory cache for search results, keyed by query string.
+ * Bad things will happend if and external service triggers a search on amule which is not handled by mularr
+ */
+class SearchHistory {
+	private readonly searchesById: Record<string, SearchHistoryEntry> = {};
+	private current: SearchHistoryEntry | null = null;
+
+	addEntry(id: string, query: string, results: MediaSearchResultsByHash = {}) {
+		if (this.current) {
+			this.controlHistorySize();
+			this.searchesById[this.current.id] = this.current;
+		}
+		this.current = { id, query, timestamp: Date.now(), results };
+	}
+
+	private controlHistorySize() {
+		const MAX_HISTORY_SIZE = 10;
+		const entries = Object.values(this.searchesById);
+		if (entries.length > MAX_HISTORY_SIZE) {
+			// Sort by timestamp and remove the oldest entries
+			entries.sort((a, b) => a.timestamp - b.timestamp);
+			const excessCount = entries.length - MAX_HISTORY_SIZE;
+			for (let i = 0; i < excessCount; i++) {
+				delete this.searchesById[entries[i].id];
+			}
+		}
+	}
+
+	pushResults(results: MediaSearchResult[]) {
+		if (!this.current) return;
+		for (const r of results) {
+			this.current.results[r.hash] = r;
+		}
+	}
+
+	/**
+	 * Returns a read-only view of the search history, keyed by search ID.
+	 * The current search (if any) is not included in the returned object.
+	 */
+	getFullHistory() {
+		return this.searchesById as Readonly<typeof this.searchesById>;
+	}
+
+	deleteEntry(id: string) {
+		if (this.current?.id === id) {
+			this.current = null;
+		} else {
+			delete this.searchesById[id];
+		}
 	}
 }
