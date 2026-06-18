@@ -25,8 +25,11 @@ INSTALL_DIR="/opt/amule"
 
 echo "Installing aMule ${AMULE_VERSION} (${AMULE_ARCH})..."
 
-# Ensure wget and ca-certificates are available (needed for HTTPS download)
-apt-get install -y --no-install-recommends ca-certificates wget
+# Install some libraries needed by amuled and amulecmd and this script. 
+# wget is needed to download the AppImage, and will be removed at the end.
+# libreadline8 needed by amulecmd.
+# ca-certificates needed by amuled for HTTPS download like serverlist updates.
+apt-get install -y --no-install-recommends libreadline8 ca-certificates wget
 
 # Download AppImage
 wget -q --show-progress -O "${APPIMAGE_PATH}" "${APPIMAGE_URL}"
