@@ -1,5 +1,5 @@
 <p align="">
-  <img src="https://games.copinstar.com/img/mularr/mularr-logo.png" alt="Logo">
+  <img src="https://games.copinstar.com/img/mularr/mularr-logo.png?1" alt="Logo">
 </p>
 
 # Mularr

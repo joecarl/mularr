@@ -35,18 +35,18 @@ services:
 
             # Gluetun integration will update the aMule ports automatically if GLUETUN_ENABLED is true (if using Gluetun)
             - GLUETUN_ENABLED=false
-            - GLUETUN_API=http://gluetun:8000/v1
+            - GLUETUN_API=http://localhost:8000/v1
 
             # Customize the incoming and temp directory directory if needed
-            - AMULE_INCOMING_DIR=/my-storage/downloads/mularr
-            - AMULE_TEMP_DIR=/my-storage/downloads/mularr/.incomplete
+            - AMULE_INCOMING_DIR= # example: /my-storage/downloads/mularr
+            - AMULE_TEMP_DIR= # example: /my-storage/downloads/mularr/.incomplete
             - AMULE_RESTART_INTERVAL_HOURS=12 # How often (in hours) the monitoring service automatically restarts the aMule daemon. Set to `0` to disable.
 
             # Auth (if no auth env vars are set, the web interface and API will be open without authentication, so make sure to set these if you are exposing the web interface or API to untrusted networks)
-            - AUTH_USERNAME=admin # used to login to the mularr web interface and the qbitorrent api
-            - AUTH_PASSWORD=admin # used to login to the mularr web interface and the qbitorrent api
-            - API_KEY=supersecretapikey # used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password with the username 'apikey' for the qbittorrent api)
-            - JWT_SECRET=supersecretjwtkey # used to sign JSON Web Tokens for API authentication (if not set, a random secret will be generated on startup, which means any existing tokens will become invalid after a restart)
+            - AUTH_USERNAME= # example: admin. Used to login to the mularr web interface and the qbitorrent api
+            - AUTH_PASSWORD= # example: admin. Used to login to the mularr web interface and the qbitorrent api
+            - API_KEY= # example: supersecretapikey. Used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password with the username 'apikey' for the qbittorrent api)
+            - JWT_SECRET= # example: supersecretjwtkey. Used to sign JSON Web Tokens for API authentication (if not set, a random secret will be generated on startup, which means any existing tokens will become invalid after a restart)
 
             # Customize how Mularr connects to aMule via EC (most likely you don't need to set these)
             # Set these ONLY if Mularr will connect to an external aMule instance
