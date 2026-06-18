@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import util from 'util';
 import path from 'path';
 import fs from 'fs';
+import { parseEd2kLink } from './eD2kTools';
 
 const execPromise = util.promisify(exec);
 
@@ -151,13 +152,13 @@ export class AmulecmdService {
 			if (trimmed.startsWith('>')) {
 				const content = trimmed.replace(/^>\s*\d+\.\s*/, '');
 				// Match ed2k link and extract filename and size bytes
-				const ed2kMatch = content.match(/ed2k:\/\/\|file\|([^|]+)\|(\d+)\|([A-F0-9]{32})\|/i);
+				const ed2kMatch = parseEd2kLink(content);
 
 				if (ed2kMatch) {
-					const link = ed2kMatch[0];
-					const fullName = ed2kMatch[1];
-					const sizeInBytes = ed2kMatch[2];
-					const sizeMB = (parseInt(sizeInBytes) / (1024 * 1024)).toFixed(3);
+					const link = content;
+					const fullName = ed2kMatch.name;
+					const sizeInBytes = ed2kMatch.size;
+					const sizeMB = (sizeInBytes / (1024 * 1024)).toFixed(3);
 
 					results.push({
 						name: fullName,

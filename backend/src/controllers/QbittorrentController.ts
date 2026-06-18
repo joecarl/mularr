@@ -5,7 +5,7 @@ import { MediaProviderService } from '../services/mediaprovider';
 import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
 import { AuthService } from '../services/AuthService';
-import { hashToBtih, extractHashFromMagnet, clientHashMatchesMularrHash } from './qbittorrentMappings';
+import { hashToBtih, extractFileRefFromMagnet, clientHashMatchesMularrHash } from './qbittorrentMappings';
 
 /**
  * ArrController provides a qBittorrent-compatible API for Sonarr and Radarr.
@@ -312,15 +312,17 @@ export class QbittorrentController {
 
 			for (const url of urlList) {
 				const trimmedUrl: string = url.trim();
-				let hash = extractHashFromMagnet(trimmedUrl);
-				if (hash) {
-					console.log(`[QbittorrentController] Extracted HASH from magnet: ${hash}`);
-				} else {
-					hash = trimmedUrl;
+				console.log(`[QbittorrentController] Parsing magnet: ${trimmedUrl}`);
+				const fileRef = extractFileRefFromMagnet(trimmedUrl);
+				if (!fileRef) {
+					console.warn(`[QbittorrentController] ⚠️ Could not extract file reference from magnet link. Skipping.`);
+					continue; // Skip invalid magnet links
 				}
 
-				console.log(`[QbittorrentController] Adding download from Sonarr/Radarr`);
-				await this.amuleService.addDownload(hash);
+				console.log(`[QbittorrentController] Adding download for the extracted file reference: ${fileRef.ref}`);
+				await this.mediaProviderService.addDownload(fileRef.ref);
+
+				const hash = fileRef.hash;
 
 				if (categoryId) {
 					console.log(`[QbittorrentController] Setting category ID ${categoryId} for hash ${hash}`);
@@ -335,7 +337,7 @@ export class QbittorrentController {
 
 				if (shouldPause) {
 					console.log(`[QbittorrentController] Pausing download for hash ${hash}`);
-					await this.amuleService.pauseDownload(hash);
+					await this.mediaProviderService.sendDownloadCommand(hash, 'pause');
 				}
 			}
 

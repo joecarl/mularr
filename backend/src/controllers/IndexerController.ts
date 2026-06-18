@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
-import { hashToFakeMagnet } from './qbittorrentMappings';
+import { eD2kLinkToFakeMagnet, hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaProviderService, MediaSearchResult } from '../services/mediaprovider';
 
 /**
@@ -183,8 +183,7 @@ export class IndexerController {
 		for (const item of results) {
 			const title = this.escapeXml(item.name);
 			const hash = item.hash;
-			//const downloadUrl = this.escapeXml(item.link);
-			const link = hashToFakeMagnet(hash);
+			const link = item.link && item.provider === 'amule' ? eD2kLinkToFakeMagnet(item.link) : hashToFakeMagnet(hash);
 			const downloadUrl = this.escapeXml(link);
 			itemsXml += `
     <item>

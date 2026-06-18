@@ -6,6 +6,7 @@ import path from 'path';
 import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
 import { AmulecmdService } from './AmulecmdService';
+import { buildEd2kLink, parseEd2kLink } from './eD2kTools';
 
 function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): string {
 	const DEFAULT_VALUE = 'default';
@@ -54,12 +55,10 @@ interface Download {
 }
 
 function getDataFromFileRef(hashOrLink: string): FileRefData | null {
-	const ed2kMatch = hashOrLink.match(/^ed2k:\/\/\|file\|([^|]+)\|(\d+)\|([a-fA-F0-9]{32})\|/);
+	const ed2kMatch = parseEd2kLink(hashOrLink);
 	if (ed2kMatch) {
 		return {
-			name: decodeURIComponent(ed2kMatch[1]),
-			size: parseInt(ed2kMatch[2], 10),
-			hash: ed2kMatch[3].toLowerCase(),
+			...ed2kMatch,
 			isEd2kLink: true,
 		};
 	} else if (/^[a-fA-F0-9]{32}$/.test(hashOrLink)) {
@@ -266,7 +265,7 @@ export class AmuleService {
 					const sizeFull = dbRecord.size || 0;
 					const mbSize = (sizeFull / (1024 * 1024)).toFixed(2);
 					//console.log('File marked as completed in DB:', dbRecord.hash, dbRecord);
-					const link = AmuleService.buildEd2kLink(dbRecord.name, sizeFull, dbRecord.hash);
+					const link = buildEd2kLink(dbRecord.name, sizeFull, dbRecord.hash);
 
 					return {
 						rawLine: `> ${dbRecord.name} [${mbSize} MB] Completed 100%`,
@@ -405,13 +404,6 @@ export class AmuleService {
 		return results;
 	}
 
-	/**
-	 * Construct a proper ed2k link: ed2k://|file|NAME|SIZE|HASH|/
-	 */
-	static buildEd2kLink(name: string, size: number, hash: string): string {
-		return `ed2k://|file|${encodeURIComponent(name)}|${size}|${hash.toUpperCase()}|/`;
-	}
-
 	async getSearchResults() {
 		try {
 			const results = await this.client.searchResults();
@@ -419,7 +411,7 @@ export class AmuleService {
 			if (results && results.files) {
 				const list = results.files.map((file) => {
 					const hash = file.hash.toString('hex');
-					const ed2k = AmuleService.buildEd2kLink(file.fileName, file.sizeFull, hash);
+					const ed2k = buildEd2kLink(file.fileName, file.sizeFull, hash);
 
 					return {
 						name: file.fileName,
@@ -496,6 +488,7 @@ export class AmuleService {
 			if (!fileRefData) {
 				throw new Error('File ref error, skipping direct add and going to fallback');
 			} else if (!fileRefData.isEd2kLink) {
+				// This will only work if the hash is in the last search results.
 				await this.client.downloadSearchResult(Buffer.from(link, 'hex'));
 				console.log(`Added download for hash ${link}`);
 			} else if (fileRefData.isEd2kLink) {
@@ -513,8 +506,12 @@ export class AmuleService {
 		if (hash) {
 			const added = await this.client.getDownloadQueue();
 			const fileInQueue = added.find((f) => (f.fileHashHexString || '').toLowerCase() === hash!.toLowerCase());
-			const name = fileInQueue?.fileName ?? 'Unknown';
-			const size = fileInQueue?.sizeFull ?? 0;
+			if (!fileInQueue) {
+				console.error('❌ File not found in queue after adding, skipping DB insert:', hash);
+				return;
+			}
+			const name = fileInQueue.fileName ?? 'Unknown';
+			const size = fileInQueue.sizeFull ?? 0;
 			try {
 				this.db.addDownload(hash, name, size);
 			} catch (dbe) {

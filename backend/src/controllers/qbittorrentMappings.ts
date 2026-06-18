@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { parseEd2kLink } from '../services/eD2kTools';
 
 export function hashToBtih(hash: string): string {
 	// Lowercase before hashing so the btih is identical whether computed from a
@@ -32,7 +33,34 @@ export function hashToFakeMagnet(hash: string): string {
 	return `magnet:?xt=urn:btih:${btih}&dn=${dn}`;
 }
 
-export function extractHashFromMagnet(magnet: string): string | null {
+export function eD2kLinkToFakeMagnet(link: string): string {
+	const linkData = parseEd2kLink(link);
+	if (!linkData) throw new Error(`Invalid eD2k link: ${link}`);
+	// Hash determinístico (Radarr solo valida formato)
+	const btih = hashToBtih(linkData.hash);
+	const dn = encodeURIComponent(link);
+
+	return `magnet:?xt=urn:btih:${btih}&dn=${dn}`;
+}
+
+interface ExtractedFileRef {
+	/**
+	 * A valid file reference which can be used to add a download to the media provider service.
+	 */
+	ref: string;
+	/**
+	 * The hash extracted from the file reference. This can be an eD2k hash or a custom hash.
+	 */
+	hash: string;
+	type: string | undefined;
+}
+
+/**
+ * Extracts the file reference from a magnet link. The reference can be:
+ * - an eD2k link (never an eD2k hash, since amule cannot download from a hash alone unless it is the last search result)
+ * - a custom hash (for Telegram or future providers)
+ */
+export function extractFileRefFromMagnet(magnet: string): ExtractedFileRef | null {
 	if (!magnet.startsWith('magnet:?')) return null;
 
 	const query = magnet.substring('magnet:?'.length);
@@ -43,7 +71,19 @@ export function extractHashFromMagnet(magnet: string): string | null {
 
 	const decoded = decodeURIComponent(dn);
 
-	return decoded;
+	const ed2kMatch = parseEd2kLink(decoded);
+
+	const res: ExtractedFileRef = {
+		ref: decoded,
+		hash: decoded,
+		type: undefined,
+	};
+	if (ed2kMatch) {
+		res.hash = ed2kMatch.hash;
+		res.type = 'ed2k';
+	}
+
+	return res;
 }
 
 /**
