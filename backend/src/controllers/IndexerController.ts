@@ -66,20 +66,26 @@ export class IndexerController {
 				return this.renderRss(res, [], cat as string);
 			}
 
-			// tvsearch: search by the title in `q` only. season/ep arrive as
-			// separate Torznab params, not inside `q`; appending them narrows
-			// the eD2k query against the network's inconsistent episode naming
-			// and loses real content. Sonarr does the episode/language/quality
-			// matching itself, rejecting releases that don't fit, so we let all
-			// candidates flow back. (season/ep stay destructured for logging.)
-			// Trade-off: a tvsearch returns every episode's releases; automatic
-			// search only grabs matches, interactive greys out the rest.
-
 			// Radarr/Sonarr "Test" often sends 't=movie' or 't=search' without 'q'.
 			if (!queryStr.trim()) {
 				console.log(`[Indexer] Empty query for action ${t}, returning empty valid RSS for Test compatibility`);
 				return this.renderRss(res, [], cat as string);
 			}
+
+			// tvsearch: season/ep arrive as separate params. Both back-ends match
+			// whole tokens and read uppercase OR as boolean, so OR the two common
+			// spellings (NxMM, SnnEmm); rarer forms fall to the *arr's own filter.
+			if (t === 'tvsearch' && typeof season === 'string' && typeof ep === 'string' && /^\d+$/.test(season) && /^\d+$/.test(ep)) {
+				const s = parseInt(season, 10);
+				const e = parseInt(ep, 10);
+				const pad2 = (n: number) => String(n).padStart(2, '0');
+				const title = queryStr;
+				queryStr = `${title} ${s}x${pad2(e)} OR ${title} S${pad2(s)}E${pad2(e)}`;
+			}
+
+			// Releases often drop apostrophes (e.g. "Widow's Bay" -> "Widows Bay").
+			// Done here so every search type benefits.
+			queryStr = this.expandApostrophes(queryStr);
 
 			try {
 				await this.mediaProviderService.startSearch(queryStr);
@@ -132,6 +138,11 @@ export class IndexerController {
 
 		res.status(400).send('Unknown action');
 	};
+
+	private expandApostrophes(query: string): string {
+		const stripped = query.replace(/['’]/g, '');
+		return stripped === query || stripped.trim() === '' ? query : `${query} OR ${stripped}`;
+	}
 
 	private getCapabilities(res: Response) {
 		res.header('Content-Type', 'application/xml');
