@@ -9,11 +9,22 @@ const execPromise = util.promisify(exec);
 export class AmuledService {
 	private readonly configDir = process.env.AMULE_CONFIG_DIR || path.join(process.env.HOME || '/home/node', '.aMule');
 	private _isRestarting = false;
+	private _isStopping = false;
 
 	get isRestarting(): boolean {
 		return this._isRestarting;
 	}
 
+	get isStopping(): boolean {
+		return this._isStopping;
+	}
+
+	/**
+	 * Updates the aMule configuration file (amule.conf) with the provided TCP and UDP port values. Stops the daemon before writing the new configuration.
+	 * @param port The new TCP and UDP port number to be set in amule.conf.
+	 * @throws Will throw an error if amule.conf is not found or if there is an issue writing to the file.
+	 * @returns A boolean indicating whether the configuration was changed (true) or not (false).
+	 */
 	async updateCoreConfig(port: number): Promise<boolean> {
 		try {
 			const confPath = path.join(this.configDir, 'amule.conf');
@@ -55,6 +66,7 @@ export class AmuledService {
 			}
 
 			if (changed) {
+				await this.stopDaemon(); // Stop the daemon before writing config
 				console.log(`Updating amule.conf ports to ${port}`);
 				fs.writeFileSync(confPath, content, 'utf-8');
 				return true;
@@ -65,13 +77,34 @@ export class AmuledService {
 		return false;
 	}
 
-	async killDaemon(mode: 'TERM' | 'KILL' = 'TERM'): Promise<void> {
+	private async killDaemon(mode: 'TERM' | 'KILL' = 'TERM'): Promise<void> {
 		const signal = mode === 'KILL' ? '-KILL' : '-TERM';
+		console.log(`🛑 Sending ${signal} to amuled...`);
 		try {
 			await execPromise(`pkill ${signal} amuled`);
 		} catch (e) {
 			// Not running — nothing to kill
 		}
+	}
+
+	/**
+	 * Stops the aMule daemon gracefully, and if it doesn't stop within 8 seconds, force kills it.
+	 */
+	private async stopDaemon(): Promise<void> {
+		if (this._isStopping || !(await this.isDaemonRunning())) return; // Process is already stopped or stopping
+		this._isStopping = true;
+		// Graceful shutdown first
+		await this.killDaemon('TERM');
+
+		// Poll until the process is confirmed dead (up to 8 s)
+		const killed = await this.waitForProcessDead(8000);
+		if (!killed) {
+			console.warn('amuled did not stop gracefully, sending SIGKILL...');
+			await this.killDaemon('KILL');
+			// Give the kernel a moment to reap it
+			await new Promise((resolve) => setTimeout(resolve, 500));
+		}
+		this._isStopping = false;
 	}
 
 	async restartDaemon(): Promise<void> {
@@ -82,18 +115,7 @@ export class AmuledService {
 		this._isRestarting = true;
 		console.log('Restarting aMule daemon...');
 		try {
-			// Graceful shutdown first
-			await this.killDaemon('TERM');
-
-			// Poll until the process is confirmed dead (up to 8 s)
-			const killed = await this.waitForProcessDead(8000);
-			if (!killed) {
-				console.warn('amuled did not stop gracefully, sending SIGKILL...');
-				await this.killDaemon('KILL');
-				// Give the kernel a moment to reap it
-				await new Promise((resolve) => setTimeout(resolve, 500));
-			}
-
+			await this.stopDaemon();
 			await this.startDaemon();
 		} catch (e) {
 			console.error('Failed to restart amuled:', e);
@@ -254,6 +276,11 @@ export class AmuledService {
 		return config;
 	}
 
+	/**
+	 * Updates the aMule configuration file (amule.conf) with the provided new configuration values. Stops the daemon before writing the new configuration.
+	 * @param newConfig An object containing the new configuration values to be set in amule.conf.
+	 * @throws Will throw an error if amule.conf is not found or if there is an issue writing to the file.
+	 */
 	async updateConfig(newConfig: any): Promise<void> {
 		const confPath = path.join(this.configDir, 'amule.conf');
 		if (!fs.existsSync(confPath)) {
@@ -309,6 +336,7 @@ export class AmuledService {
 			}
 		}
 
+		await this.stopDaemon(); // Stop the daemon before writing config
 		fs.writeFileSync(confPath, content, 'utf-8');
 	}
 }

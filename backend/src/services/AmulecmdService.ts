@@ -26,7 +26,7 @@ export class AmulecmdService {
 			});
 			return stdout;
 		} catch (error: any) {
-			console.error('AmuleCmd Error:', error);
+			console.error('❌ AmuleCmd Error:', error.message);
 			// If amulecmd is missing (dev env), return mock data
 			if (error.code === 127 || error.message.includes('not found')) {
 				console.warn('amulecmd not found. Returning mock data.');

@@ -112,6 +112,10 @@ export class WsBroadcastService {
 		if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
 	}
 
+	private async readyToPoll(): Promise<boolean> {
+		return this.openClientCount() > 0 && !this.amuled.isRestarting && !this.amuled.isStopping && (await this.amuled.isDaemonRunning());
+	}
+
 	// ── Initial data burst on connect ──────────────────────────────────────────
 
 	private async sendInitialData(ws: WebSocket): Promise<void> {
@@ -132,7 +136,7 @@ export class WsBroadcastService {
 	// ── Periodic broadcast handlers ────────────────────────────────────────────
 
 	private async pollFast(): Promise<void> {
-		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
+		if (!(await this.readyToPoll())) return;
 		await Promise.allSettled([
 			this.media
 				.getTransfers()
@@ -146,7 +150,7 @@ export class WsBroadcastService {
 	}
 
 	private async pollLog(): Promise<void> {
-		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
+		if (!(await this.readyToPoll())) return;
 		try {
 			const lines = await this.amuled.getLog(100);
 			this.broadcast({ type: 'amule:log', data: { lines } });
@@ -156,7 +160,7 @@ export class WsBroadcastService {
 	}
 
 	private async pollStatus(): Promise<void> {
-		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
+		if (!(await this.readyToPoll())) return;
 		await Promise.allSettled([
 			this.amule
 				.getStats()
@@ -170,7 +174,7 @@ export class WsBroadcastService {
 	}
 
 	private async pollServers(): Promise<void> {
-		if (this.openClientCount() === 0 || this.amuled.isRestarting) return;
+		if (!(await this.readyToPoll())) return;
 		try {
 			const servers = await this.amule.getServers();
 			this.broadcast({ type: 'amule:servers', data: servers });
