@@ -34,6 +34,16 @@ FROM node:24-trixie-slim
 
 WORKDIR /app
 
+# Config Locales to support UTF-8 (tildes, ñ, etc)
+RUN apt-get update && apt-get install -y --no-install-recommends locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
 # Install tini; install aMule 3.0.0 via shared script
 COPY install-amule-gh-release.sh /tmp/install-amule.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
