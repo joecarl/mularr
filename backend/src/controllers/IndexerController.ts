@@ -72,15 +72,11 @@ export class IndexerController {
 				return this.renderRss(res, [], cat as string);
 			}
 
-			// tvsearch: season/ep arrive as separate params. Both back-ends match
-			// whole tokens and read uppercase OR as boolean, so OR the two common
-			// spellings (NxMM, SnnEmm); rarer forms fall to the *arr's own filter.
+			// tvsearch: search by title alone, then filter names locally by
+			// season/ep (see filterByEpisode).
+			let epFilter: { season: number; ep: number } | undefined;
 			if (t === 'tvsearch' && typeof season === 'string' && typeof ep === 'string' && /^\d+$/.test(season) && /^\d+$/.test(ep)) {
-				const s = parseInt(season, 10);
-				const e = parseInt(ep, 10);
-				const pad2 = (n: number) => String(n).padStart(2, '0');
-				const title = queryStr;
-				queryStr = `${title} ${s}x${pad2(e)} OR ${title} S${pad2(s)}E${pad2(e)}`;
+				epFilter = { season: parseInt(season, 10), ep: parseInt(ep, 10) };
 			}
 
 			// Releases often drop apostrophes (e.g. "Widow's Bay" -> "Widows Bay").
@@ -121,8 +117,9 @@ export class IndexerController {
 
 				const results = await this.mediaProviderService.getSearchResults();
 
+				let list = epFilter ? this.filterByEpisode(results.list, epFilter.season, epFilter.ep) : results.list;
+
 				// Apply offset and limit
-				let list = results.list;
 				const start = parseInt(offset as string) || 0;
 				const size = parseInt(limit as string) || 100;
 				list = list.slice(start, start + size);
@@ -138,6 +135,22 @@ export class IndexerController {
 
 		res.status(400).send('Unknown action');
 	};
+
+	private filterByEpisode(results: MediaSearchResult[], season: number, ep: number): MediaSearchResult[] {
+		// 0* absorbs zero-padding (S01E07 == S1E7); \s? allows a split SxxEyy.
+		const patterns = [/\bs0*(\d+)\s?e0*(\d+)\b/i, /\b0*(\d+)x0*(\d+)\b/i];
+		return results.filter((r) => {
+			// Normalize dot/underscore separators so word boundaries hold.
+			const name = r.name.replace(/[._]/g, ' ');
+			for (const pattern of patterns) {
+				const m = name.match(pattern);
+				if (m && parseInt(m[1], 10) === season && parseInt(m[2], 10) === ep) {
+					return true;
+				}
+			}
+			return false;
+		});
+	}
 
 	private expandApostrophes(query: string): string {
 		const stripped = query.replace(/['’]/g, '');
