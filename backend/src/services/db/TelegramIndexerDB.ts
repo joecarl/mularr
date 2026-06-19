@@ -53,6 +53,22 @@ export interface ActiveDownloadRow {
 	error_message?: string | null;
 }
 
+// Quote each term so FTS5-special chars (' - : & ( ) ") match literally
+// instead of throwing; keep uppercase OR/AND/NOT as operators. Drops
+// punctuation-only terms; null when nothing usable remains.
+export function toFtsMatchExpr(query: string): string | null {
+	const expr = query
+		.split(/\s+/)
+		.map((tok) => {
+			if (tok === 'OR' || tok === 'AND' || tok === 'NOT') return tok;
+			if (!/[\p{L}\p{N}]/u.test(tok)) return '';
+			return `"${tok.replace(/"/g, '""')}"`;
+		})
+		.filter((tok) => tok.length > 0)
+		.join(' ');
+	return expr.length > 0 ? expr : null;
+}
+
 export class TelegramIndexerDB {
 	private db: Database.Database;
 
@@ -292,13 +308,15 @@ export class TelegramIndexerDB {
 	}
 
 	public search(query: string, limit: number = 20): MessageRow[] {
+		const match = toFtsMatchExpr(query);
+		if (match === null) return [];
 		return this.db
 			.prepare(
 				`
 				SELECT * FROM messages_fts WHERE messages_fts MATCH ? ORDER BY rank LIMIT ?
 			`
 			)
-			.all(query, limit) as MessageRow[];
+			.all(match, limit) as MessageRow[];
 	}
 
 	public getMessage(chatId: string, messageId: number): MessageRow | undefined {
@@ -325,6 +343,9 @@ export class TelegramIndexerDB {
 		// query so callers in pagination loops don't starve other async work.
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
+		const match = toFtsMatchExpr(query);
+		if (match === null) return { rows: [], nextCursor: null };
+
 		const rows = this.db
 			.prepare(
 				`
@@ -338,7 +359,7 @@ export class TelegramIndexerDB {
 				LIMIT ?
 			`
 			)
-			.all(query, cursorId, limit) as MessageRow[];
+			.all(match, cursorId, limit) as MessageRow[];
 
 		const nextCursor = rows.length === limit ? rows[rows.length - 1].id : null;
 		return { rows, nextCursor };

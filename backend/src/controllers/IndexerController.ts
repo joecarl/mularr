@@ -66,20 +66,22 @@ export class IndexerController {
 				return this.renderRss(res, [], cat as string);
 			}
 
-			// tvsearch: search by the title in `q` only. season/ep arrive as
-			// separate Torznab params, not inside `q`; appending them narrows
-			// the eD2k query against the network's inconsistent episode naming
-			// and loses real content. Sonarr does the episode/language/quality
-			// matching itself, rejecting releases that don't fit, so we let all
-			// candidates flow back. (season/ep stay destructured for logging.)
-			// Trade-off: a tvsearch returns every episode's releases; automatic
-			// search only grabs matches, interactive greys out the rest.
-
 			// Radarr/Sonarr "Test" often sends 't=movie' or 't=search' without 'q'.
 			if (!queryStr.trim()) {
 				console.log(`[Indexer] Empty query for action ${t}, returning empty valid RSS for Test compatibility`);
 				return this.renderRss(res, [], cat as string);
 			}
+
+			// tvsearch: search by title alone, then filter names locally by
+			// season/ep (see filterByEpisode).
+			let epFilter: { season: number; ep: number } | undefined;
+			if (t === 'tvsearch' && typeof season === 'string' && typeof ep === 'string' && /^\d+$/.test(season) && /^\d+$/.test(ep)) {
+				epFilter = { season: parseInt(season, 10), ep: parseInt(ep, 10) };
+			}
+
+			// Releases often drop apostrophes (e.g. "Widow's Bay" -> "Widows Bay").
+			// Done here so every search type benefits.
+			queryStr = this.expandApostrophes(queryStr);
 
 			try {
 				await this.mediaProviderService.startSearch(queryStr);
@@ -115,8 +117,9 @@ export class IndexerController {
 
 				const results = await this.mediaProviderService.getSearchResults();
 
+				let list = epFilter ? this.filterByEpisode(results.list, epFilter.season, epFilter.ep) : results.list;
+
 				// Apply offset and limit
-				let list = results.list;
 				const start = parseInt(offset as string) || 0;
 				const size = parseInt(limit as string) || 100;
 				list = list.slice(start, start + size);
@@ -132,6 +135,27 @@ export class IndexerController {
 
 		res.status(400).send('Unknown action');
 	};
+
+	private filterByEpisode(results: MediaSearchResult[], season: number, ep: number): MediaSearchResult[] {
+		// 0* absorbs zero-padding (S01E07 == S1E7); \s? allows a split SxxEyy.
+		const patterns = [/\bs0*(\d+)\s?e0*(\d+)\b/i, /\b0*(\d+)x0*(\d+)\b/i];
+		return results.filter((r) => {
+			// Normalize dot/underscore separators so word boundaries hold.
+			const name = r.name.replace(/[._]/g, ' ');
+			for (const pattern of patterns) {
+				const m = name.match(pattern);
+				if (m && parseInt(m[1], 10) === season && parseInt(m[2], 10) === ep) {
+					return true;
+				}
+			}
+			return false;
+		});
+	}
+
+	private expandApostrophes(query: string): string {
+		const stripped = query.replace(/['’]/g, '');
+		return stripped === query || stripped.trim() === '' ? query : `${query} OR ${stripped}`;
+	}
 
 	private getCapabilities(res: Response) {
 		res.header('Content-Type', 'application/xml');
