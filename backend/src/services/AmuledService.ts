@@ -10,6 +10,11 @@ export class AmuledService {
 	private readonly configDir = process.env.AMULE_CONFIG_DIR || path.join(process.env.HOME || '/home/node', '.aMule');
 	private _isRestarting = false;
 	private _isStopping = false;
+	private readonly sharedDirsManager = new AmuleSharedDirsManager(this);
+
+	get configDirectory(): string {
+		return this.configDir;
+	}
 
 	get isRestarting(): boolean {
 		return this._isRestarting;
@@ -228,6 +233,7 @@ export class AmuledService {
 			lockedFields: {
 				incomingDir: !!process.env.AMULE_INCOMING_DIR,
 				tempDir: !!process.env.AMULE_TEMP_DIR,
+				sharedDirs: this.sharedDirsManager.isSharedDirsLockedByEnv(),
 				ports: process.env.GLUETUN_ENABLED?.toLowerCase() === 'true',
 			},
 		};
@@ -273,7 +279,13 @@ export class AmuledService {
 			console.warn('Could not read local amule.conf:', e);
 		}
 
+		config.sharedDirs = this.sharedDirsManager.getSharedDirectories();
+
 		return config;
+	}
+
+	public applySharedDirsFromEnvIfNeeded(): void {
+		this.sharedDirsManager.applySharedDirsFromEnvIfNeeded();
 	}
 
 	/**
@@ -327,6 +339,15 @@ export class AmuledService {
 			replacements.TempDir = newConfig.tempDir;
 		}
 
+		await this.stopDaemon(); // Stop the daemon before writing config
+
+		if (!this.sharedDirsManager.isSharedDirsLockedByEnv() && newConfig.sharedDirs !== undefined && Array.isArray(newConfig.sharedDirs)) {
+			const normalized = normalizeSharedDirectories(newConfig.sharedDirs);
+			this.sharedDirsManager.setSharedDirectories(normalized);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 5000)); // Give the kernel a moment to release the port
+
 		for (const [key, value] of Object.entries(replacements)) {
 			if (value !== undefined) {
 				const regex = new RegExp(`^${key}=.*$`, 'm');
@@ -336,7 +357,159 @@ export class AmuledService {
 			}
 		}
 
-		await this.stopDaemon(); // Stop the daemon before writing config
 		fs.writeFileSync(confPath, content, 'utf-8');
+	}
+}
+
+interface SharedDirectoryEntry {
+	path: string;
+	recursive: boolean;
+}
+
+function normalizeSharedDirectories(entries: unknown[]): SharedDirectoryEntry[] {
+	const merged = new Map<string, boolean>();
+
+	for (const item of entries) {
+		if (!item || typeof item !== 'object') {
+			continue;
+		}
+		const candidatePath = (item as { path?: unknown }).path;
+		const candidateRecursive = (item as { recursive?: unknown }).recursive;
+		if (typeof candidatePath !== 'string') {
+			continue;
+		}
+
+		const trimmedPath = candidatePath.trim();
+		if (!trimmedPath) {
+			continue;
+		}
+		if (!path.isAbsolute(trimmedPath)) {
+			throw new Error(`Shared directory path must be absolute: ${trimmedPath}`);
+		}
+
+		const recursive = candidateRecursive === true;
+		const previous = merged.get(trimmedPath);
+		merged.set(trimmedPath, recursive || previous === true);
+	}
+
+	return Array.from(merged.entries()).map(([entryPath, recursive]) => ({
+		path: entryPath,
+		recursive,
+	}));
+}
+
+class AmuleSharedDirsManager {
+	private readonly sharedDirRecursiveFile = 'shareddir-recursive.dat';
+	private readonly sharedDirExplicitFile = 'shareddir-explicit.dat';
+	private readonly sharedDirFile = 'shareddir.dat'; // legacy file, used internally by amule, must be removed before writing new shared directories
+
+	constructor(private readonly amuledService: AmuledService) {}
+
+	get configDir(): string {
+		return this.amuledService.configDirectory;
+	}
+
+	public isSharedDirsLockedByEnv(): boolean {
+		return !!process.env.AMULE_SHAREDDIR_RECURSIVE || !!process.env.AMULE_SHAREDDIR_EXPLICIT;
+	}
+
+	private readPathListFile(fileName: string): string[] {
+		const filePath = path.join(this.configDir, fileName);
+		if (!fs.existsSync(filePath)) {
+			return [];
+		}
+
+		return fs
+			.readFileSync(filePath, 'utf-8')
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}
+
+	private writePathListFile(fileName: string, paths: string[]): void {
+		const filePath = path.join(this.configDir, fileName);
+		const content = paths.length > 0 ? `${paths.join('\n')}\n` : '';
+		console.log(`Writing to ${filePath}:`);
+		console.log(content);
+		fs.writeFileSync(filePath, content, 'utf-8');
+	}
+
+	public getSharedDirectories(): SharedDirectoryEntry[] {
+		const recursiveDirs = this.readPathListFile(this.sharedDirRecursiveFile);
+		const explicitDirs = this.readPathListFile(this.sharedDirExplicitFile);
+
+		const merged = new Map<string, boolean>();
+		for (const dirPath of recursiveDirs) {
+			if (!path.isAbsolute(dirPath)) {
+				continue;
+			}
+			merged.set(dirPath, true);
+		}
+		for (const dirPath of explicitDirs) {
+			if (!path.isAbsolute(dirPath)) {
+				continue;
+			}
+			if (!merged.has(dirPath)) {
+				merged.set(dirPath, false);
+			}
+		}
+
+		return Array.from(merged.entries()).map(([entryPath, recursive]) => ({
+			path: entryPath,
+			recursive,
+		}));
+	}
+
+	public setSharedDirectories(entries: SharedDirectoryEntry[]): void {
+		const recursiveDirs = entries.filter((entry) => entry.recursive).map((entry) => entry.path);
+		const explicitDirs = entries.filter((entry) => !entry.recursive).map((entry) => entry.path);
+
+		// Remove legacy sharedDirFile before writing new shared directories
+		const legacyFilePath = path.join(this.configDir, this.sharedDirFile);
+		if (fs.existsSync(legacyFilePath)) {
+			fs.unlinkSync(legacyFilePath);
+		}
+
+		console.log('Writing shared directories:');
+		console.log('Recursive:', recursiveDirs);
+		this.writePathListFile(this.sharedDirRecursiveFile, recursiveDirs);
+		console.log('Explicit:', explicitDirs);
+		this.writePathListFile(this.sharedDirExplicitFile, explicitDirs);
+	}
+
+	private parseSharedDirsEnvVar(rawList: string | undefined, recursive: boolean): SharedDirectoryEntry[] {
+		if (!rawList) {
+			return [];
+		}
+
+		const entries: SharedDirectoryEntry[] = [];
+		for (const rawPath of rawList.split(';')) {
+			const trimmedPath = rawPath.trim();
+			if (!trimmedPath) {
+				continue;
+			}
+			if (!path.isAbsolute(trimmedPath)) {
+				console.warn(`Ignoring non-absolute shared directory path from env: ${trimmedPath}`);
+				continue;
+			}
+			entries.push({ path: trimmedPath, recursive });
+		}
+
+		return entries;
+	}
+
+	public applySharedDirsFromEnvIfNeeded(): void {
+		if (!this.isSharedDirsLockedByEnv()) {
+			return;
+		}
+
+		fs.mkdirSync(this.configDir, { recursive: true });
+
+		const fromRecursive = this.parseSharedDirsEnvVar(process.env.AMULE_SHAREDDIR_RECURSIVE, true);
+		const fromExplicit = this.parseSharedDirsEnvVar(process.env.AMULE_SHAREDDIR_EXPLICIT, false);
+		const normalized = normalizeSharedDirectories([...fromRecursive, ...fromExplicit]);
+
+		console.log('Applying shared directories from environment variables...');
+		this.setSharedDirectories(normalized);
 	}
 }

@@ -38,6 +38,11 @@ export interface AmuleInfo {
 	version: string;
 }
 
+export interface SharedDirectoryEntry {
+	path: string;
+	recursive: boolean;
+}
+
 export interface ConfigValues {
 	nick?: string;
 	tcpPort?: string;
@@ -64,9 +69,11 @@ export interface ConfigValues {
 	smartIdCheck?: boolean;
 	ich?: boolean;
 	allocateFullFile?: boolean;
+	sharedDirs?: SharedDirectoryEntry[];
 	lockedFields?: {
 		incomingDir?: boolean;
 		tempDir?: boolean;
+		sharedDirs?: boolean;
 		ports?: boolean;
 	};
 }

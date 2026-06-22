@@ -17,6 +17,7 @@
 	}
 
 	.settings-fieldset {
+		min-width: 0px;
 		padding: 10px;
 	}
 
@@ -73,6 +74,36 @@
 	.settings-checkbox-label {
 		display: block;
 	}
+
+	/* -- Shared directories table ----------------------------------------- */
+
+	.settings-shared-table {
+		max-height: 190px;
+		table {
+			table-layout: fixed;
+		}
+	}
+
+	.settings-shared-path-cell {
+		font-family: monospace;
+	}
+
+	.settings-shared-add-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		align-items: center;
+		justify-content: end;
+	}
+
+	.settings-shared-recursive-label {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		white-space: nowrap;
+	}
+
+	/* -- Settings actions ------------------------------------------------- */
 
 	.settings-actions {
 		display: flex;

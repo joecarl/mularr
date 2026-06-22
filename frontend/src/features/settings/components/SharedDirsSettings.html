@@ -1,0 +1,42 @@
+<div class="settings-group" style="height: 100%;">
+	<div data-cb="lockedSharedDirsInfo" class="settings-info">
+		Managed by environment variables.
+	</div>
+	<div class="ui-table-container settings-shared-table" style="flex: 1;">
+		<table class="ui-list">
+			<thead>
+				<tr>
+					<th>Path</th>
+					<th style="width: 60px;">Recursive</th>
+					<th style="width: 45px;">Actions</th>
+				</tr>
+			</thead>
+			<tbody data-cb="sharedDirsTableBody">
+				<tr data-cb="sharedDirTableRow">
+					<td data-cb="sharedDirPathCell" class="settings-shared-path-cell"></td>
+					<td>
+						<input type="checkbox" data-cb="sharedDirRecursive" />
+					</td>
+					<td style="text-align: center;">
+						<button class="ui-btn" data-cb="removeSharedDirBtn" title="Remove shared directory"
+							style="min-width: 24px; width: 24px; height: 20px; padding: 0;">
+							<span class="icon-img icon-delete"></span>
+						</button>
+					</td>
+				</tr>
+				<tr data-cb="sharedDirNoRows">
+					<td colspan="3">No shared directories configured.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="settings-shared-add-row">
+		<input type="text" data-cb="newSharedDirPath" class="settings-input settings-input-full"
+			placeholder="/absolute/path" />
+		<label class="settings-shared-recursive-label">
+			<input type="checkbox" data-cb="newSharedDirRecursive" />
+			Recursive
+		</label>
+		<button class="ui-btn" data-cb="addSharedDirBtn">Add</button>
+	</div>
+</div>

@@ -87,7 +87,7 @@
 			<!-- Paths -->
 			<fieldset class="settings-fieldset">
 				<legend>Paths</legend>
-				<div style="display: flex; flex-direction: column; gap: 5px;">
+				<div class="settings-group">
 					<label>Incoming Files:</label>
 					<input type="text" data-cb="incomingDir" class="settings-input settings-input-full" />
 					<div data-cb="lockedIncomingInfo" class="settings-info">
@@ -99,6 +99,11 @@
 						Managed via environment variable.
 					</div>
 				</div>
+			</fieldset>
+
+			<fieldset class="settings-fieldset">
+				<legend>Shared Directories</legend>
+				<div class="settings-group" data-cb="sharedDirsSection">
 			</fieldset>
 
 			<!-- Behavior & Files -->
@@ -170,5 +175,4 @@
 		<button class="ui-btn" data-cb="applyBtn">Apply</button>
 		<button class="ui-btn" data-cb="cancelBtn">Cancel</button>
 	</div>
-</div>
 </div>
