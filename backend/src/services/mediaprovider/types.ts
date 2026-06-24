@@ -4,6 +4,20 @@ import type { AmuleCategory } from 'amule-ec-client';
 // Shared transfer / search types
 // ---------------------------------------------------------------------------
 
+export enum CHUNK_STATUS {
+	UNAVAILABLE = 0,
+	AVAILABLE = 1,
+	COMPLETE = 2,
+	DOWNLOADING = 3,
+}
+
+export interface ChunkInfo {
+	chunkStates: CHUNK_STATUS[];
+	chunkAvailability: number[];
+	partCount: number;
+	sizeFull: number;
+}
+
 export interface MediaTransfer {
 	rawLine: string;
 	name?: string;
@@ -28,6 +42,8 @@ export interface MediaTransfer {
 	filePath?: string;
 	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
 	sourceName?: string;
+	/** Chunk information for the transfer. */
+	chunkInfo?: ChunkInfo;
 }
 
 export interface MediaSearchResult {

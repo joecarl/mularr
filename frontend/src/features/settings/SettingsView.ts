@@ -21,9 +21,14 @@ export const SettingsView = component(() => {
 	});
 
 	const interval = signal(prefs.get('ui.refreshInterval', 2000));
+	const detailedTransferProgress = signal(prefs.get('ui.transfers.useDetailedProgress', true));
 
 	effect(() => {
 		prefs.set('ui.refreshInterval', interval.get());
+	});
+
+	effect(() => {
+		prefs.set('ui.transfers.useDetailedProgress', detailedTransferProgress.get());
 	});
 
 	const nick = signal('');
@@ -127,6 +132,11 @@ export const SettingsView = component(() => {
 		intervalInput: {
 			_ref: (el) => {
 				bindControlledInput(el, interval);
+			},
+		},
+		detailedTransferProgress: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, detailedTransferProgress);
 			},
 		},
 		nick: {

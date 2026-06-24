@@ -1,4 +1,4 @@
-import { computed, componentList } from 'chispa';
+import { computed, componentList, Signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { Transfer } from '../../services/MediaApiService';
@@ -11,19 +11,22 @@ import { isVideoFile } from '../../utils/files';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { RowSelectionManager } from '../../utils/ListManager';
 import { TransferDetailsDialog } from './TransferDetailsDialog';
+import { TransferProgressBar } from './TransferProgressBar';
+import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { statusMap } from './transferStatus';
 import tpl from './TransfersView.html';
 import './TransfersView.css';
 
 export const DEFAULT_VALUE = 'default';
 
-async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
+async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
 	const extensionsApi = services.get(ExtensionsApiService);
 	const ctx = services.get(TransfersContextService);
 	const dialogService = services.get(DialogService);
 	const actions: ContextMenuItem[] = [];
 	const popupProps = 'width=1280,height=720,toolbar=no,menubar=no,location=no,status=no';
 
+	const transfer = t.get();
 	const hash = transfer.hash ?? '';
 	const allHashes = [...selectionMgr.selectedHashes.get()].filter(Boolean) as string[];
 	const targetHashes = allHashes.length > 0 ? allHashes : hash ? [hash] : [];
@@ -36,7 +39,7 @@ async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSele
 			dialogService.open({
 				title: transfer.name || 'Transfer Details',
 				width: '580px',
-				render: (close) => TransferDetailsDialog({ transfer, onClose: close }),
+				render: (close) => TransferDetailsDialog({ transfer: t, onClose: close }),
 			});
 		},
 	});
@@ -59,9 +62,6 @@ async function buildContextMenuActions(transfer: Transfer, selectionMgr: RowSele
 		} catch {
 			// silently ignore if extensions can't be fetched
 		}
-	}
-
-	if (actions.length > 0) {
 		actions.push({ separator: true });
 	}
 
@@ -133,6 +133,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 	(t, i, l, props) => {
 		const selectionMgr = props!.selectionMgr;
 		const onRowClick = props!.onRowClick;
+		const prefs = services.get(LocalPrefsService);
 		const ctxMenu = services.get(ContextMenuService);
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(t.get().hash || ''));
 		const addedOn = computed(() => {
@@ -156,7 +157,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 					selectionMgr.handleRowSelection(e, hash, l.get());
 					onRowClick(hash);
 				}
-				const actions = await buildContextMenuActions(transfer, selectionMgr);
+				const actions = await buildContextMenuActions(t, selectionMgr);
 				ctxMenu.show(e, actions);
 			},
 			nodes: {
@@ -199,17 +200,10 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				completedCol: { inner: () => fbytes(t.get().completed) },
 				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
 				progressCol: {
-					nodes: {
-						progressBar: {
-							style: { width: () => `${(t.get().progress || 0) * 100}%` },
-							addClass: () => {
-								if (t.get().stopped || t.get().statusId === 7) return 'transfer-progress-bar-paused';
-								if (t.get().isCompleted) return 'transfer-progress-bar-complete';
-								return '';
-							},
-						},
-						progressText: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
-					},
+					inner: TransferProgressBar({
+						transfer: t,
+						preferChunked: prefs.get('ui.transfers.useDetailedProgress', false),
+					}),
 				},
 				sourcesCol: { inner: () => String(t.get().sources || 0) },
 				priorityCol: { inner: () => String(t.get().priority || 0) },
