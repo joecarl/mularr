@@ -190,7 +190,7 @@ export class AmuledService {
 			}
 		}
 		console.log('Starting aMule daemon...');
-		const child = spawn('amuled', ['-c', this.configDir, '-f'], {
+		const child = spawn('amuled', ['-c', this.configDir], {
 			detached: true,
 			stdio: 'ignore',
 		});

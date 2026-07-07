@@ -177,9 +177,15 @@ export class TelegramIndexerService {
 		}
 
 		try {
-			await (this.client as any).signIn({
-				password: password,
-			});
+			await this.client.signInWithPassword(
+				{ apiId: (this.client as any).apiId, apiHash: (this.client as any).apiHash },
+				{
+					password: async () => password,
+					onError: (err: any) => {
+						throw err;
+					},
+				}
+			);
 
 			this.onLoginSuccess();
 		} catch (e: any) {
