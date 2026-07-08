@@ -177,8 +177,10 @@ export class TelegramIndexerService {
 		}
 
 		try {
+			const { apiId, apiHash } = this.getExtensionConfig();
+			if (!apiId || !apiHash) throw new Error('Missing Telegram API credentials');
 			await this.client.signInWithPassword(
-				{ apiId: (this.client as any).apiId, apiHash: (this.client as any).apiHash },
+				{ apiId, apiHash },
 				{
 					password: async () => password,
 					onError: (err: any) => {
