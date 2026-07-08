@@ -1,4 +1,4 @@
-import { component, computed, componentList, effect } from 'chispa';
+import { component, computed, componentList, effect, signal, bindControlledInput } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
@@ -50,12 +50,15 @@ const SharedRows = componentList<AmuleFile, { mgr: ListManager<AmuleFile, keyof 
 );
 
 const MOBILE_SORT_OPTIONS: any[] = [];
+const SHARED_PAGE_SIZE = 200;
 
 export const SharedView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const dialogService = services.get(DialogService);
 	const prefs = services.get(LocalPrefsService);
 	const ws = services.get(WsService);
+	const nameFilter = signal('');
+	const visibleCount = signal(SHARED_PAGE_SIZE);
 
 	const mgr = new ListManager<AmuleFile, keyof AmuleFile>({
 		defaultColumn: 'name',
@@ -65,6 +68,26 @@ export const SharedView = component(() => {
 	});
 
 	const isDisabled = computed(() => mgr.selectedHashes.get().size === 0);
+	const filteredItems = computed(() => {
+		const term = nameFilter.get().trim().toLowerCase();
+		const list = mgr.sortedItems.get();
+		if (!term) return list;
+		return list.filter((item) => (item.name || '').toLowerCase().includes(term));
+	});
+	const visibleItems = computed(() => filteredItems.get().slice(0, visibleCount.get()));
+	const hasMoreItems = computed(() => visibleItems.get().length < filteredItems.get().length);
+	const shownCountLabel = computed(() => {
+		const total = mgr.sortedItems.get().length;
+		const filtered = filteredItems.get().length;
+		const shown = visibleItems.get().length;
+		if (filtered === total) return `${shown}/${total} shown`;
+		return `${shown}/${filtered} shown (filtered from ${total})`;
+	});
+
+	effect(() => {
+		filteredItems.get();
+		visibleCount.set(SHARED_PAGE_SIZE);
+	});
 
 	// Sync shared files from WebSocket
 	effect(() => {
@@ -91,6 +114,19 @@ export const SharedView = component(() => {
 		}
 	};
 
+	const loadMoreItems = () => {
+		if (!hasMoreItems.get()) return;
+		visibleCount.set(Math.min(visibleCount.get() + SHARED_PAGE_SIZE, filteredItems.get().length));
+	};
+
+	const onSharedTableScroll = (e: Event) => {
+		const el = e.currentTarget as HTMLElement | null;
+		if (!el) return;
+		if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+			loadMoreItems();
+		}
+	};
+
 	return tpl.fragment({
 		thName: { onclick: () => mgr.sort('name') },
 		thSize: { onclick: () => mgr.sort('size') },
@@ -100,14 +136,39 @@ export const SharedView = component(() => {
 		thCompleteSources: { onclick: () => mgr.sort('getCompleteSources') },
 
 		refreshBtn: { onclick: loadShared },
+		nameFilterInput: {
+			_ref: (el) => {
+				bindControlledInput(el, nameFilter);
+			},
+		},
+		sharedCountLabel: {
+			inner: shownCountLabel,
+		},
 
 		cancelBtn: {
 			disabled: isDisabled,
 			onclick: () => deleteSharedFiles(),
 		},
 
+		sharedTableContainer: {
+			onscroll: onSharedTableScroll,
+		},
+
 		sharedListContainer: {
-			inner: () => (!mgr.hasItems.get() ? tpl.noSharedRow({}) : SharedRows(mgr.sortedItems, { mgr })),
+			inner: () => {
+				const list = visibleItems.get();
+				if (list.length === 0) {
+					return tpl.noSharedRow({
+						nodes: {
+							noSharedText: {
+								inner: () => (nameFilter.get().trim() ? 'No shared files match this name.' : 'No shared files.'),
+							},
+						},
+					});
+				}
+
+				return SharedRows(visibleItems, { mgr });
+			},
 		},
 	});
 });
