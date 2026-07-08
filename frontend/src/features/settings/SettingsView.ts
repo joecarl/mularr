@@ -58,6 +58,14 @@ export const SettingsView = component(() => {
 	const smartIdCheck = signal(true);
 	const ich = signal(true);
 	const allocateFullFile = signal(false);
+	const ipFilterClients = signal(true);
+	const ipFilterServers = signal(true);
+	const filterLanIps = signal(true);
+	const paranoidFiltering = signal(true);
+	const ipFilterAutoLoad = signal(true);
+	const ipFilterUrl = signal('');
+	const filterLevel = signal('127');
+	const ipFilterSystem = signal(false);
 
 	const showSplash = signal(true);
 	const startMinimized = signal(false);
@@ -98,6 +106,14 @@ export const SettingsView = component(() => {
 				smartIdCheck.set(v.smartIdCheck ?? true);
 				ich.set(v.ich ?? true);
 				allocateFullFile.set(v.allocateFullFile ?? false);
+				ipFilterClients.set(v.ipFilterClients ?? true);
+				ipFilterServers.set(v.ipFilterServers ?? true);
+				filterLanIps.set(v.filterLanIps ?? true);
+				paranoidFiltering.set(v.paranoidFiltering ?? true);
+				ipFilterAutoLoad.set(v.ipFilterAutoLoad ?? true);
+				ipFilterUrl.set(v.ipFilterUrl || '');
+				filterLevel.set(v.filterLevel || '127');
+				ipFilterSystem.set(v.ipFilterSystem ?? false);
 				sharedDirs.set((v.sharedDirs || []).map((entry) => ({ path: entry.path || '', recursive: !!entry.recursive })));
 				lockedPorts.set(false);
 				lockedIncomingDir.set(false);
@@ -268,6 +284,46 @@ export const SettingsView = component(() => {
 				bindControlledCheckbox(el, allocateFullFile);
 			},
 		},
+		ipFilterClients: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, ipFilterClients);
+			},
+		},
+		ipFilterServers: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, ipFilterServers);
+			},
+		},
+		filterLanIps: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, filterLanIps);
+			},
+		},
+		paranoidFiltering: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, paranoidFiltering);
+			},
+		},
+		ipFilterAutoLoad: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, ipFilterAutoLoad);
+			},
+		},
+		ipFilterUrl: {
+			_ref: (el) => {
+				bindControlledInput(el, ipFilterUrl);
+			},
+		},
+		filterLevel: {
+			_ref: (el) => {
+				bindControlledInput(el, filterLevel);
+			},
+		},
+		ipFilterSystem: {
+			_ref: (el) => {
+				bindControlledCheckbox(el, ipFilterSystem);
+			},
+		},
 		showSplash: {
 			onclick: handleNostalgiaClick,
 			_ref: (el) => {
@@ -322,6 +378,14 @@ export const SettingsView = component(() => {
 						smartIdCheck: smartIdCheck.get(),
 						ich: ich.get(),
 						allocateFullFile: allocateFullFile.get(),
+						ipFilterClients: ipFilterClients.get(),
+						ipFilterServers: ipFilterServers.get(),
+						filterLanIps: filterLanIps.get(),
+						paranoidFiltering: paranoidFiltering.get(),
+						ipFilterAutoLoad: ipFilterAutoLoad.get(),
+						ipFilterUrl: ipFilterUrl.get(),
+						filterLevel: filterLevel.get(),
+						ipFilterSystem: ipFilterSystem.get(),
 						sharedDirs: sharedDirs.get(),
 					});
 					await loadConfig();

@@ -69,6 +69,14 @@ export interface ConfigValues {
 	smartIdCheck?: boolean;
 	ich?: boolean;
 	allocateFullFile?: boolean;
+	ipFilterClients?: boolean;
+	ipFilterServers?: boolean;
+	filterLanIps?: boolean;
+	paranoidFiltering?: boolean;
+	ipFilterAutoLoad?: boolean;
+	ipFilterUrl?: string;
+	filterLevel?: string;
+	ipFilterSystem?: boolean;
 	sharedDirs?: SharedDirectoryEntry[];
 	lockedFields?: {
 		incomingDir?: boolean;

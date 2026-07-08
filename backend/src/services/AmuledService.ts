@@ -274,6 +274,14 @@ export class AmuledService {
 				config.smartIdCheck = findVal('SmartIdCheck') === '1';
 				config.ich = findVal('ICH') === '1';
 				config.allocateFullFile = findVal('AllocateFullFile') === '1';
+				config.ipFilterClients = findVal('IpFilterClients') === '1';
+				config.ipFilterServers = findVal('IpFilterServers') === '1';
+				config.filterLanIps = findVal('FilterLanIPs') === '1';
+				config.paranoidFiltering = findVal('ParanoidFiltering') === '1';
+				config.ipFilterAutoLoad = findVal('IPFilterAutoLoad') === '1';
+				config.ipFilterUrl = findVal('IPFilterURL');
+				config.filterLevel = findVal('FilterLevel');
+				config.ipFilterSystem = findVal('IPFilterSystem') === '1';
 			}
 		} catch (e) {
 			console.warn('Could not read local amule.conf:', e);
@@ -325,6 +333,14 @@ export class AmuledService {
 			SmartIdCheck: fromBool(newConfig.smartIdCheck),
 			ICH: fromBool(newConfig.ich),
 			AllocateFullFile: fromBool(newConfig.allocateFullFile),
+			IpFilterClients: fromBool(newConfig.ipFilterClients),
+			IpFilterServers: fromBool(newConfig.ipFilterServers),
+			FilterLanIPs: fromBool(newConfig.filterLanIps),
+			ParanoidFiltering: fromBool(newConfig.paranoidFiltering),
+			IPFilterAutoLoad: fromBool(newConfig.ipFilterAutoLoad),
+			IPFilterURL: newConfig.ipFilterUrl,
+			FilterLevel: newConfig.filterLevel,
+			IPFilterSystem: fromBool(newConfig.ipFilterSystem),
 		};
 
 		if (process.env.GLUETUN_ENABLED?.toLowerCase() !== 'true') {

@@ -84,6 +84,31 @@
 				</div>
 			</fieldset>
 
+			<!-- IP Filter -->
+			<fieldset class="settings-fieldset">
+				<legend>IP Filter</legend>
+				<div class="settings-group-compact">
+					<label><input type="checkbox" data-cb="ipFilterClients" /> Apply filter to clients</label>
+					<label><input type="checkbox" data-cb="ipFilterServers" /> Apply filter to servers</label>
+					<label><input type="checkbox" data-cb="filterLanIps" /> Filter LAN IPs</label>
+					<label><input type="checkbox" data-cb="paranoidFiltering" /> Paranoid filtering</label>
+					<label><input type="checkbox" data-cb="ipFilterAutoLoad" /> Auto-load IP filter list</label>
+					<label><input type="checkbox" data-cb="ipFilterSystem" /> Use system-wide IP filter</label>
+
+					<div class="settings-separator"></div>
+
+					<div class="settings-row">
+						<label>Filter URL:</label>
+						<input type="text" data-cb="ipFilterUrl" class="settings-input settings-input-full"
+							placeholder="https://..." />
+					</div>
+					<div class="settings-row">
+						<label>Filter level:</label>
+						<input type="number" data-cb="filterLevel" class="settings-input settings-input-m" />
+					</div>
+				</div>
+			</fieldset>
+
 			<!-- Paths -->
 			<fieldset class="settings-fieldset">
 				<legend>Paths</legend>
