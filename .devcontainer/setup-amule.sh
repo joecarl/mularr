@@ -23,6 +23,8 @@ echo "aMule ${AMULE_VERSION} installation complete."
 # -- Configuration Setup --
 # Dev uses default home directory for config
 CONF_DIR="$HOME/.aMule"
+EC_PASSWORD="${AMULE_PASSWORD:-secret}"
+EC_PASSWORD_HASH="$(printf '%s' "$EC_PASSWORD" | node -e "const crypto = require('crypto'); const chunks = []; process.stdin.on('data', (chunk) => chunks.push(chunk)); process.stdin.on('end', () => process.stdout.write(crypto.createHash('md5').update(Buffer.concat(chunks)).digest('hex')));")"
 mkdir -p "$CONF_DIR"
 
 if [ ! -f "$CONF_DIR/amule.conf" ]; then
@@ -35,7 +37,7 @@ Nick=Mularr
 AcceptExternalConnections=1
 ECAddress=127.0.0.1
 ECPort=4712
-ECPassword=5ebe2294ecd0e0f08eab7690d2a6ee69
+ECPassword=$EC_PASSWORD_HASH
 EOF
 fi
 
