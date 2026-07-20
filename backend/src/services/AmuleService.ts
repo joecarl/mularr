@@ -1,4 +1,4 @@
-import { AmuleClient, AmuleFile, AmuleTransferringFile, SearchType, type AmuleCategory } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, SearchType, type AmuleCategory, type SourceNameCount } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs/promises';
@@ -7,7 +7,7 @@ import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
 import { AmulecmdService } from './AmulecmdService';
 import { buildEd2kLink, parseEd2kLink } from './eD2kTools';
-import { ChunkInfo } from './mediaprovider/types';
+import { ChunkInfo, TransferSource, TransferSourceNameCount } from './mediaprovider/types';
 
 function normalizeCategoryName(name: string | null, ctgs: AmuleCategory[]): string {
 	const DEFAULT_VALUE = 'default';
@@ -41,7 +41,7 @@ interface Download {
 	speed?: number;
 	isCompleted?: boolean;
 	progress?: number;
-	sources?: number;
+	sourceCount?: number;
 	priority?: number;
 	status?: string;
 	statusId?: number;
@@ -53,8 +53,32 @@ interface Download {
 	categoryName?: string | null;
 	addedOn?: string | null;
 	chunkInfo?: ChunkInfo;
+	sources?: TransferSource[];
+	sourceNames?: TransferSourceNameCount[];
 	provider?: string;
 	providerData?: any; // Raw data from the provider
+}
+
+function normalizeSourceNameCounts(sourceNames: SourceNameCount[] | undefined): TransferSourceNameCount[] {
+	if (!sourceNames || sourceNames.length === 0) return [];
+	return sourceNames.map((s) => ({ name: (s.name || '').trim(), count: Number(s.count || 0) })).filter((s) => !!s.name && s.count > 0);
+}
+
+function toTransferSourceFromClient(client: AmuleUpDownClient): TransferSource {
+	return {
+		clientName: client.clientName,
+		ip: client.userIP,
+		port: client.userPort,
+		software: client.software,
+		softwareVersion: client.softVerStr,
+		downloadSpeed: client.downSpeed,
+		uploadSpeed: client.upSpeed,
+		availableParts: client.availableParts,
+		remoteFilename: client.remoteFilename,
+		sourceFrom: client.sourceFrom,
+		remoteQueueRank: client.remoteQueueRank,
+		waitingPosition: client.waitingPosition,
+	};
 }
 
 export function normalizeChunkProgress(transfer: AmuleTransferringFile): ChunkInfo | null {
@@ -234,6 +258,7 @@ export class AmuleService {
 
 	async getTransfers(): Promise<{ raw: string; list: Download[]; categories: AmuleCategory[] }> {
 		try {
+			//const queue = await this.client.getDownloadQueueWithSources();
 			const queue = await this.client.getDownloadQueue();
 			const categories = await this.getCategories();
 			//console.log('Download Queue from EC Client:', queue);
@@ -289,7 +314,7 @@ export class AmuleService {
 						link: link,
 						completed: sizeFull,
 						speed: 0,
-						sources: 0,
+						sourceCount: 0,
 						priority: 0,
 						remaining: 0,
 						addedOn: dbRecord.added_at,
@@ -313,7 +338,7 @@ export class AmuleService {
 						link: '',
 						completed: 0,
 						speed: 0,
-						sources: 0,
+						sourceCount: 0,
 						priority: 0,
 						remaining: dbRecord.size || 0,
 						addedOn: dbRecord.added_at,
@@ -343,7 +368,7 @@ export class AmuleService {
 					link: file.fileEd2kLink,
 					completed: sizeDone,
 					speed: file.speed || 0,
-					sources: file.sourceCount,
+					sourceCount: file.sourceCount,
 					priority: file.downPrio,
 					remaining: remaining,
 					timeLeft: timeLeft,
@@ -351,6 +376,8 @@ export class AmuleService {
 					addedOn: dbRecord ? dbRecord.added_at : null,
 					isCompleted: false,
 					chunkInfo: normalizeChunkProgress(file),
+					sources: file.sources?.map((s) => toTransferSourceFromClient(s)) || [],
+					sourceNames: normalizeSourceNameCounts(file.sourceNames),
 					providerData: file,
 				} as Download;
 			});
@@ -428,8 +455,8 @@ export class AmuleService {
 					return {
 						name: file.fileName,
 						size: file.sizeFull,
-						sources: file.sourceCount,
-						completeSources: file.completeSourceCount,
+						sourceCount: file.sourceCount,
+						completeSourceCount: file.completeSourceCount,
 						downloadStatus: file.downloadStatus,
 						type: '',
 						link: ed2k,

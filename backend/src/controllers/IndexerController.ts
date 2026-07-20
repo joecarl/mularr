@@ -40,7 +40,7 @@ export class IndexerController {
 					{
 						name: 'Mularr Test Item',
 						size: 10240,
-						sources: 0,
+						sourceCount: 0,
 						link: 'http://localhost:8940/dummy',
 						hash: '00000000000000000000000000000000',
 						provider: 'Mularr',
@@ -218,8 +218,8 @@ export class IndexerController {
       <pubDate>${new Date().toUTCString()}</pubDate>
       <size>${item.size}</size>
       <enclosure url="${downloadUrl}" length="${item.size}" type="application/x-bittorrent" />
-      <torznab:attr name="seeders" value="${item.sources || 0}" />
-      <torznab:attr name="peers" value="${item.sources || 0}" />
+      <torznab:attr name="seeders" value="${item.sourceCount || 0}" />
+      <torznab:attr name="peers" value="${item.sourceCount || 0}" />
       <torznab:attr name="infohash" value="${hash}" />
       <torznab:attr name="category" value="${category}" />
       <torznab:attr name="downloadvolumefactor" value="1" />

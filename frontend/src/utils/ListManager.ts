@@ -25,7 +25,7 @@ export interface ListManagerConfig<T, K extends keyof T & string> {
 	defaultDirection?: 'asc' | 'desc';
 	/**
 	 * Columns whose values should be coerced to Number for comparison.
-	 * Useful when the data type is string but the semantic is numeric (e.g. "sources").
+	 * Useful when the data type is string but the semantic is numeric (e.g. "sourceCount").
 	 */
 	numericColumns?: K[];
 	/**

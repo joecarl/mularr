@@ -18,6 +18,26 @@ export interface ChunkInfo {
 	sizeFull: number;
 }
 
+export interface TransferSource {
+	clientName?: string;
+	ip?: string;
+	port?: number;
+	software?: string;
+	softwareVersion?: string;
+	downloadSpeed?: number;
+	uploadSpeed?: number;
+	availableParts?: number;
+	remoteFilename?: string;
+	sourceFrom?: number;
+	remoteQueueRank?: number;
+	waitingPosition?: number;
+}
+
+export interface TransferSourceNameCount {
+	name: string;
+	count: number;
+}
+
 export interface MediaTransfer {
 	rawLine: string;
 	name?: string;
@@ -26,7 +46,7 @@ export interface MediaTransfer {
 	speed?: number;
 	isCompleted?: boolean;
 	progress?: number;
-	sources?: number;
+	sourceCount?: number;
 	priority?: number;
 	status?: string;
 	statusId?: number;
@@ -44,6 +64,10 @@ export interface MediaTransfer {
 	sourceName?: string;
 	/** Chunk information for the transfer. */
 	chunkInfo?: ChunkInfo;
+	/** Peers currently related to this transfer (download sources). */
+	sources?: TransferSource[];
+	/** Aggregated source names (client names grouped by count). */
+	sourceNames?: TransferSourceNameCount[];
 }
 
 export interface MediaSearchResult {
@@ -51,8 +75,8 @@ export interface MediaSearchResult {
 	size: number;
 	hash: string;
 	link?: string;
-	sources?: number;
-	completeSources?: number;
+	sourceCount?: number;
+	completeSourceCount?: number;
 	downloadStatus?: number;
 	type?: string;
 	provider: string;

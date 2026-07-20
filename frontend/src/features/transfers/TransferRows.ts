@@ -205,7 +205,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 						preferChunked: prefs.get('ui.transfers.useDetailedProgress', false),
 					}),
 				},
-				sourcesCol: { inner: () => String(t.get().sources || 0) },
+				sourcesCol: { inner: () => String(t.get().sourceCount || 0) },
 				priorityCol: { inner: () => String(t.get().priority || 0) },
 				statusCol: {
 					inner: () => {

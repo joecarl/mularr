@@ -128,11 +128,31 @@ interface ChunkInfo {
 	sizeFull: number;
 }
 
+export interface TransferSource {
+	clientName?: string;
+	ip?: string;
+	port?: number;
+	software?: string;
+	softwareVersion?: string;
+	downloadSpeed?: number;
+	uploadSpeed?: number;
+	availableParts?: number;
+	remoteFilename?: string;
+	sourceFrom?: number;
+	remoteQueueRank?: number;
+	waitingPosition?: number;
+}
+
+export interface TransferSourceNameCount {
+	name: string;
+	count: number;
+}
+
 export interface Transfer extends AmuleFile {
 	completed?: number;
 	speed?: number;
 	progress?: number;
-	sources?: number;
+	sourceCount?: number;
 	priority?: number;
 	status?: string;
 	statusId?: number;
@@ -148,6 +168,8 @@ export interface Transfer extends AmuleFile {
 	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
 	sourceName?: string;
 	chunkInfo?: ChunkInfo;
+	sources?: TransferSource[];
+	sourceNames?: TransferSourceNameCount[];
 	/** Raw provider payload (aMule keeps chunk info here). */
 	providerData?: unknown;
 }
@@ -252,9 +274,9 @@ export interface SearchResult {
 	hash: string;
 	link?: string;
 	type?: string;
-	sources?: string;
+	sourceCount?: string;
 	downloadStatus?: number;
-	completeSources?: string;
+	completeSourceCount?: string;
 	provider?: string;
 	/** Human-readable source label (e.g. Telegram chat name). Provider-agnostic. */
 	sourceName?: string;

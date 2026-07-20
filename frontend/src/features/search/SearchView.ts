@@ -31,8 +31,8 @@ const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof SearchResu
 	{ value: 'name-desc', label: 'Name Z→A', col: 'name', dir: 'desc' },
 	{ value: 'provider-asc', label: 'Provider A→Z', col: 'provider', dir: 'asc' },
 	{ value: 'provider-desc', label: 'Provider Z→A', col: 'provider', dir: 'desc' },
-	{ value: 'sources-asc', label: 'Sources ↑', col: 'sources', dir: 'asc' },
-	{ value: 'sources-desc', label: 'Sources ↓', col: 'sources', dir: 'desc' },
+	{ value: 'sources-asc', label: 'Sources ↑', col: 'sourceCount', dir: 'asc' },
+	{ value: 'sources-desc', label: 'Sources ↓', col: 'sourceCount', dir: 'desc' },
 	{ value: 'size-asc', label: 'Size ↑', col: 'size', dir: 'asc' },
 	{ value: 'size-desc', label: 'Size ↓', col: 'size', dir: 'desc' },
 ];
@@ -90,7 +90,7 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 							title: () => getProviderName(res.get().provider),
 						},
 						mobSize: { inner: () => fbytes(res.get().size) },
-						mobSources: { inner: () => (res.get().sources ? `${res.get().sources}` : '0') },
+						mobSources: { inner: () => (res.get().sourceCount ? `${res.get().sourceCount}` : '0') },
 						mobDownloadBtn: {
 							onclick: (e: MouseEvent) => {
 								e.stopPropagation();
@@ -107,13 +107,13 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 				},
 				typeCol: { inner: () => res.get().type || '' },
 				sizeCol: { inner: () => fbytes(res.get().size) },
-				sourcesCol: { inner: () => res.get().sources || '0' },
+				sourcesCol: { inner: () => res.get().sourceCount || '0' },
 				completeCol: {
 					inner: () => {
 						const r = res.get();
-						if (!r.sources || !r.completeSources) return '0%';
-						const s = parseInt(r.sources);
-						const c = parseInt(r.completeSources);
+						if (!r.sourceCount || !r.completeSourceCount) return '0%';
+						const s = parseInt(r.sourceCount);
+						const c = parseInt(r.completeSourceCount);
 						if (isNaN(s) || isNaN(c) || s === 0) return '0%';
 						return `${((c / s) * 100).toFixed(0)}% (${c})`;
 					},
@@ -144,7 +144,7 @@ export const SearchView = component(() => {
 
 	const mgr = new ListManager<SearchResult, keyof SearchResult>({
 		defaultColumn: 'name',
-		numericColumns: ['size', 'sources', 'completeSources'],
+		numericColumns: ['size', 'sourceCount', 'completeSourceCount'],
 		mobileSortOptions: MOBILE_SORT_OPTIONS,
 		prefs: { service: prefs, key: 'search' },
 	});
@@ -271,8 +271,8 @@ export const SearchView = component(() => {
 		thProvider: { onclick: () => mgr.sort('provider') },
 		thSourceInfo: { onclick: () => mgr.sort('sourceName') },
 		thSize: { onclick: () => mgr.sort('size') },
-		thSources: { onclick: () => mgr.sort('sources') },
-		thCompleted: { onclick: () => mgr.sort('completeSources') },
+		thSources: { onclick: () => mgr.sort('sourceCount') },
+		thCompleted: { onclick: () => mgr.sort('completeSourceCount') },
 		thType: { onclick: () => mgr.sort('type') },
 
 		searchInput: {

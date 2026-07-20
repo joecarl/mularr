@@ -20,8 +20,8 @@ const MOBILE_SORT_OPTIONS: { value: string; label: string; col: keyof Transfer; 
 	{ value: 'added-desc', label: 'Added ↓', col: 'addedOn', dir: 'desc' },
 	{ value: 'name-asc', label: 'Name A→Z', col: 'name', dir: 'asc' },
 	{ value: 'name-desc', label: 'Name Z→A', col: 'name', dir: 'desc' },
-	{ value: 'sources-asc', label: 'Sources ↑', col: 'sources', dir: 'asc' },
-	{ value: 'sources-desc', label: 'Sources ↓', col: 'sources', dir: 'desc' },
+	{ value: 'sources-asc', label: 'Sources ↑', col: 'sourceCount', dir: 'asc' },
+	{ value: 'sources-desc', label: 'Sources ↓', col: 'sourceCount', dir: 'desc' },
 	{ value: 'provider-asc', label: 'Provider A→Z', col: 'provider', dir: 'asc' },
 	{ value: 'provider-desc', label: 'Provider Z→A', col: 'provider', dir: 'desc' },
 ];
@@ -45,7 +45,7 @@ export const TransfersView = component(() => {
 		defaultColumn: 'name',
 		skipSort: (list) => list.length === 1 && !list[0].name && !!list[0].rawLine,
 		mobileSortOptions: MOBILE_SORT_OPTIONS,
-		numericColumns: ['size', 'progress', 'sources', 'priority', 'remaining'],
+		numericColumns: ['size', 'progress', 'sourceCount', 'priority', 'remaining'],
 		prefs: { service: prefs, key: 'transfers' },
 	});
 
@@ -193,7 +193,7 @@ export const TransfersView = component(() => {
 		thCompleted: { onclick: () => mgr.sort('completed') },
 		thSpeed: { onclick: () => mgr.sort('speed') },
 		thProgress: { onclick: () => mgr.sort('progress') },
-		thSources: { onclick: () => mgr.sort('sources') },
+		thSources: { onclick: () => mgr.sort('sourceCount') },
 		thPriority: { onclick: () => mgr.sort('priority') },
 		thStatus: { onclick: () => mgr.sort('status') },
 		thRemaining: { onclick: () => mgr.sort('remaining') },

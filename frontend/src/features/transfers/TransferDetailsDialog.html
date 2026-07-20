@@ -72,6 +72,60 @@
 		<div data-cb="progressMount"></div>
 	</div>
 
+	<!-- Peers / Sources (conditional) -->
+	<div data-cb="peerSection" style="display: none;">
+		<div style="color: #888; margin-bottom: 3px;">Peers (<span data-cb="peerCount"></span>):</div>
+		<div
+			style="max-height: 170px; overflow: auto; border: 1px solid var(--ui-shadow); background: var(--ui-light);">
+			<table class="ui-list" style="font-size: 10px; width: 100%; margin: 0; border-collapse: collapse;">
+				<thead>
+					<tr>
+						<th style="text-align: left;">Client</th>
+						<th style="text-align: left;">Software</th>
+						<th style="text-align: left;">IP</th>
+						<th style="text-align: right;">Down</th>
+						<th style="text-align: right;">Parts</th>
+						<th style="text-align: left;">From</th>
+						<th style="text-align: right;">Queue</th>
+					</tr>
+				</thead>
+				<tbody data-cb="peerRows">
+					<tr data-cb="peerRow">
+						<td data-cb="peerName" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis;">
+						</td>
+						<td data-cb="peerSoftware"></td>
+						<td data-cb="peerEndpoint"></td>
+						<td data-cb="peerSpeed" style="text-align: right;"></td>
+						<td data-cb="peerAvail" style="text-align: right;"></td>
+						<td data-cb="peerFrom"></td>
+						<td data-cb="peerQueue" style="text-align: right;"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<div data-cb="sourceNamesSection" style="display: none;">
+		<div style="color: #888; margin-bottom: 3px;">Source names (<span data-cb="sourceNameCount"></span>):</div>
+		<div
+			style="max-height: 140px; overflow: auto; border: 1px solid var(--ui-shadow); background: var(--ui-light);">
+			<table class="ui-list" style="font-size: 10px; width: 100%; margin: 0; border-collapse: collapse;">
+				<thead>
+					<tr>
+						<th style="text-align: left;">Name</th>
+						<th style="text-align: right; width: 70px;">Count</th>
+					</tr>
+				</thead>
+				<tbody data-cb="sourceNameRows">
+					<tr data-cb="sourceNameRow">
+						<td data-cb="sourceNameName" style="word-break: break-word;"></td>
+						<td data-cb="sourceNameCount" style="text-align: right;"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
 	<!-- ED2K / Download link (conditional) -->
 	<div data-cb="ed2kSection" style="display: none;">
 		<div style="color: #888; margin-bottom: 3px;">Download Link:</div>

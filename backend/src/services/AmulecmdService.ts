@@ -140,8 +140,8 @@ export class AmulecmdService {
 				results.push({
 					name: name,
 					size: tableMatch[3], // Keep it as number string for now, backend usually returns MB in this column
-					sources: tableMatch[4],
-					completeSources: tableMatch[5] || '0',
+					sourceCount: tableMatch[4],
+					completeSourceCount: tableMatch[5] || '0',
 					type: type,
 					link: tableMatch[1],
 				});
@@ -163,8 +163,8 @@ export class AmulecmdService {
 					results.push({
 						name: fullName,
 						size: sizeMB,
-						sources: '?',
-						completeSources: '?',
+						sourceCount: '?',
+						completeSourceCount: '?',
 						type: '',
 						link,
 					});

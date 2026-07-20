@@ -1,3 +1,14 @@
+/** Request failure carrying the HTTP status so callers can branch on it
+ * (e.g. 502 = upstream m3u unreachable vs 400 = invalid input). */
+export class ApiError extends Error {
+	constructor(
+		message: string,
+		readonly status: number
+	) {
+		super(message);
+	}
+}
+
 export abstract class BaseApiService {
 	protected baseUrl = '/api';
 
@@ -26,12 +37,12 @@ export abstract class BaseApiService {
 			// Token expired or invalid — clear it and reload so main.ts will show LoginView
 			localStorage.removeItem('mularr.auth.token');
 			window.location.reload();
-			throw new Error('Session expired');
+			throw new ApiError('Session expired', response.status);
 		}
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-			throw new Error(error.error || `Request failed with status ${response.status}`);
+			throw new ApiError(error.error || `Request failed with status ${response.status}`, response.status);
 		}
 
 		if (response.status === 204) {

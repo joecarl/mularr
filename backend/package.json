@@ -8,14 +8,14 @@
 		"dev": "tsx watch src/index.ts"
 	},
 	"dependencies": {
-		"amule-ec-client": "^0.6.1",
+		"amule-ec-client": "^0.7.0",
 		"axios": "^1.6.2",
 		"better-sqlite3": "^12.6.2",
 		"cors": "^2.8.5",
 		"dotenv": "^17.0.0",
 		"express": "^5.0.0",
 		"jsonwebtoken": "^9.0.3",
-		"node-telegram-bot-api": "^0.67.0",
+		"node-telegram-bot-api": "^1.2.0",
 		"telegram": "^2.26.22",
 		"ws": "^8.19.0"
 	},
@@ -25,7 +25,6 @@
 		"@types/express": "^5.0.0",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/node": "^24.0.0",
-		"@types/node-telegram-bot-api": "^0.64.13",
 		"@types/ws": "^8.18.1",
 		"tsx": "^4.21.0",
 		"typescript": "^6.0.3"
