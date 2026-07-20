@@ -137,8 +137,8 @@ export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ tr
 		sourceNamesSection: {
 			style: { display: () => (hasSourceNames.get() ? '' : 'none') },
 		},
-		sourceNameCount: { inner: () => String(sourceNames.get().length) },
-		sourceNameRows: {
+		sourceNamesCount: { inner: () => String(sourceNames.get().length) },
+		sourceNamesRows: {
 			inner: () => SourceNameRows(sourceNames),
 		},
 
