@@ -258,8 +258,8 @@ export class AmuleService {
 
 	async getTransfers(): Promise<{ raw: string; list: Download[]; categories: AmuleCategory[] }> {
 		try {
-			//const queue = await this.client.getDownloadQueueWithSources();
-			const queue = await this.client.getDownloadQueue();
+			const queue = await this.client.getDownloadQueueWithSources();
+			//const queue = await this.client.getDownloadQueue();
 			const categories = await this.getCategories();
 			//console.log('Download Queue from EC Client:', queue);
 			let dbRecords = this.db.getAllDownloads().filter((r) => !r.provider || r.provider === 'amule');
