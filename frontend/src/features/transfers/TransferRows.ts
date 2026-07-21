@@ -19,6 +19,13 @@ import './TransfersView.css';
 
 export const DEFAULT_VALUE = 'default';
 
+const numberToColor = (num: number) => {
+	const r = num & 0xff;
+	const g = (num >> 8) & 0xff;
+	const b = (num >> 16) & 0xff;
+	return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
 async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
 	const extensionsApi = services.get(ExtensionsApiService);
 	const ctx = services.get(TransfersContextService);
@@ -135,11 +142,23 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 		const onRowClick = props!.onRowClick;
 		const prefs = services.get(LocalPrefsService);
 		const ctxMenu = services.get(ContextMenuService);
+		const transferCtx = services.get(TransfersContextService);
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(t.get().hash || ''));
 		const addedOn = computed(() => {
 			const dt = t.get().addedOn;
 			return dt ? new Date(dt).toLocaleString() : '-';
 		});
+		const categoryName = () => {
+			const name = t.get().categoryName;
+			return name === DEFAULT_VALUE ? '-' : (name ?? '-');
+		};
+		const categoryColor = () => {
+			const name = t.get().categoryName;
+			if (!name || name === DEFAULT_VALUE) return 'transparent';
+			const cat = transferCtx.categories.get().find((c) => c.name === name);
+			if (!cat || !cat.color) return 'transparent';
+			return numberToColor(cat.color);
+		};
 
 		return tpl.transferRow({
 			classes: { selected: isSelected },
@@ -196,7 +215,13 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				},
 				sourceInfoCol: { inner: () => t.get().sourceName || '', title: () => t.get().sourceName || '' },
 				sizeCol: { inner: () => fbytes(t.get().size) },
-				categoryCol: { inner: () => (t.get().categoryName === DEFAULT_VALUE ? '-' : (t.get().categoryName ?? '-')) },
+				categoryCol: {
+					nodes: {
+						categoryColorDot: () =>
+							categoryColor() === 'transparent' ? null : tpl.categoryColorDot({ style: { backgroundColor: categoryColor } }),
+						categoryText: { inner: categoryName },
+					},
+				},
 				completedCol: { inner: () => fbytes(t.get().completed) },
 				speedCol: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '') },
 				progressCol: {
