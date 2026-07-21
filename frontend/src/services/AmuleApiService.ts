@@ -1,5 +1,21 @@
 import { BaseApiService } from './BaseApiService';
 
+export interface ConnectionState {
+	ed2kConnected?: boolean;
+	ed2kConnecting?: boolean;
+	kadConnected?: boolean;
+	kadFirewalled?: boolean;
+	kadRunning?: boolean;
+	ed2kId?: number;
+	clientId?: number;
+	serverIpv4?: {
+		address: string;
+		port: number;
+	};
+	serverName?: string;
+	serverDescription?: string;
+}
+
 export interface StatsResponse {
 	raw?: string;
 	id?: number;
@@ -11,7 +27,7 @@ export interface StatsResponse {
 		ip: string;
 		port: number;
 	};
-	connectionState?: any;
+	connectionState?: ConnectionState;
 	uploadOverhead?: number;
 	downloadOverhead?: number;
 	bannedCount?: number;

@@ -1,15 +1,11 @@
-import { component, computed, Link, pathMatches } from 'chispa';
+import { component, Link, pathMatches } from 'chispa';
 import { services } from '../services/container/ServiceContainer';
-import { StatsService } from '../services/StatsService';
 import { AuthApiService } from '../services/AuthApiService';
 import { StatsContainer } from './panels/Stats';
 import { NetworkContainer } from './panels/Network';
+import { ConnectionContainer } from './panels/Connection';
 import tpl from './Sidebar.html';
 import './Sidebar.css';
-
-// NOTE: ¡No crear nodos DOM manualmente en este archivo!
-// Usa plantillas con `data-cb` en `Sidebar.html` y constrúyelas desde aquí con `tpl.<dataCbName>(...)`.
-// Evita `document.createElement` y la manipulación manual del DOM; revisa `CHISPA_GUIDE.md` y `CHISPA_BEST_PRACTICES.md`.
 
 interface LinkData {
 	to: string;
@@ -24,7 +20,6 @@ export interface SidebarProps {
 }
 
 export const Sidebar = component<SidebarProps>((props) => {
-	const statsService = services.get(StatsService);
 	const authService = services.get(AuthApiService);
 
 	const handleLogout = () => {
@@ -59,60 +54,9 @@ export const Sidebar = component<SidebarProps>((props) => {
 		});
 	});
 
-	const serverIsConnected = computed(() => {
-		const s = statsService.stats.get();
-		return !!s && !!s.connectedServer;
-	});
-
 	return tpl.fragment({
 		navLinks: { inner: links },
-		connectionContainer: () => {
-			if (!serverIsConnected.get()) {
-				return tpl.connectionContainer({
-					nodes: {
-						connStatusText: { inner: 'Disconnected' },
-						highIdBadge: { style: { display: 'none' } },
-						serverName: { inner: 'Not connected' },
-						serverIpPort: { inner: '-' },
-						serverDesc: { inner: 'Please connect to a server' },
-						ed2kBadge: { title: '-', classes: { 'badge-error': true } },
-						ed2kBadgeIcon: { inner: '✖' },
-						kadBadge: { title: '-', classes: { 'badge-error': true } },
-						kadBadgeIcon: { inner: '✖' },
-					},
-				});
-			}
-
-			const s = () => statsService.stats.get()!;
-			const server = () => s().connectedServer!;
-			const isHigh = () => !!s().isHighID;
-
-			const hasEd2k = () => !!(s().ed2kId || s().id);
-			const hasKad = () => !!s().kadId && s().kadId !== '-' && s().kadId !== '0';
-
-			return tpl.connectionContainer({
-				nodes: {
-					connStatusText: { inner: () => s().connectionState || 'Connected' },
-					highIdBadge: {
-						inner: () => (isHigh() ? 'High ID' : 'Low ID'),
-						addClass: () => (isHigh() ? 'badge-success' : 'badge-error'),
-					},
-					serverName: { inner: () => server()?.name || 'Unknown Server' },
-					serverIpPort: { inner: () => `${server()?.ip}:${server()?.port}` },
-					serverDesc: { inner: () => server()?.description || 'No description available' },
-					ed2kBadge: {
-						title: () => String(s().ed2kId || s().id || '-'),
-						addClass: () => (hasEd2k() ? 'badge-success' : 'badge-error'),
-					},
-					ed2kBadgeIcon: { inner: () => (hasEd2k() ? '✔' : '✖') },
-					kadBadge: {
-						title: () => s().kadId || '-',
-						addClass: () => (hasKad() ? 'badge-success' : 'badge-error'),
-					},
-					kadBadgeIcon: { inner: () => (hasKad() ? '✔' : '✖') },
-				},
-			});
-		},
+		connectionContainer: ConnectionContainer(),
 		networkContainer: NetworkContainer(),
 		statsContainer: StatsContainer(),
 		appVersion: { inner: `v${__APP_MANIFEST__.version}` },

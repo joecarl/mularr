@@ -73,6 +73,11 @@
 			border: 1px solid #d32f2f;
 		}
 
+		&.badge-warning {
+			background: #ff9800;
+			border: 1px solid #f57c00;
+		}
+
 		&.badge-neutral {
 			background: #9e9e9e;
 			border: 1px solid #757575;
@@ -254,10 +259,44 @@
 			flex-direction: column;
 			gap: 4px;
 
+			.connection-status {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				min-width: 0;
+			}
+
+			.connection-status-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: #9e9e9e;
+				flex-shrink: 0;
+
+				&.dot-ok {
+					background: #4caf50;
+				}
+
+				&.dot-warn {
+					background: #ff9800;
+				}
+
+				&.dot-error {
+					background: #f44336;
+				}
+
+				&.dot-pulse {
+					animation: connection-dot-pulse 1.2s ease-in-out infinite;
+				}
+			}
+
 			.connection-status-text {
 				font-size: 11px;
 				font-weight: bold;
 				color: var(--sidebar-text-secondary);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 
 			.server-name {
@@ -324,6 +363,12 @@
 				border-top: 1px solid var(--sidebar-item-active);
 				margin: 5px 0;
 			}
+		}
+	}
+
+	@keyframes connection-dot-pulse {
+		50% {
+			opacity: 0.25;
 		}
 	}
 
