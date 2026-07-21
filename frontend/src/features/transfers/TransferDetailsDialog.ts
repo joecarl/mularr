@@ -1,4 +1,6 @@
 import { component, componentList, computed, Signal } from 'chispa';
+import { services } from '../../services/container/ServiceContainer';
+import { ClipboardService } from '../../services/ClipboardService';
 import { Transfer } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { getFileIcon } from '../../utils/icons';
@@ -148,7 +150,7 @@ export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ tr
 		},
 		valEd2kLink: { inner: ed2kLink },
 		copyLinkBtn: {
-			onclick: () => navigator.clipboard.writeText(ed2kLink.get()),
+			onclick: () => services.get(ClipboardService).copy(ed2kLink.get()),
 		},
 		btnClose: { onclick: onClose },
 	});

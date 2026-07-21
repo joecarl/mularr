@@ -9,6 +9,7 @@ import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { ContextMenuItem, ContextMenuService } from '../../services/ContextMenuService';
+import { ClipboardService } from '../../services/ClipboardService';
 import { Ed2kDownloadForm } from './Ed2kDownloadForm';
 import tpl from './SearchView.html';
 import './SearchView.css';
@@ -20,7 +21,7 @@ async function buildContextMenuActions(result: SearchResult, selectionMgr: RowSe
 		actions.push({
 			label: 'Copy ed2k Link',
 			icon: '🔗',
-			onClick: () => navigator.clipboard.writeText(ed2kLink),
+			onClick: () => services.get(ClipboardService).copy(ed2kLink),
 		});
 	}
 	return actions;

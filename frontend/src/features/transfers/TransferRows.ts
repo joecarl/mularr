@@ -6,6 +6,7 @@ import { ExtensionsApiService } from '../../services/ExtensionsApiService';
 import { ContextMenuService, ContextMenuItem } from '../../services/ContextMenuService';
 import { TransfersContextService } from '../../services/TransfersContextService';
 import { DialogService } from '../../services/DialogService';
+import { ClipboardService } from '../../services/ClipboardService';
 import { getFileIcon } from '../../utils/icons';
 import { isVideoFile } from '../../utils/files';
 import { fbytes, formatRemaining } from '../../utils/formats';
@@ -125,7 +126,7 @@ async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSel
 		actions.push({
 			label: 'Copy ed2k Link',
 			icon: '🔗',
-			onClick: () => navigator.clipboard.writeText(ed2kLink),
+			onClick: () => services.get(ClipboardService).copy(ed2kLink),
 		});
 	}
 
