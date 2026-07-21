@@ -19,7 +19,7 @@ case "$(uname -m)" in
         ;;
 esac
 
-APPIMAGE_URL="https://github.com/amule-project/amule/releases/download/${AMULE_VERSION}/aMule-${AMULE_VERSION}-Linux-${AMULE_ARCH}.AppImage"
+APPIMAGE_URL="https://github.com/amule-org/amule/releases/download/${AMULE_VERSION}/aMule-${AMULE_VERSION}-Linux-${AMULE_ARCH}.AppImage"
 APPIMAGE_PATH="/tmp/aMule-${AMULE_VERSION}-Linux-${AMULE_ARCH}.AppImage"
 INSTALL_DIR="/opt/amule"
 

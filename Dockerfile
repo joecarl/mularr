@@ -44,12 +44,12 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Install tini; install aMule 3.0.0 via shared script
+# Install tini; install aMule via shared script
 COPY install-amule-gh-release.sh /tmp/install-amule.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	tini \
 	procps \
-	&& bash /tmp/install-amule.sh 3.0.0 \
+	&& bash /tmp/install-amule.sh 3.0.1 \
 	&& rm /tmp/install-amule.sh \
 	&& rm -rf /var/lib/apt/lists/*
 

@@ -10,7 +10,7 @@ if [ -f /etc/alpine-release ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AMULE_VERSION="3.0.0"
+AMULE_VERSION="3.0.1"
 
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
