@@ -185,6 +185,20 @@
 		margin: 0;
 	}
 
+	.dashboard-uploads {
+		flex: 0 0 auto;
+		display: flex;
+		flex-direction: column;
+		padding: 10px 12px;
+		min-height: 210px;
+	}
+
+	.dashboard-uploads-scroll {
+		flex: 1;
+		overflow: auto;
+		margin: 0;
+	}
+
 	.dashboard-name-cell {
 		white-space: nowrap;
 		overflow: hidden;

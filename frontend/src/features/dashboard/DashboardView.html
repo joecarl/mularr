@@ -181,4 +181,34 @@
 		</div>
 	</div>
 
+	<!-- ── Active Uploads ─────────────────────────────────────────────────── -->
+	<div class="ui-panel-raised dashboard-uploads">
+		<div class="ui-header-small">Active Uploads</div>
+		<div class="ui-table-container dashboard-uploads-scroll">
+			<table class="ui-list">
+				<thead>
+					<tr>
+						<th>Client</th>
+						<th class="is-mobile-primary">File</th>
+						<th>Version</th>
+						<th style="text-align:right; width: 100px;">Speed</th>
+						<th style="text-align:right; width: 120px;">Transferred</th>
+					</tr>
+				</thead>
+				<tbody data-cb="uploadList">
+					<tr data-cb="uploadRow">
+						<td data-cb="uClientCol"></td>
+						<td data-cb="uFileCol" class="is-mobile-primary"></td>
+						<td data-cb="uVersionCol"></td>
+						<td data-cb="uSpeedCol" style="text-align:right;"></td>
+						<td data-cb="uTransferredCol" style="text-align:right;"></td>
+					</tr>
+					<tr data-cb="noUploadRow">
+						<td colspan="5">No active uploads.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
 </div>

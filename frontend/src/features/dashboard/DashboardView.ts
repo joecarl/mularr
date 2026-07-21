@@ -2,6 +2,7 @@ import { component, componentList, signal, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import type { SpeedSample } from '../../services/DashboardApiService';
 import type { Transfer } from '../../services/MediaApiService';
+import type { AmuleUpDownClient } from '../../services/AmuleApiService';
 import { WsService } from '../../services/WsService';
 import { formatSpeed, fbytes, formatRemaining } from '../../utils/formats';
 import { getProviderIcon } from '../../services/ProvidersApiService';
@@ -111,6 +112,25 @@ const ActiveRows = componentList<Transfer>(
 	(t) => t.hash
 );
 
+const UploadRows = componentList<AmuleUpDownClient>(
+	(u) => {
+		const uf = () => u.get();
+		const uploadSpeed = () => ((uf().upSpeed ?? 0) > 0 ? `${fbytes(uf().upSpeed || 0)}/s` : '0 B/s');
+		const transferred = () => fbytes(uf().uploadedTotal || 0);
+
+		return tpl.uploadRow({
+			nodes: {
+				uClientCol: { inner: () => uf().clientName || 'Unknown' },
+				uFileCol: { inner: () => uf().uploadFilename || uf().remoteFilename || 'Unknown' },
+				uVersionCol: { inner: () => uf().softVerStr || 'Unknown' },
+				uSpeedCol: { inner: uploadSpeed },
+				uTransferredCol: { inner: transferred },
+			},
+		});
+	},
+	(u, i) => `${u.userHashHexString || u.userIP || 'unknown'}-${u.uploadFileId || u.requestFileId || i}`
+);
+
 // ── DashboardView ─────────────────────────────────────────────────────────────
 
 export const DashboardView = component(() => {
@@ -118,6 +138,7 @@ export const DashboardView = component(() => {
 
 	// ── Data signals ──────────────────────────────────────────────────────
 	const activeTransfers = signal<Transfer[]>([]);
+	const activeUploads = signal<AmuleUpDownClient[]>([]);
 
 	// ── Canvas + value rows (built imperatively, never re-created) ─────────
 	const dlCanvas = document.createElement('canvas');
@@ -219,8 +240,18 @@ export const DashboardView = component(() => {
 	// ── Reactive data from WebSocket ──────────────────────────────────────
 	effect(() => {
 		const t = ws.transfers.get();
-		const active = (t?.list ?? []).filter((tf) => !tf.isCompleted && !tf.stopped);
+		const active = (t?.list ?? []).filter((tf) => {
+			if (tf.isCompleted || tf.stopped) return false;
+			const progress = tf.progress ?? 0;
+			const completed = tf.completed ?? 0;
+			return progress > 0 || completed > 0;
+		});
 		activeTransfers.set(active);
+	});
+
+	effect(() => {
+		const queue = ws.uploadQueue.get();
+		activeUploads.set(queue?.list || []);
 	});
 
 	// ── Chart rendering effects ───────────────────────────────────────────
@@ -303,6 +334,13 @@ export const DashboardView = component(() => {
 
 		// Active transfers table
 		activeList: { inner: () => ActiveRows(activeTransfers) },
+		uploadList: {
+			inner: () => {
+				const list = activeUploads.get();
+				if (list.length === 0) return tpl.noUploadRow({});
+				return UploadRows(activeUploads);
+			},
+		},
 
 		// Active transfers summary bar
 		summaryCount: { inner: () => String(activeSummary().count) },
