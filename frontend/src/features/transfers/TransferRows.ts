@@ -12,6 +12,7 @@ import { fbytes, formatRemaining } from '../../utils/formats';
 import { RowSelectionManager } from '../../utils/ListManager';
 import { TransferDetailsDialog } from './TransferDetailsDialog';
 import { TransferProgressBar } from './TransferProgressBar';
+import { formatSourcesSummary } from './sourcesSummary';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { statusMap } from './transferStatus';
 import tpl from './TransfersView.html';
@@ -45,7 +46,7 @@ async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSel
 		onClick: () => {
 			dialogService.open({
 				title: transfer.name || 'Transfer Details',
-				width: '580px',
+				width: '680px',
 				render: (close) => TransferDetailsDialog({ transfer: t, onClose: close }),
 			});
 		},
@@ -230,7 +231,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 						preferChunked: prefs.get('ui.transfers.useDetailedProgress', false),
 					}),
 				},
-				sourcesCol: { inner: () => String(t.get().sourceCount || 0) },
+				sourcesCol: { inner: () => formatSourcesSummary(t.get()) },
 				priorityCol: { inner: () => String(t.get().priority || 0) },
 				statusCol: {
 					inner: () => {

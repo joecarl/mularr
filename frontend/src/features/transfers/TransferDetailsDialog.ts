@@ -4,6 +4,7 @@ import { getProviderIcon, getProviderName } from '../../services/ProvidersApiSer
 import { getFileIcon } from '../../utils/icons';
 import { fbytes, formatRemaining } from '../../utils/formats';
 import { TransferProgressBar } from './TransferProgressBar';
+import { formatSourcesSummary } from './sourcesSummary';
 import { statusMap } from './transferStatus';
 import tpl from './TransferDetailsDialog.html';
 import './TransfersView.css';
@@ -113,7 +114,7 @@ export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ tr
 		valCompleted: { inner: () => fbytes(t.get().completed) },
 		valSpeed: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '-') },
 		valRemaining: { inner: () => formatRemaining(t.get().remaining, t.get().speed) },
-		valSources: { inner: () => String(t.get().sourceCount ?? 0) },
+		valSources: { inner: () => formatSourcesSummary(t.get()) },
 		valPriority: { inner: () => String(t.get().priority ?? 0) },
 		valCategory: { inner: categoryLabel },
 		valSourceInfo: { inner: () => t.get().sourceName || '-' },
