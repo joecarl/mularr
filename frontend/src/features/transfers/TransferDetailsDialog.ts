@@ -77,7 +77,7 @@ const SourceNameRows = componentList<NonNullable<Transfer['sourceNames']>[number
 
 export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ transfer: t, onClose }) => {
 	const statusText = computed(() =>
-		t.get().stopped ? 'Stopped' : t.get().isCompleted ? 'Completed' : statusMap[t.get().statusId ?? -1] || t.get().status || 'Unknown'
+		t.get().isCompleted ? 'Completed' : t.get().stopped ? 'Stopped' : statusMap[t.get().statusId ?? -1] || t.get().status || 'Unknown'
 	);
 	const addedOnText = computed(() => {
 		const addedOn = t.get().addedOn;

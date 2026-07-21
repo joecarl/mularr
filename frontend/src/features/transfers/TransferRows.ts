@@ -195,8 +195,8 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 								mobStatus: {
 									inner: () => {
 										const tfer = t.get();
-										if (tfer.stopped) return 'Stopped';
 										if (tfer.isCompleted) return 'Completed';
+										if (tfer.stopped) return 'Stopped';
 										return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
 									},
 								},
@@ -236,8 +236,8 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				statusCol: {
 					inner: () => {
 						const tfer = t.get();
-						if (tfer.stopped) return 'Stopped';
 						if (tfer.isCompleted) return 'Completed';
+						if (tfer.stopped) return 'Stopped';
 						return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
 					},
 				},

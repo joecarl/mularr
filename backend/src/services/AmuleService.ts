@@ -1,4 +1,4 @@
-import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, SearchType, type AmuleCategory, type SourceNameCount } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FileStatus, SearchType, type AmuleCategory, type SourceNameCount } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs/promises';
@@ -276,19 +276,24 @@ export class AmuleService {
 			const transfers = dbRecords.map(async (dbRecord) => {
 				const queueFile = findByHash(queue, dbRecord.hash);
 				//console.log('Matching queue file for hash', dbRecord.hash, ':', queueFile);
-				if (!queueFile && !dbRecord.is_completed) {
-					const sharedFiles = await getSharedFiles();
-					//console.log('Checking shared files for completion of hash:', dbRecord.hash, sharedFiles);
-					const sharedFile = findByHash(sharedFiles, dbRecord.hash);
-					//console.log('Shared file found:', sharedFile);
-					if (sharedFile) {
+
+				if (!dbRecord.is_completed) {
+					// Completed downloads may linger in the download queue (status COMPLETE, stopped)
+					// until the daemon restarts — detect completion there too, not only via shared files.
+					let completedFile: AmuleFile | null = null;
+					if (queueFile) {
+						if (queueFile.fileStatus === FileStatus.COMPLETE) completedFile = queueFile;
+					} else {
+						completedFile = findByHash(await getSharedFiles(), dbRecord.hash);
+					}
+					if (completedFile) {
 						// Mark as completed in DB
 						try {
-							// Also update name and size from shared file info just in case they were never set
-							this.db.updateDownloadCompletion(dbRecord.hash, true, sharedFile.fileName, sharedFile.sizeFull);
+							// Also update name and size from file info just in case they were never set
+							this.db.updateDownloadCompletion(dbRecord.hash, true, completedFile.fileName, completedFile.sizeFull);
 							dbRecord.is_completed = 1;
-							dbRecord.name = sharedFile.fileName ?? '';
-							dbRecord.size = sharedFile.sizeFull || 0;
+							dbRecord.name = completedFile.fileName ?? '';
+							dbRecord.size = completedFile.sizeFull || 0;
 							console.log('Marked file as completed in DB:', dbRecord.hash, dbRecord.name);
 						} catch (e) {
 							console.error('DB update completion error:', e);
@@ -309,7 +314,8 @@ export class AmuleService {
 						progress: 1,
 						status: 'Completed',
 						statusId: 9, // Completed
-						stopped: false,
+						// The daemon reports completed downloads as stopped, so we do the same
+						stopped: true,
 						hash: dbRecord.hash,
 						link: link,
 						completed: sizeFull,
@@ -374,7 +380,7 @@ export class AmuleService {
 					timeLeft: timeLeft,
 					categoryName: normalizeCategoryName(dbRecord?.category_name, categories),
 					addedOn: dbRecord ? dbRecord.added_at : null,
-					isCompleted: false,
+					isCompleted: file.fileStatus === FileStatus.COMPLETE,
 					chunkInfo: normalizeChunkProgress(file),
 					sources: file.sources?.map((s) => toTransferSourceFromClient(s)) || [],
 					sourceNames: normalizeSourceNameCounts(file.sourceNames),
