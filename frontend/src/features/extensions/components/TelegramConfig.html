@@ -82,7 +82,7 @@
 				<table class="ui-list">
 					<thead>
 						<tr>
-							<th>Chat Name</th>
+							<th class="is-mobile-primary">Chat Name</th>
 							<th>Type</th>
 							<th style="text-align: center;">Status</th>
 							<th style="text-align: center;">Action</th>
@@ -90,7 +90,19 @@
 					</thead>
 					<tbody data-cb="chatsList">
 						<tr data-cb="chatRow">
-							<td data-cb="chatName" style="max-width: 350px;">
+							<td data-cb="chatName" class="is-mobile-primary" style="max-width: 350px;">
+								<span data-cb="chatNameText"></span>
+								<div class="mobile-info-block" data-cb="mobileInfo">
+									<div class="mobile-info-row">
+										<span data-cb="mobType"></span>
+									</div>
+									<div class="mobile-info-row" style="margin-top: 5px; gap: 10px;">
+										<span data-cb="mobStatusBadge"></span>
+										<div style="flex: 1;"></div>
+										<button class="ui-btn" style="min-width: 60px; padding: 2px 5px;"
+											data-cb="mobActionBtn"></button>
+									</div>
+								</div>
 							</td>
 							<td data-cb="chatType" style="color: #666;"></td>
 							<td style="text-align: center;">
@@ -101,7 +113,8 @@
 							</td>
 						</tr>
 						<tr data-cb="noChats">
-							<td colspan="4" style="text-align: center; padding: 20px; color: #666;">No chats loaded.
+							<td colspan="4" class="is-mobile-primary"
+								style="text-align: center; padding: 20px; color: #666;">No chats loaded.
 							</td>
 						</tr>
 					</tbody>

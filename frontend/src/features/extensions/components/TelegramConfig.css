@@ -77,7 +77,7 @@
 	.connected-panel {
 		height: 100%;
 		min-height: 200px;
-		max-height: 650px;
+		max-height: min(700px, 58vh);
 		display: flex;
 		flex-direction: column;
 

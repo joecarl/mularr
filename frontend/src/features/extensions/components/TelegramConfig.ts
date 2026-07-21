@@ -12,7 +12,27 @@ const ChatsRows = componentList<TelegramChat, ChatRowProps>(
 	(c, i, l, props) => {
 		return tpl.chatRow({
 			nodes: {
-				chatName: { inner: () => c.get().title },
+				chatName: {
+					nodes: {
+						chatNameText: { inner: () => c.get().title },
+						mobileInfo: {
+							nodes: {
+								mobType: { inner: () => c.get().type },
+								mobStatusBadge: {
+									inner: () => (c.get().indexing_enabled ? 'Indexing' : 'Ignored'),
+									style: {
+										color: () => (c.get().indexing_enabled ? '#46d369' : '#ff4d4d'),
+										fontWeight: 'bold',
+									},
+								},
+								mobActionBtn: {
+									inner: () => (c.get().indexing_enabled ? 'Disable' : 'Enable'),
+									onclick: () => props!.onToggleChat(c.get()),
+								},
+							},
+						},
+					},
+				},
 				chatType: { inner: () => c.get().type },
 				chatStatusBadge: {
 					inner: () => (c.get().indexing_enabled ? 'Indexing' : 'Ignored'),
