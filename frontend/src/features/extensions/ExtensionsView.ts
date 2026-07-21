@@ -103,6 +103,12 @@ export const ExtensionsView = component(() => {
 												inner: v.enabled ? 'Enabled' : 'Disabled',
 												style: { color: v.enabled ? '#46d369' : '#ff4d4d', fontWeight: 'bold' },
 											},
+											mobBtnConfigure: {
+												style: { display: v.type === 'telegram_indexer' ? '' : 'none' },
+												onclick: () => {
+													openTelegramDialog();
+												},
+											},
 											mobBtnToggle: {
 												onclick: () => handleToggle(v.id, !!v.enabled),
 												inner: v.enabled ? 'Disable' : 'Enable',
@@ -117,7 +123,7 @@ export const ExtensionsView = component(() => {
 							enabledCol: { inner: v.enabled ? 'Yes' : 'No' },
 
 							btnConfigure: {
-								style: { display: v.type === 'telegram_indexer' ? 'inline-block' : 'none' },
+								style: { display: v.type === 'telegram_indexer' ? '' : 'none' },
 								onclick: () => {
 									openTelegramDialog();
 								},

@@ -203,7 +203,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 								},
 								mobSpeed: {
 									inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : ''),
-									style: { display: () => ((t.get().speed ?? 0) > 0 ? 'inline' : 'none') },
+									style: { display: () => ((t.get().speed ?? 0) > 0 ? '' : 'none') },
 								},
 								mobProgress: { inner: () => ((t.get().progress || 0) * 100).toFixed(1) + '%' },
 								mobProgressBar: { style: { width: () => `${(t.get().progress || 0) * 100}%` } },
