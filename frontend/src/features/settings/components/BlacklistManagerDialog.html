@@ -1,0 +1,33 @@
+<div class="ui-table-container" style="max-height: 60vh;">
+	<table class="ui-list" style="table-layout: fixed; width: 100%;">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th style="width: 130px;">Hash</th>
+				<th style="width: 70px;">Size</th>
+				<th>Reason</th>
+				<th style="width: 135px;">Added</th>
+				<th style="width: 55px;">Actions</th>
+			</tr>
+		</thead>
+		<tbody data-cb="managerTableBody">
+			<tr data-cb="managerRow">
+				<td data-cb="managerNameCell" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></td>
+				<td data-cb="managerHashCell"
+					style="font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></td>
+				<td data-cb="managerSizeCell"></td>
+				<td data-cb="managerReasonCell" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></td>
+				<td data-cb="managerAddedCell"></td>
+				<td style="text-align: center;">
+					<button class="ui-btn" data-cb="managerRemoveBtn" title="Remove from blacklist"
+						style="min-width: 24px; width: 24px; height: 20px; padding: 0;">
+						<span class="icon-img icon-delete"></span>
+					</button>
+				</td>
+			</tr>
+			<tr data-cb="managerNoRows">
+				<td colspan="6">No blacklisted hashes.</td>
+			</tr>
+		</tbody>
+	</table>
+</div>

@@ -4,7 +4,8 @@ import type { AmuleCategory } from 'amule-ec-client';
 import { container } from '../container/ServiceContainer';
 import { AmuleService } from '../AmuleService';
 import { AmuledService } from '../AmuledService';
-import { MainDB } from '../db/MainDB';
+import { MainDB, blacklistEntryMatches } from '../db/MainDB';
+import { parseEd2kLink } from '../eD2kTools';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
 import type { IMediaProvider, MediaTransfer, MediaSearchResult, MediaTransfersResponse, MediaSearchResponse, MediaSearchStatusResponse } from './types';
@@ -36,7 +37,20 @@ export class MediaProviderService {
 				this.searchHistory.pushResults(r.value);
 			}
 		}
-		return { raw: `Found ${combined.length} results`, list: combined };
+		const { visible, blacklistedCount } = this.filterBlacklisted(combined);
+		return { raw: `Found ${visible.length} results`, list: visible, blacklistedCount };
+	}
+
+	/** Removes blacklisted results (see blacklistEntryMatches for the hash+size rule). */
+	private filterBlacklisted(results: MediaSearchResult[]): { visible: MediaSearchResult[]; blacklistedCount: number } {
+		const entries = this.db.getBlacklist();
+		if (entries.length === 0) return { visible: results, blacklistedCount: 0 };
+		const byHash = new Map(entries.map((e) => [e.hash.toLowerCase(), e]));
+		const visible = results.filter((r) => {
+			const entry = r.hash ? byHash.get(r.hash.toLowerCase()) : undefined;
+			return !entry || !blacklistEntryMatches(entry, r.size);
+		});
+		return { visible, blacklistedCount: results.length - visible.length };
 	}
 
 	async getSearchStatus(): Promise<MediaSearchStatusResponse> {
@@ -87,9 +101,31 @@ export class MediaProviderService {
 	// ---- Download management ---------------------------------------------------
 
 	async addDownload(link: string): Promise<void> {
+		this.assertNotBlacklisted(link);
 		const provider = this.providers.find((p) => p.canHandleDownload(link));
 		if (!provider) throw new Error(`No provider can handle link: ${link}`);
 		await provider.addDownload(link);
+	}
+
+	/** Throws when the link/hash to download is blacklisted. */
+	private assertNotBlacklisted(link: string): void {
+		let hash: string | null = null;
+		let size: number | null = null;
+		if (link.startsWith('telegram:')) {
+			hash = link;
+		} else {
+			const ed2k = parseEd2kLink(link);
+			if (ed2k) {
+				hash = ed2k.hash;
+				size = ed2k.size;
+			} else if (/^[a-fA-F0-9]{32}$/.test(link)) {
+				hash = link;
+			}
+		}
+		if (!hash) return;
+		const entry = this.db.getBlacklistEntry(hash);
+		if (!entry || !blacklistEntryMatches(entry, size)) return;
+		throw new Error(`This file is blacklisted${entry.name ? `: ${entry.name}` : ''}`);
 	}
 
 	async sendDownloadCommand(hash: string, command: 'pause' | 'resume' | 'stop' | 'cancel'): Promise<void> {

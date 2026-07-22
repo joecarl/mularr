@@ -2,7 +2,7 @@ import { signal, effect, WritableSignal } from 'chispa';
 import { services } from './container/ServiceContainer';
 import { MediaApiService, Transfer, Category } from './MediaApiService';
 import { DialogService } from './DialogService';
-import { BlacklistApiService } from './BlacklistApiService';
+import { BlacklistService } from './BlacklistService';
 import { WsService } from './WsService';
 import { smartLoad } from '../utils/scheduling';
 
@@ -26,7 +26,7 @@ export class TransfersContextService {
 
 	private readonly mediaApi = services.get(MediaApiService);
 	private readonly dialogService = services.get(DialogService);
-	private readonly blacklistApi = services.get(BlacklistApiService);
+	private readonly blacklistService = services.get(BlacklistService);
 
 	constructor() {
 		// Keep state in sync with WebSocket push updates
@@ -119,15 +119,19 @@ export class TransfersContextService {
 	// Blacklist
 	// ---------------------------------------------------------------------------
 
-	async blacklistHash(hash: string, name: string): Promise<boolean> {
-		const confirmed = await this.dialogService.confirm(
-			`Mark this hash as bad content?\n\nHash: ${hash}\nName: ${name || 'Unknown'}\n\nThe download will be cancelled and the hash blocked from future downloads.`,
-			'Blacklist Hash'
+	async blacklistTransfers(transfers: Transfer[]): Promise<boolean> {
+		const targets = transfers.filter((t) => t.hash);
+		if (targets.length === 0) return false;
+		const single = targets.length === 1;
+		const ok = await this.blacklistService.blacklistWithConfirm(
+			targets.map((t) => ({ hash: t.hash!, name: t.name, size: t.size })),
+			single
+				? 'The download will be cancelled and the hash blocked from future downloads.'
+				: 'The downloads will be cancelled and the hashes blocked from future downloads.'
 		);
-		if (!confirmed) return false;
+		if (!ok) return false;
 		try {
-			await this.blacklistApi.addToBlacklist(hash, name, '');
-			await this.mediaApi.sendDownloadCommand(hash, 'cancel');
+			await Promise.all(targets.map((t) => this.mediaApi.sendDownloadCommand(t.hash!, 'cancel')));
 			this.reload();
 			return true;
 		} catch (e: any) {

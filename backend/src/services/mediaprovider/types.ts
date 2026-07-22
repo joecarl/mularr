@@ -93,6 +93,8 @@ export interface MediaTransfersResponse {
 export interface MediaSearchResponse {
 	raw: string;
 	list: MediaSearchResult[];
+	/** Number of results hidden because their hash is blacklisted. */
+	blacklistedCount?: number;
 }
 
 export interface MediaSearchStatusResponse {

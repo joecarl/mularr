@@ -10,20 +10,51 @@ import { MediaApiService, SearchResult } from '../../services/MediaApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { ContextMenuItem, ContextMenuService } from '../../services/ContextMenuService';
 import { ClipboardService } from '../../services/ClipboardService';
+import { BlacklistService } from '../../services/BlacklistService';
 import { Ed2kDownloadForm } from './Ed2kDownloadForm';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
-async function buildContextMenuActions(result: SearchResult, selectionMgr: RowSelectionManager): Promise<ContextMenuItem[]> {
+function buildContextMenuActions(
+	result: SearchResult,
+	selectionMgr: RowSelectionManager,
+	list: SearchResult[],
+	onBlacklisted: () => void
+): ContextMenuItem[] {
 	const actions: ContextMenuItem[] = [];
-	if (result.provider === 'amule' && result.link) {
-		const ed2kLink = result.link;
+	const selected = selectionMgr.selectedHashes.get();
+	const targets = selected.size > 0 ? list.filter((r) => r.hash && selected.has(r.hash)) : [result];
+	const multi = targets.length > 1;
+
+	const ed2kLinks = targets.filter((r) => r.provider === 'amule' && r.link).map((r) => r.link!);
+	if (ed2kLinks.length > 0) {
 		actions.push({
-			label: 'Copy ed2k Link',
+			label: ed2kLinks.length > 1 ? `Copy ${ed2kLinks.length} ed2k Links` : 'Copy ed2k Link',
 			icon: '🔗',
-			onClick: () => services.get(ClipboardService).copy(ed2kLink),
+			onClick: () => services.get(ClipboardService).copy(ed2kLinks.join('\n')),
 		});
 	}
+
+	if (targets.some((r) => r.hash)) {
+		if (actions.length > 0) actions.push({ separator: true });
+		actions.push({
+			label: multi ? `Blacklist ${targets.length} Hashes…` : 'Blacklist Hash…',
+			icon: '🚫',
+			onClick: async () => {
+				const ok = await services.get(BlacklistService).blacklistWithConfirm(
+					targets.map((r) => ({ hash: r.hash, name: r.name, size: r.size })),
+					multi
+						? 'The hashes will be blocked from downloads and hidden from search results.'
+						: 'The hash will be blocked from downloads and hidden from search results.'
+				);
+				if (ok) {
+					selectionMgr.clearSelection();
+					onBlacklisted();
+				}
+			},
+		});
+	}
+
 	return actions;
 }
 
@@ -42,12 +73,14 @@ interface ResultsRowsProps {
 	onDownload: (hash: string) => void;
 	downloadingHashes: Signal<Set<string>>;
 	selectionMgr: RowSelectionManager;
+	onBlacklisted: () => void;
 }
 const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 	(res, i, l, props) => {
 		const onDownload = props!.onDownload;
 		const downloadingHashes = props!.downloadingHashes;
 		const selectionMgr = props!.selectionMgr;
+		const onBlacklisted = props!.onBlacklisted;
 		const ctxMenu = services.get(ContextMenuService);
 		const isSelected = computed(() => selectionMgr.selectedHashes.get().has(res.get().hash || ''));
 		const isDownloading = computed(() => downloadingHashes.get().has(res.get().hash || ''));
@@ -65,14 +98,14 @@ const ResultsRows = componentList<SearchResult, ResultsRowsProps>(
 				'status-queued': () => res.get().downloadStatus === 2,
 				selected: isSelected,
 			},
-			oncontextmenu: async (e: MouseEvent) => {
+			oncontextmenu: (e: MouseEvent) => {
 				e.preventDefault();
 				const result = res.get();
 				const hash = result.hash;
 				if (hash) {
-					selectionMgr.handleRowSelection(e, hash, l.get());
+					selectionMgr.handleContextMenuSelection(e, hash, l.get());
 				}
-				const actions = await buildContextMenuActions(result, selectionMgr);
+				const actions = buildContextMenuActions(result, selectionMgr, l.get(), onBlacklisted);
 				ctxMenu.show(e, actions);
 			},
 			onclick: (e: MouseEvent) => {
@@ -156,6 +189,7 @@ export const SearchView = component(() => {
 
 	const searchProgress = signal(0);
 	const downloadingHashes = signal<Set<string>>(new Set());
+	const blacklistedCount = signal(0);
 
 	let isPolling = false;
 
@@ -166,6 +200,7 @@ export const SearchView = component(() => {
 			statusLog.set('Search started. Waiting for results...');
 			mgr.items.set([]);
 			searchProgress.set(0);
+			blacklistedCount.set(0);
 			startPolling();
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Search Error');
@@ -182,6 +217,7 @@ export const SearchView = component(() => {
 	const loadResults = async () => {
 		try {
 			const data = await apiService.getSearchResults();
+			blacklistedCount.set(data.blacklistedCount ?? 0);
 			if (data.list && data.list.length > 0) {
 				mgr.items.set(data.list);
 				statusLog.set(`Found ${data.list.length} results.`);
@@ -293,7 +329,8 @@ export const SearchView = component(() => {
 		refreshBtn: { onclick: loadResults },
 		resultsList: { inner: statusLog },
 		resultsContainer: {
-			inner: () => ResultsRows(mgr.sortedItems, { onDownload: (hash) => download(hash), downloadingHashes, selectionMgr: mgr }),
+			inner: () =>
+				ResultsRows(mgr.sortedItems, { onDownload: (hash) => download(hash), downloadingHashes, selectionMgr: mgr, onBlacklisted: loadResults }),
 		},
 		ed2kForm: Ed2kDownloadForm({ onAdded: loadResults }),
 		downloadSelectedBtn: {
@@ -323,6 +360,13 @@ export const SearchView = component(() => {
 		},
 		searchProgressText: {
 			inner: () => `${Math.floor(Math.min(1, searchProgress.get()) * 100)}%`,
+		},
+		blacklistHiddenLabel: {
+			style: { display: () => (blacklistedCount.get() > 0 ? '' : 'none') },
+			inner: () => {
+				const n = blacklistedCount.get();
+				return n > 0 ? `🚫 ${n} result${n === 1 ? '' : 's'} hidden by blacklist` : '';
+			},
 		},
 	});
 });

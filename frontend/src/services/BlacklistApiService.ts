@@ -3,6 +3,8 @@ import { BaseApiService } from './BaseApiService';
 export interface BlacklistEntry {
 	hash: string;
 	name: string;
+	/** File size in bytes — ed2k identifies a file by (hash, size). Null when unknown. */
+	size: number | null;
 	reason: string | null;
 	added_at: string;
 }
@@ -25,10 +27,10 @@ export class BlacklistApiService extends BaseApiService {
 		return this.request<BlacklistCheckResult>(`/${encodeURIComponent(hash)}`);
 	}
 
-	async addToBlacklist(hash: string, name: string, reason: string = ''): Promise<{ success: boolean }> {
+	async addToBlacklist(hash: string, name: string, reason: string = '', size?: number): Promise<{ success: boolean }> {
 		return this.request<{ success: boolean }>('/', {
 			method: 'POST',
-			body: JSON.stringify({ hash, name, reason }),
+			body: JSON.stringify({ hash, name, reason, size }),
 		});
 	}
 

@@ -1,0 +1,24 @@
+<div class="settings-group" style="height: 100%;">
+	<div class="ui-table-container settings-shared-table" style="flex: 1;">
+		<table class="ui-list">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th style="width: 70px;">Size</th>
+				</tr>
+			</thead>
+			<tbody data-cb="blacklistTableBody">
+				<tr data-cb="blacklistTableRow">
+					<td data-cb="blacklistNameCell" class="settings-blacklist-ellipsis-cell"></td>
+					<td data-cb="blacklistSizeCell"></td>
+				</tr>
+				<tr data-cb="blacklistNoRows">
+					<td colspan="2">No blacklisted hashes.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="settings-shared-add-row">
+		<button class="ui-btn" data-cb="manageBlacklistBtn">Manage Blacklist…</button>
+	</div>
+</div>

@@ -366,12 +366,6 @@
 		}
 	}
 
-	@keyframes connection-dot-pulse {
-		50% {
-			opacity: 0.25;
-		}
-	}
-
 	.sidebar-footer {
 		margin-top: auto;
 		padding-top: 0.4em;
@@ -423,5 +417,11 @@
 				color: #d61b1b;
 			}
 		}
+	}
+}
+
+@keyframes connection-dot-pulse {
+	50% {
+		opacity: 0.25;
 	}
 }

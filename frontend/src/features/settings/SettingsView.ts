@@ -4,6 +4,7 @@ import { AmuleApiService, SharedDirectoryEntry } from '../../services/AmuleApiSe
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { DialogService } from '../../services/DialogService';
 import { SharedDirsSettings } from './components/SharedDirsSettings';
+import { BlacklistSettings } from './components/BlacklistSettings';
 import tpl from './SettingsView.html';
 import './SettingsView.css';
 
@@ -418,5 +419,6 @@ export const SettingsView = component(() => {
 			sharedDirs,
 			isLocked: () => lockedSharedDirs.get(),
 		}),
+		blacklistSection: BlacklistSettings(),
 	});
 });

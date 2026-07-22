@@ -9,6 +9,7 @@ export interface RowSelectionManager {
 	selectedHashes: WritableSignal<Set<string>>;
 	lastClickedHash: WritableSignal<string | null>;
 	handleRowSelection<T extends { hash?: string }>(e: MouseEvent, hash: string, list: T[]): void;
+	handleContextMenuSelection<T extends { hash?: string }>(e: MouseEvent, hash: string, list: T[]): void;
 	clearSelection(): void;
 }
 
@@ -181,5 +182,16 @@ export class ListManager<T extends { hash?: string }, K extends keyof T & string
 			this.selectedHashes.set(new Set([hash]));
 			this.lastClickedHash.set(hash);
 		}
+	}
+
+	/**
+	 * Selection handler for right-click (context menu) on a row.
+	 * If the row is already part of the current selection it is kept as-is, so
+	 * the menu can act on all selected rows; otherwise it falls back to the
+	 * normal click behaviour and selects only the clicked row.
+	 */
+	handleContextMenuSelection<TItem extends { hash?: string }>(e: MouseEvent, hash: string, list: TItem[]): void {
+		if (this.selectedHashes.get().has(hash)) return;
+		this.handleRowSelection(e, hash, list);
 	}
 }

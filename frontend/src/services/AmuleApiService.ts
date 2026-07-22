@@ -301,6 +301,8 @@ export interface SearchResult {
 export interface SearchResultsResponse {
 	raw: string;
 	list: SearchResult[];
+	/** Number of results hidden because their hash is blacklisted. */
+	blacklistedCount?: number;
 }
 
 export interface SearchStatusResponse {

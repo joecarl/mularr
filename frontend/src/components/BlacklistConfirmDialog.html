@@ -1,0 +1,34 @@
+<div style="display: flex; flex-direction: column; font-size: 12px; font-family: Tahoma, 'MS Sans Serif', sans-serif;">
+	<div style="display: flex; gap: 15px; align-items: center; margin-bottom: 12px;">
+		<div style="font-size: 32px;">🚫</div>
+		<div data-cb="question"></div>
+	</div>
+	<div class="ui-table-container" style="max-height: 180px; margin-bottom: 12px; font-size: 11px;">
+		<table class="ui-list" style="table-layout: fixed; width: 100%;">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th style="width: 110px;">Hash</th>
+					<th style="width: 70px;">Size</th>
+				</tr>
+			</thead>
+			<tbody data-cb="filesList">
+				<tr data-cb="fileItem">
+					<td data-cb="fileName"></td>
+					<td data-cb="fileHash" style="font-family: monospace;"></td>
+					<td data-cb="fileSize"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div data-cb="consequences" style="margin-bottom: 20px;"></div>
+	<div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;">
+		<label>Reason (optional):</label>
+		<textarea data-cb="reasonInput" rows="3" class="ui-input"
+			style="width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
+	</div>
+	<div style="display: flex; justify-content: flex-end; gap: 8px;">
+		<button class="ui-btn" data-cb="btnOk">OK</button>
+		<button class="ui-btn" data-cb="btnCancel">Cancel</button>
+	</div>
+</div>

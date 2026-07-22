@@ -39,24 +39,30 @@ async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSel
 	const hash = transfer.hash ?? '';
 	const allHashes = [...selectionMgr.selectedHashes.get()].filter(Boolean) as string[];
 	const targetHashes = allHashes.length > 0 ? allHashes : hash ? [hash] : [];
+	// Resolve the selected transfers so multi-selection menus reflect all of them
+	const allTransfers = ctx.transfers.get();
+	const targetTransfers = targetHashes.map((h) => allTransfers.find((x) => x.hash === h) ?? (h === hash ? transfer : null)).filter(Boolean) as Transfer[];
+	const multi = targetHashes.length > 1;
 
-	// ---- Details action ----
-	actions.push({
-		label: 'Details ...',
-		icon: 'ℹ️',
-		onClick: () => {
-			dialogService.open({
-				title: transfer.name || 'Transfer Details',
-				width: '680px',
-				render: (close) => TransferDetailsDialog({ transfer: t, onClose: close }),
-			});
-		},
-	});
-	actions.push({ separator: true });
+	// ---- Details action (single selection only) ----
+	if (!multi) {
+		actions.push({
+			label: 'Details ...',
+			icon: 'ℹ️',
+			onClick: () => {
+				dialogService.open({
+					title: transfer.name || 'Transfer Details',
+					width: '680px',
+					render: (close) => TransferDetailsDialog({ transfer: t, onClose: close }),
+				});
+			},
+		});
+		actions.push({ separator: true });
+	}
 
-	// ---- Media preview actions ----
+	// ---- Media preview actions (single selection only) ----
 	const filePath = transfer.filePath;
-	if (filePath && isVideoFile(filePath)) {
+	if (!multi && filePath && isVideoFile(filePath)) {
 		try {
 			const allExtensions = await extensionsApi.getExtensions();
 			const previewers = allExtensions.filter((x) => x.type === 'media_previewer' && x.enabled);
@@ -74,10 +80,10 @@ async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSel
 		actions.push({ separator: true });
 	}
 
-	// ---- Transfer control actions ----
-	const canPause = !transfer.isCompleted && !transfer.stopped && transfer.statusId === 0;
-	const canResume = !transfer.isCompleted && (!!transfer.stopped || transfer.statusId === 7);
-	const canStop = transfer.provider === 'amule' && !transfer.isCompleted && !transfer.stopped;
+	// ---- Transfer control actions (enabled when applicable to any selected transfer) ----
+	const canPause = targetTransfers.some((x) => !x.isCompleted && !x.stopped && x.statusId === 0);
+	const canResume = targetTransfers.some((x) => !x.isCompleted && (!!x.stopped || x.statusId === 7));
+	const canStop = targetTransfers.some((x) => x.provider === 'amule' && !x.isCompleted && !x.stopped);
 
 	actions.push({ label: 'Pause', icon: '⏸', disabled: !canPause, onClick: () => ctx.executeCommand(targetHashes, 'pause') });
 	actions.push({ label: 'Resume', icon: '▶', disabled: !canResume, onClick: () => ctx.executeCommand(targetHashes, 'resume') });
@@ -107,26 +113,26 @@ async function buildContextMenuActions(t: Signal<Transfer>, selectionMgr: RowSel
 	}
 
 	// ---- Blacklist action ----
-	if (hash) {
+	if (targetTransfers.length > 0) {
 		actions.push({ separator: true });
 		actions.push({
-			label: 'Blacklist Hash…',
+			label: multi ? `Blacklist ${targetTransfers.length} Hashes…` : 'Blacklist Hash…',
 			icon: '🚫',
 			onClick: async () => {
-				const ok = await ctx.blacklistHash(hash, transfer.name || '');
+				const ok = await ctx.blacklistTransfers(targetTransfers);
 				if (ok) selectionMgr.clearSelection();
 			},
 		});
 	}
 
 	// ---- ed2k link action (amule only) ----
-	if (transfer.provider === 'amule' && transfer.link) {
-		const ed2kLink = transfer.link;
+	const ed2kLinks = targetTransfers.filter((x) => x.provider === 'amule' && x.link).map((x) => x.link!);
+	if (ed2kLinks.length > 0) {
 		actions.push({ separator: true });
 		actions.push({
-			label: 'Copy ed2k Link',
+			label: ed2kLinks.length > 1 ? `Copy ${ed2kLinks.length} ed2k Links` : 'Copy ed2k Link',
 			icon: '🔗',
-			onClick: () => services.get(ClipboardService).copy(ed2kLink),
+			onClick: () => services.get(ClipboardService).copy(ed2kLinks.join('\n')),
 		});
 	}
 
@@ -175,7 +181,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				const transfer = t.get();
 				const hash = transfer.hash;
 				if (hash) {
-					selectionMgr.handleRowSelection(e, hash, l.get());
+					selectionMgr.handleContextMenuSelection(e, hash, l.get());
 					onRowClick(hash);
 				}
 				const actions = await buildContextMenuActions(t, selectionMgr);

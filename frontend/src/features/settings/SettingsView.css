@@ -103,6 +103,14 @@
 		white-space: nowrap;
 	}
 
+	/* -- Blacklist table ---------------------------------------------------- */
+
+	.settings-blacklist-ellipsis-cell {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	/* -- Settings actions ------------------------------------------------- */
 
 	.settings-actions {

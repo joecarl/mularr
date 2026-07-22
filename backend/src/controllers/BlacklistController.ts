@@ -26,12 +26,13 @@ export class BlacklistController {
 
 	addToBlacklist = async (req: Request, res: Response) => {
 		try {
-			const { hash, name, reason } = req.body;
+			const { hash, name, reason, size } = req.body;
 			if (!hash) {
 				res.status(400).json({ error: 'hash is required' });
 				return;
 			}
-			this.db.addToBlacklist(hash, name ?? '', reason ?? null);
+			const sizeNum = Number(size);
+			this.db.addToBlacklist(hash, name ?? '', reason ?? null, sizeNum > 0 ? sizeNum : null);
 			res.status(201).json({ success: true });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });

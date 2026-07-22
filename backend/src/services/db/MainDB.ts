@@ -30,8 +30,18 @@ export interface ValidationResult {
 export interface BlacklistEntry {
 	hash: string;
 	name: string;
+	/** File size in bytes — ed2k identifies a file by (hash, size). Null when unknown. */
+	size: number | null;
 	reason: string | null;
 	added_at: string;
+}
+
+/**
+ * ed2k identifies a file by (hash, size): a hash match is discarded only when
+ * both sizes are known and differ. Pass a falsy size when it is unknown.
+ */
+export function blacklistEntryMatches(entry: BlacklistEntry, size?: number | null): boolean {
+	return !(entry.size && size && entry.size !== size);
 }
 
 export class MainDB {
@@ -78,6 +88,7 @@ export class MainDB {
 			CREATE TABLE IF NOT EXISTS blacklist (
 				hash TEXT PRIMARY KEY,
 				name TEXT NOT NULL DEFAULT '',
+				size INTEGER,
 				reason TEXT,
 				added_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);
@@ -98,6 +109,14 @@ export class MainDB {
 			const hasProvider = dlTableInfo.some((col) => col.name === 'provider');
 			if (!hasProvider) {
 				this.db.prepare("ALTER TABLE downloads ADD COLUMN provider TEXT DEFAULT 'amule'").run();
+			}
+
+			const blTableInfo = this.db.prepare('PRAGMA table_info(blacklist)').all() as any[];
+			const hasSize = blTableInfo.some((col) => col.name === 'size');
+			if (!hasSize) {
+				this.db.prepare('ALTER TABLE blacklist ADD COLUMN size INTEGER').run();
+				// One-time normalization: hashes are matched case-insensitively from now on
+				this.db.prepare('UPDATE blacklist SET hash = LOWER(hash)').run();
 			}
 		} catch (e) {
 			console.error('Migration error:', e);
@@ -232,19 +251,21 @@ export class MainDB {
 	}
 
 	public getBlacklistEntry(hash: string): BlacklistEntry | undefined {
-		return this.db.prepare<string, BlacklistEntry>('SELECT * FROM blacklist WHERE hash = ?').get(hash);
+		return this.db.prepare<string, BlacklistEntry>('SELECT * FROM blacklist WHERE hash = ?').get(hash.toLowerCase());
 	}
 
-	public addToBlacklist(hash: string, name: string, reason: string | null = null) {
-		this.db.prepare('INSERT OR REPLACE INTO blacklist (hash, name, reason, added_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)').run(hash, name, reason);
+	public addToBlacklist(hash: string, name: string, reason: string | null = null, size: number | null = null) {
+		this.db
+			.prepare('INSERT OR REPLACE INTO blacklist (hash, name, size, reason, added_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)')
+			.run(hash.toLowerCase(), name, size, reason);
 	}
 
 	public removeFromBlacklist(hash: string) {
-		this.db.prepare('DELETE FROM blacklist WHERE hash = ?').run(hash);
+		this.db.prepare('DELETE FROM blacklist WHERE hash = ?').run(hash.toLowerCase());
 	}
 
-	public isBlacklisted(hash: string): boolean {
-		const row = this.db.prepare<string, { hash: string }>('SELECT hash FROM blacklist WHERE hash = ?').get(hash);
-		return !!row;
+	public isBlacklisted(hash: string, size?: number | null): boolean {
+		const entry = this.getBlacklistEntry(hash);
+		return !!entry && blacklistEntryMatches(entry, size);
 	}
 }
