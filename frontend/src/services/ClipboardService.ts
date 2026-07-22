@@ -13,8 +13,8 @@ export class ClipboardService {
 	 * manual-copy dialog was shown instead.
 	 */
 	public async copy(text: string): Promise<boolean> {
-		// if (await this.tryClipboardApi(text)) return true;
-		// if (this.tryExecCommand(text)) return true;
+		if (await this.tryClipboardApi(text)) return true;
+		if (this.tryExecCommand(text)) return true;
 		this.openManualCopyDialog(text);
 		return false;
 	}
