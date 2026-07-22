@@ -1,13 +1,18 @@
 import { component, signal, bindControlledInput } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { DialogService } from '../../services/DialogService';
-import { MediaApiService } from '../../services/MediaApiService';
+import { MediaApiService, type AddDownloadResponse } from '../../services/MediaApiService';
 import { BulkDownloadDialog } from './BulkDownloadDialog';
 import tpl from './Ed2kDownloadForm.html';
 
 export interface Ed2kDownloadFormProps {
 	onAdded?: () => void;
 }
+
+const duplicateStatusLabel = (duplicate: NonNullable<AddDownloadResponse['duplicate']>) =>
+	duplicate.isCompleted ? 'already downloaded' : 'already being downloaded';
+
+const truncateName = (name: string, maxLength = 50) => (name.length > maxLength ? name.slice(0, maxLength - 1) + '…' : name);
 
 export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) => {
 	const apiService = services.get(MediaApiService);
@@ -18,9 +23,12 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 		const link = downloadLink.get();
 		if (!link) return;
 		try {
-			await apiService.addDownload(link);
+			const result = await apiService.addDownload(link);
 			downloadLink.set('');
 			onAdded?.();
+			if (result.duplicate) {
+				await dialogService.alert(`This link matches a file that is ${duplicateStatusLabel(result.duplicate)} as "${result.duplicate.name}".`, 'Duplicate Download');
+			}
 		} catch (e: any) {
 			await dialogService.alert('Error adding download: ' + e.message, 'Download Error');
 		}
@@ -34,8 +42,15 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 				BulkDownloadDialog({
 					onConfirm: async (links) => {
 						close();
-						await Promise.allSettled(links.map((l) => apiService.addDownload(l)));
+						const results = await Promise.allSettled(links.map((l) => apiService.addDownload(l)));
 						onAdded?.();
+						const duplicates = results
+							.map((r) => (r.status === 'fulfilled' ? r.value.duplicate : undefined))
+							.filter((d): d is NonNullable<AddDownloadResponse['duplicate']> => !!d);
+						if (duplicates.length > 0) {
+							const lines = duplicates.map((d) => `• ${truncateName(d.name)}`);
+							await dialogService.alert(`${duplicates.length} of ${links.length} links match files already in transfers:\n${lines.join('\n')}`, 'Duplicate Downloads');
+						}
 					},
 					onCancel: close,
 				}),

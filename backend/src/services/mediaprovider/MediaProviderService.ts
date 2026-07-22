@@ -4,7 +4,7 @@ import type { AmuleCategory } from 'amule-ec-client';
 import { container } from '../container/ServiceContainer';
 import { AmuleService } from '../AmuleService';
 import { AmuledService } from '../AmuledService';
-import { MainDB, blacklistEntryMatches } from '../db/MainDB';
+import { MainDB, blacklistEntryMatches, type DownloadDbRecord } from '../db/MainDB';
 import { parseEd2kLink } from '../eD2kTools';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
@@ -100,32 +100,45 @@ export class MediaProviderService {
 
 	// ---- Download management ---------------------------------------------------
 
-	async addDownload(link: string): Promise<void> {
+	async addDownload(link: string): Promise<{ duplicate?: DownloadDbRecord }> {
 		this.assertNotBlacklisted(link);
+		const duplicate = this.findExistingDownload(link);
 		const provider = this.providers.find((p) => p.canHandleDownload(link));
 		if (!provider) throw new Error(`No provider can handle link: ${link}`);
 		await provider.addDownload(link);
+		return { duplicate };
 	}
 
 	/** Throws when the link/hash to download is blacklisted. */
 	private assertNotBlacklisted(link: string): void {
-		let hash: string | null = null;
-		let size: number | null = null;
-		if (link.startsWith('telegram:')) {
-			hash = link;
-		} else {
-			const ed2k = parseEd2kLink(link);
-			if (ed2k) {
-				hash = ed2k.hash;
-				size = ed2k.size;
-			} else if (/^[a-fA-F0-9]{32}$/.test(link)) {
-				hash = link;
-			}
-		}
+		const { hash, size } = this.parseLinkIdentity(link);
 		if (!hash) return;
 		const entry = this.db.getBlacklistEntry(hash);
 		if (!entry || !blacklistEntryMatches(entry, size)) return;
 		throw new Error(`This file is blacklisted${entry.name ? `: ${entry.name}` : ''}`);
+	}
+
+	/** Extracts the (hash, size) file identity from a link/hash, when recognizable. */
+	private parseLinkIdentity(link: string): { hash: string | null; size: number | null } {
+		if (link.startsWith('telegram:')) return { hash: link, size: null };
+		const ed2k = parseEd2kLink(link);
+		if (ed2k) return { hash: ed2k.hash, size: ed2k.size };
+		if (/^[a-fA-F0-9]{32}$/.test(link)) return { hash: link.toLowerCase(), size: null };
+		return { hash: null, size: null };
+	}
+
+	/**
+	 * Returns the already-tracked download matching the link, if any.
+	 * ed2k identifies a file by (hash, size): a hash match is discarded only when
+	 * both sizes are known and differ (the name may differ freely).
+	 */
+	private findExistingDownload(link: string): DownloadDbRecord | undefined {
+		const { hash, size } = this.parseLinkIdentity(link);
+		if (!hash) return undefined;
+		const record = this.db.getDownload(hash);
+		if (!record) return undefined;
+		if (record.size && size && record.size !== size) return undefined;
+		return record;
 	}
 
 	async sendDownloadCommand(hash: string, command: 'pause' | 'resume' | 'stop' | 'cancel'): Promise<void> {

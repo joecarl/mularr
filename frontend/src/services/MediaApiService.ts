@@ -4,6 +4,16 @@ import type { Transfer, Category, TransfersResponse, SearchResult, SearchResults
 // Re-export so consumers can import types from a single place
 export type { Transfer, Category, TransfersResponse, SearchResult, SearchResultsResponse, SearchStatusResponse, SuccessResponse };
 
+export interface AddDownloadResponse extends SuccessResponse {
+	/** Set when the link matches an already-tracked download (same hash & size, the name may differ). */
+	duplicate?: {
+		hash: string;
+		name: string;
+		size: number;
+		isCompleted: boolean;
+	};
+}
+
 /**
  * MediaApiService
  *
@@ -62,8 +72,8 @@ export class MediaApiService extends BaseApiService {
 
 	// ---- Download --------------------------------------------------------------
 
-	async addDownload(link: string): Promise<SuccessResponse> {
-		return this.request<SuccessResponse>('/download', {
+	async addDownload(link: string): Promise<AddDownloadResponse> {
+		return this.request<AddDownloadResponse>('/download', {
 			method: 'POST',
 			body: JSON.stringify({ link }),
 		});

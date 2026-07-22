@@ -13,7 +13,7 @@ export class DialogService {
 		return new Promise((resolve) => {
 			this.open({
 				title,
-				width: '350px',
+				width: '420px',
 				render: (close) =>
 					MessageDialog({
 						message,
@@ -31,7 +31,7 @@ export class DialogService {
 		return new Promise((resolve) => {
 			this.open({
 				title,
-				width: '350px',
+				width: '420px',
 				render: (close) =>
 					MessageDialog({
 						message,

@@ -55,8 +55,11 @@ export class MediaProviderController {
 	addDownload = async (req: Request, res: Response) => {
 		try {
 			const { link } = req.body;
-			await this.service.addDownload(link);
-			res.json({ success: true });
+			const { duplicate } = await this.service.addDownload(link);
+			res.json({
+				success: true,
+				duplicate: duplicate ? { hash: duplicate.hash, name: duplicate.name, size: duplicate.size, isCompleted: !!duplicate.is_completed } : undefined,
+			});
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}
