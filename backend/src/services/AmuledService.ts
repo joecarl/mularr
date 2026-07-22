@@ -246,8 +246,8 @@ export class AmuledService {
 				const findVal = (key: string) =>
 					lines
 						.find((l) => l.startsWith(key + '='))
-						?.split('=')[1]
-						?.trim();
+						?.slice(key.length + 1)
+						.trim();
 
 				config.nick = findVal('Nick');
 				config.tcpPort = findVal('Port');
@@ -280,6 +280,7 @@ export class AmuledService {
 				config.paranoidFiltering = findVal('ParanoidFiltering') === '1';
 				config.ipFilterAutoLoad = findVal('IPFilterAutoLoad') === '1';
 				config.ipFilterUrl = findVal('IPFilterURL');
+				config.ed2kServersUrl = findVal('Ed2kServersUrl');
 				config.filterLevel = findVal('FilterLevel');
 				config.ipFilterSystem = findVal('IPFilterSystem') === '1';
 			}

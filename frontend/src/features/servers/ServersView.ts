@@ -1,12 +1,15 @@
-import { component, componentList, computed, effect, Signal, signal } from 'chispa';
+import { bindControlledInput, component, componentList, computed, effect, Signal, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
+import { DialogService } from '../../services/DialogService';
 import { StatsService } from '../../services/StatsService';
 import { WsService } from '../../services/WsService';
 import { formatAmount } from '../../utils/formats';
 import { smartLoad } from '../../utils/scheduling';
 import tpl from './ServersView.html';
 import './ServersView.css';
+
+const LAST_URL_KEY = 'mularr.servers.lastUpdateUrl';
 
 interface ServersViewProps {
 	// Optional callback for when a server row is double-clicked
@@ -65,6 +68,7 @@ const ServersRows = componentList<Server, ServersViewProps>(
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const statsService = services.get(StatsService);
+	const dialogService = services.get(DialogService);
 	const ws = services.get(WsService);
 
 	// We'll treat the list as a signal of objects
@@ -89,6 +93,43 @@ export const ServersView = component(() => {
 		const data = await apiService.getServers();
 		servers.set(data.list || []);
 	}, 'servers');
+
+	const storedUpdateUrl = localStorage.getItem(LAST_URL_KEY) || '';
+	const updateUrl = signal(storedUpdateUrl);
+
+	// Default URL is the Ed2kServersUrl configured in amule.conf
+	const loadDefaultUrl = async () => {
+		try {
+			const cfg = await apiService.getConfig();
+			return cfg.ed2kServersUrl || '';
+		} catch {
+			return '';
+		}
+	};
+
+	if (!storedUpdateUrl) {
+		loadDefaultUrl().then((url) => {
+			if (!updateUrl.get() && url) updateUrl.set(url);
+		});
+	}
+
+	const resetUpdateUrl = async () => {
+		localStorage.removeItem(LAST_URL_KEY);
+		updateUrl.set(await loadDefaultUrl());
+	};
+
+	const updateServerList = async () => {
+		const url = updateUrl.get().trim();
+		if (!url) return;
+		localStorage.setItem(LAST_URL_KEY, url);
+		try {
+			await apiService.updateServerList(url);
+			// The daemon downloads the list asynchronously; give it a moment
+			setTimeout(loadServers, 2000);
+		} catch (e: any) {
+			await dialogService.alert('Error updating server list: ' + e.message, 'Update Error');
+		}
+	};
 
 	const connectToServer = async (s?: Server) => {
 		// logText.set(`Connecting to ${s.name ?? s.ip}...`);
@@ -141,5 +182,15 @@ export const ServersView = component(() => {
 			style: { display: () => (someServers.get() && connectedServer.get() ? '' : 'none') },
 		},
 		refreshBtn: { onclick: loadServers },
+		updateUrlInput: {
+			_ref: (el) => {
+				bindControlledInput(el, updateUrl);
+			},
+			onkeydown: (e: KeyboardEvent) => {
+				if (e.key === 'Enter') updateServerList();
+			},
+		},
+		defaultUrlBtn: { onclick: resetUpdateUrl },
+		updateListBtn: { onclick: updateServerList },
 	});
 });

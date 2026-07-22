@@ -28,6 +28,7 @@ export const amuleRoutes = () => {
 	router.post('/download/set-category', controller.setFileCategory);
 	router.post('/server/connect', controller.connect);
 	router.post('/server/disconnect', controller.disconnect);
+	router.post('/server/update-list', controller.updateServerList);
 	router.get('/log', controller.getLog);
 	router.post('/daemon/restart', controller.restartDaemon);
 

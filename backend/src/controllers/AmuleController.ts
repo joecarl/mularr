@@ -247,6 +247,20 @@ export class AmuleController {
 		}
 	};
 
+	updateServerList = async (req: Request, res: Response) => {
+		try {
+			const { url } = req.body;
+			if (!url || typeof url !== 'string') {
+				res.status(400).json({ error: 'Missing "url" in request body' });
+				return;
+			}
+			await this.amuleService.updateServerListFromUrl(url);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	getLog = async (req: Request, res: Response) => {
 		try {
 			const lines = req.query.lines ? parseInt(req.query.lines as string) : 50;

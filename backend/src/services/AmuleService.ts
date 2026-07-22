@@ -225,6 +225,15 @@ export class AmuleService {
 		}
 	}
 
+	async updateServerListFromUrl(url: string) {
+		try {
+			await this.client.updateServerListFromUrl(url);
+		} catch (error) {
+			console.error('❌ EC Client Update Server List Error:', error);
+			throw error;
+		}
+	}
+
 	async getSharedFiles() {
 		try {
 			const files = await this.client.getSharedFiles();

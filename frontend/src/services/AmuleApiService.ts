@@ -91,6 +91,7 @@ export interface ConfigValues {
 	paranoidFiltering?: boolean;
 	ipFilterAutoLoad?: boolean;
 	ipFilterUrl?: string;
+	ed2kServersUrl?: string;
 	filterLevel?: string;
 	ipFilterSystem?: boolean;
 	sharedDirs?: SharedDirectoryEntry[];
@@ -423,6 +424,13 @@ export class AmuleApiService extends BaseApiService {
 	async disconnectFromServer(): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>('/server/disconnect', {
 			method: 'POST',
+		});
+	}
+
+	async updateServerList(url: string): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/update-list', {
+			method: 'POST',
+			body: JSON.stringify({ url }),
 		});
 	}
 
