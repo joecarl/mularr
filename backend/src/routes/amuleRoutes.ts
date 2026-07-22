@@ -29,6 +29,10 @@ export const amuleRoutes = () => {
 	router.post('/server/connect', controller.connect);
 	router.post('/server/disconnect', controller.disconnect);
 	router.post('/server/update-list', controller.updateServerList);
+	router.post('/server/add', controller.addServer);
+	router.post('/server/remove', controller.removeServer);
+	router.post('/server/set-priority', controller.setServerPriority);
+	router.post('/server/set-static', controller.setServerStatic);
 	router.get('/log', controller.getLog);
 	router.post('/daemon/restart', controller.restartDaemon);
 

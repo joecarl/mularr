@@ -247,6 +247,62 @@ export class AmuleController {
 		}
 	};
 
+	addServer = async (req: Request, res: Response) => {
+		try {
+			const { ip, port, name } = req.body;
+			if (!ip || !port) {
+				res.status(400).json({ error: 'Missing "ip" or "port" in request body' });
+				return;
+			}
+			await this.amuleService.addServer(ip, port, name);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	removeServer = async (req: Request, res: Response) => {
+		try {
+			const { ip, port } = req.body;
+			if (!ip || !port) {
+				res.status(400).json({ error: 'Missing "ip" or "port" in request body' });
+				return;
+			}
+			await this.amuleService.removeServer(ip, port);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	setServerPriority = async (req: Request, res: Response) => {
+		try {
+			const { ip, port, priority } = req.body;
+			if (!ip || !port || ![0, 1, 2].includes(priority)) {
+				res.status(400).json({ error: 'Expected "ip", "port" and "priority" (0=normal, 1=high, 2=low) in request body' });
+				return;
+			}
+			await this.amuleService.setServerPriority(ip, port, priority);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	setServerStatic = async (req: Request, res: Response) => {
+		try {
+			const { ip, port, isStatic } = req.body;
+			if (!ip || !port || typeof isStatic !== 'boolean') {
+				res.status(400).json({ error: 'Expected "ip", "port" and boolean "isStatic" in request body' });
+				return;
+			}
+			await this.amuleService.setServerStatic(ip, port, isStatic);
+			res.json({ success: true });
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
 	updateServerList = async (req: Request, res: Response) => {
 		try {
 			const { url } = req.body;

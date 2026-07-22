@@ -434,6 +434,34 @@ export class AmuleApiService extends BaseApiService {
 		});
 	}
 
+	async addServer(ip: string, port: number, name?: string): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/add', {
+			method: 'POST',
+			body: JSON.stringify({ ip, port, name }),
+		});
+	}
+
+	async removeServer(ip: string, port: number): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/remove', {
+			method: 'POST',
+			body: JSON.stringify({ ip, port }),
+		});
+	}
+
+	async setServerPriority(ip: string, port: number, priority: number): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/set-priority', {
+			method: 'POST',
+			body: JSON.stringify({ ip, port, priority }),
+		});
+	}
+
+	async setServerStatic(ip: string, port: number, isStatic: boolean): Promise<SuccessResponse> {
+		return this.request<SuccessResponse>('/server/set-static', {
+			method: 'POST',
+			body: JSON.stringify({ ip, port, isStatic }),
+		});
+	}
+
 	async getLog(lines: number = 50): Promise<{ lines: string[] }> {
 		return this.request<{ lines: string[] }>(`/log?lines=${lines}`);
 	}

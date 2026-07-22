@@ -1,0 +1,21 @@
+<form data-cb="form">
+	<div class="form-group" style="margin-bottom: 10px;">
+		<label style="display: block; margin-bottom: 3px;">Name:</label>
+		<input type="text" data-cb="name" name="name" style="width: 100%;" placeholder="Optional" />
+	</div>
+	<div style="display: flex; gap: 10px;">
+		<div class="form-group" style="margin-bottom: 10px; flex: 2;">
+			<label style="display: block; margin-bottom: 3px;">IP / Host:</label>
+			<input type="text" data-cb="ip" name="ip" required style="width: 100%;" placeholder="0.0.0.0" />
+		</div>
+		<div class="form-group" style="margin-bottom: 10px; flex: 1;">
+			<label style="display: block; margin-bottom: 3px;">Port:</label>
+			<input type="number" data-cb="port" name="port" required min="1" max="65535" style="width: 100%;"
+				placeholder="4661" />
+		</div>
+	</div>
+	<div style="display: flex; gap: 5px; justify-content: flex-end; margin-top: 15px;">
+		<button type="submit" class="ui-btn">Add</button>
+		<button type="button" class="ui-btn" data-cb="btnCancel">Cancel</button>
+	</div>
+</form>

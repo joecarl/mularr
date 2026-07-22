@@ -1,4 +1,5 @@
-import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FileStatus, SearchType, type AmuleCategory, type SourceNameCount } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FileStatus, SearchType, ServerPriority } from 'amule-ec-client';
+import type { AmuleCategory, SourceNameCount } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs/promises';
@@ -230,6 +231,57 @@ export class AmuleService {
 			await this.client.updateServerListFromUrl(url);
 		} catch (error) {
 			console.error('❌ EC Client Update Server List Error:', error);
+			throw error;
+		}
+	}
+
+	async addServer(ip: string, port: number, name?: string) {
+		try {
+			await this.client.addServer(ip, port, name);
+		} catch (error) {
+			console.error('❌ EC Client Add Server Error:', error);
+			throw error;
+		}
+	}
+
+	async removeServer(ip: string, port: number) {
+		try {
+			await this.client.removeServer(ip, port);
+		} catch (error) {
+			console.error('❌ EC Client Remove Server Error:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * The daemon identifies servers by ECID for the static/priority operations,
+	 * but only reports it through the incremental update mechanism.
+	 */
+	private async resolveServerEcid(ip: string, port: number): Promise<number> {
+		const update = await this.client.getUpdate();
+		const server = (update.servers || []).find((s) => s.ip === ip && s.port === port);
+		if (!server?.ecid) {
+			throw new Error(`Server not found: ${ip}:${port}`);
+		}
+		return server.ecid;
+	}
+
+	async setServerPriority(ip: string, port: number, priority: ServerPriority) {
+		try {
+			const ecid = await this.resolveServerEcid(ip, port);
+			await this.client.setServerPriority(ecid, priority);
+		} catch (error) {
+			console.error('❌ EC Client Set Server Priority Error:', error);
+			throw error;
+		}
+	}
+
+	async setServerStatic(ip: string, port: number, isStatic: boolean) {
+		try {
+			const ecid = await this.resolveServerEcid(ip, port);
+			await this.client.setServerStatic(ecid, isStatic);
+		} catch (error) {
+			console.error('❌ EC Client Set Server Static Error:', error);
 			throw error;
 		}
 	}
