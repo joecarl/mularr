@@ -7,6 +7,15 @@ import type { SystemInfo } from './SystemApiService';
 /** Maximum speed-sample buffer kept in the frontend (matches DashboardView's chart window). */
 const MAX_SPEED_SAMPLES = 2160;
 
+/** Maximum number of aMule log lines kept in the frontend buffer. */
+const MAX_LOG_LINES = 500;
+
+/** A single aMule log line with a stable id for keyed list rendering. */
+export interface LogLine {
+	id: number;
+	text: string;
+}
+
 /** Reconnect delays: 1 s, 2 s, 4 s … capped at 30 s. */
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -27,7 +36,7 @@ export class WsService {
 	public readonly transfers = signal<TransfersResponse | null>(null);
 	public readonly uploadQueue = signal<{ list: AmuleUpDownClient[] } | null>(null);
 	public readonly speedSamples = signal<SpeedSample[]>([]);
-	public readonly amuleLog = signal<string[]>([]);
+	public readonly amuleLog = signal<LogLine[]>([]);
 	public readonly servers = signal<ServersResponse | null>(null);
 	public readonly sharedFiles = signal<{ list: AmuleFile[] } | null>(null);
 	public readonly systemInfo = signal<SystemInfo | null>(null);
@@ -37,6 +46,7 @@ export class WsService {
 	private reconnectAttempt = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	private stopped = false;
+	private logLineSeq = 0;
 
 	constructor() {
 		this.connect();
@@ -126,8 +136,18 @@ export class WsService {
 			}
 
 			case 'amule:log': {
+				// Full snapshot (sent on connect): replaces the buffer
 				const { lines } = msg.data as { lines: string[] };
-				this.amuleLog.set(lines);
+				this.amuleLog.set(this.toLogLines(lines));
+				break;
+			}
+
+			case 'amule:log-append': {
+				// Incremental feed: concatenate and trim to the max buffer size
+				const { lines } = msg.data as { lines: string[] };
+				if (!lines.length) break;
+				const next = [...this.amuleLog.get(), ...this.toLogLines(lines)];
+				this.amuleLog.set(next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next);
 				break;
 			}
 
@@ -146,5 +166,9 @@ export class WsService {
 			default:
 				console.warn('[WS] Unknown message type:', msg.type);
 		}
+	}
+
+	private toLogLines(lines: string[]): LogLine[] {
+		return lines.map((text) => ({ id: this.logLineSeq++, text }));
 	}
 }

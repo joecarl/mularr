@@ -11,3 +11,8 @@
     font-family: monospace;
     white-space: pre;
 }
+
+/* Log lines flagged as critical by aMule (lines starting with "!") */
+.log-line-critical {
+    color: var(--ui-log-critical, #a04ce0);
+}

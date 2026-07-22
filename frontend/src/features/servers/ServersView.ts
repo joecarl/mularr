@@ -5,7 +5,7 @@ import { ContextMenuService, ContextMenuItem } from '../../services/ContextMenuS
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { StatsService } from '../../services/StatsService';
-import { WsService } from '../../services/WsService';
+import { LogLine, WsService } from '../../services/WsService';
 import { ListManager } from '../../utils/ListManager';
 import { formatAmount } from '../../utils/formats';
 import { smartLoad } from '../../utils/scheduling';
@@ -130,6 +130,16 @@ const ServersRows = componentList<ServerItem, ServersViewProps>(
 	(s) => s.hash
 );
 
+const LogLines = componentList<LogLine>(
+	(line) =>
+		tpl.logLine({
+			// aMule prefixes critical log lines with "!"
+			classes: { 'log-line-critical': () => line.get().text.startsWith('!') },
+			inner: () => line.get().text,
+		}),
+	(l) => l.id
+);
+
 export const ServersView = component(() => {
 	const apiService = services.get(AmuleApiService);
 	const statsService = services.get(StatsService);
@@ -146,13 +156,9 @@ export const ServersView = component(() => {
 	const connectedServer = computed(() => {
 		return statsService.stats.get()?.connectedServer ?? null;
 	});
-	const logText = signal('Initializing...');
+	const hasLog = computed(() => ws.amuleLog.get().length > 0);
 
-	// Sync log and servers from WebSocket
-	effect(() => {
-		const log = ws.amuleLog.get();
-		logText.set(log.length ? log.join('\n') : 'No log data');
-	});
+	// Sync servers from WebSocket
 	effect(() => {
 		const s = ws.servers.get();
 		if (s) mgr.items.set(toServerItems(s.list || []));
@@ -267,14 +273,17 @@ export const ServersView = component(() => {
 		}
 	};
 
+	// Auto-scroll: stick to the bottom on new lines, but pause while the user
+	// has scrolled up; scrolling back to the bottom re-enables it.
 	let logContainer: HTMLElement | null = null;
+	let logAutoScroll = true;
 	effect(() => {
-		logText.get();
-		if (logContainer) {
-			// Keep scroll at bottom
-			//console.log('Updating log scroll position', logContainer);
-			logContainer.scrollTop = logContainer.scrollHeight;
-		}
+		ws.amuleLog.get();
+		if (!logAutoScroll) return;
+		// Wait a frame so the new lines are in the DOM before scrolling
+		requestAnimationFrame(() => {
+			if (logAutoScroll && logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+		});
 	});
 
 	const someServers = mgr.hasItems;
@@ -309,7 +318,12 @@ export const ServersView = component(() => {
 			},
 		},
 		logContainer: {
-			inner: logText,
+			inner: () => (hasLog.get() ? LogLines(ws.amuleLog) : 'Waiting for log...'),
+			onscroll: () => {
+				if (!logContainer) return;
+				const distanceToBottom = logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight;
+				logAutoScroll = distanceToBottom < 8;
+			},
 			_ref: (el) => {
 				logContainer = el;
 			},

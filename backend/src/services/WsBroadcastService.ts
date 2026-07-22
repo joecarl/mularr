@@ -24,7 +24,8 @@ interface WsMessage {
  *   media:transfers    – MediaProviderService.getTransfers() every 2 s
  *   amule:upload-queue – AmuleService.getUploadQueue()     every 2 s
  *   amule:shared       – AmuleService.getSharedFiles()     every 4 s
- *   amule:log          – AmuledService.getLog()            every 3 s
+ *   amule:log          – snapshot of recent lines on client connect
+ *   amule:log-append   – new lines pushed as amuled writes them (file watcher)
  *   amule:servers      – AmuleService.getServers()         every 10 s
  *   system:info        – SystemService.getSystemInfo()     every 5 min
  *   stats:speed-history – full history on client connect
@@ -34,6 +35,7 @@ export class WsBroadcastService {
 	private wss: WebSocketServer | null = null;
 	private intervals: NodeJS.Timeout[] = [];
 	private lastRestartingState = false;
+	private logUnsubscribe: (() => void) | null = null;
 
 	private readonly amule = container.get(AmuleService);
 	private readonly amuled = container.get(AmuledService);
@@ -67,8 +69,11 @@ export class WsBroadcastService {
 		// Transfers and upload-queue at 2 s
 		this.intervals.push(setInterval(() => this.pollFast(), 2000));
 
-		// aMule log at 3 s
-		this.intervals.push(setInterval(() => this.pollLog(), 3000));
+		// Incremental aMule log feed: push new lines as soon as amuled writes them
+		this.amuled.startLogWatcher().catch((e) => console.error('[WS] log watcher error:', (e as Error).message));
+		this.logUnsubscribe = this.amuled.onLogLines((lines) => {
+			this.broadcast({ type: 'amule:log-append', data: { lines } });
+		});
 
 		// aMule global status and shared files at 4 s
 		this.intervals.push(setInterval(() => this.pollStatus(), 4000));
@@ -86,6 +91,9 @@ export class WsBroadcastService {
 	public stop(): void {
 		for (const id of this.intervals) clearInterval(id);
 		this.intervals = [];
+		this.logUnsubscribe?.();
+		this.logUnsubscribe = null;
+		this.amuled.stopLogWatcher();
 		this.wss?.close();
 	}
 
@@ -128,7 +136,7 @@ export class WsBroadcastService {
 			this.amule.getUploadQueue().then((d) => this.send(ws, { type: 'amule:upload-queue', data: d })),
 			this.amule.getServers().then((d) => this.send(ws, { type: 'amule:servers', data: d })),
 			this.amule.getSharedFiles().then((d) => this.send(ws, { type: 'amule:shared', data: d })),
-			this.amuled.getLog(100).then((lines) => this.send(ws, { type: 'amule:log', data: { lines } })),
+			this.amuled.startLogWatcher().then(() => this.send(ws, { type: 'amule:log', data: { lines: this.amuled.getLogLines() } })),
 			this.system.getSystemInfo().then((d) => this.send(ws, { type: 'system:info', data: d })),
 		]);
 	}
@@ -147,16 +155,6 @@ export class WsBroadcastService {
 				.then((d) => this.broadcast({ type: 'amule:upload-queue', data: d }))
 				.catch((e) => console.error('[WS] upload-queue error:', (e as Error).message)),
 		]);
-	}
-
-	private async pollLog(): Promise<void> {
-		if (!(await this.readyToPoll())) return;
-		try {
-			const lines = await this.amuled.getLog(100);
-			this.broadcast({ type: 'amule:log', data: { lines } });
-		} catch (e) {
-			console.error('[WS] log error:', (e as Error).message);
-		}
 	}
 
 	private async pollStatus(): Promise<void> {

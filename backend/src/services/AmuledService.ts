@@ -3,6 +3,7 @@ import util from 'util';
 import path from 'path';
 import fs from 'fs';
 import net from 'net';
+import { AmuleLogWatcher } from './AmuleLogWatcher';
 
 const execPromise = util.promisify(exec);
 
@@ -11,6 +12,7 @@ export class AmuledService {
 	private _isRestarting = false;
 	private _isStopping = false;
 	private readonly sharedDirsManager = new AmuleSharedDirsManager(this);
+	private readonly logWatcher = new AmuleLogWatcher(this.configDir);
 
 	get configDirectory(): string {
 		return this.configDir;
@@ -226,6 +228,27 @@ export class AmuledService {
 			console.error('Error reading log file:', error);
 			return ['Error reading log file'];
 		}
+	}
+
+	// ── Incremental log watching (delegated to AmuleLogWatcher) ─────────────
+
+	/** Subscribe to new log lines. Returns an unsubscribe function. */
+	onLogLines(listener: (lines: string[]) => void): () => void {
+		return this.logWatcher.onLines(listener);
+	}
+
+	/** Current in-memory log tail, primed and kept up to date by the watcher. */
+	getLogLines(): string[] {
+		return this.logWatcher.getLines();
+	}
+
+	/** Starts the incremental logfile watcher. Idempotent. */
+	startLogWatcher(): Promise<void> {
+		return this.logWatcher.start();
+	}
+
+	stopLogWatcher(): void {
+		this.logWatcher.stop();
 	}
 
 	async getConfig() {
