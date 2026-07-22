@@ -42,7 +42,7 @@ export class BlacklistService {
 		return new Promise((resolve) => {
 			this.dialogService.open({
 				title,
-				width: '420px',
+				width: '540px',
 				render: (close) =>
 					BlacklistConfirmDialog({
 						files,
