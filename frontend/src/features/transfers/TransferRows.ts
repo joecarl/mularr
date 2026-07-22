@@ -160,13 +160,16 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 			const name = t.get().categoryName;
 			return name === DEFAULT_VALUE ? '-' : (name ?? '-');
 		};
-		const categoryColor = () => {
+		// Must be a computed (not a plain function): its string value acts as a memo
+		// barrier, so the categoryColorDot node below is only rebuilt when the color
+		// actually changes and not on every transfers push (identity churn).
+		const categoryColor = computed(() => {
 			const name = t.get().categoryName;
 			if (!name || name === DEFAULT_VALUE) return 'transparent';
 			const cat = transferCtx.categories.get().find((c) => c.name === name);
 			if (!cat || !cat.color) return 'transparent';
 			return numberToColor(cat.color);
-		};
+		});
 
 		return tpl.transferRow({
 			classes: { selected: isSelected },
@@ -226,7 +229,7 @@ export const TransfersRows = componentList<Transfer, TransferListProps>(
 				categoryCol: {
 					nodes: {
 						categoryColorDot: () =>
-							categoryColor() === 'transparent' ? null : tpl.categoryColorDot({ style: { backgroundColor: categoryColor } }),
+							categoryColor.get() === 'transparent' ? null : tpl.categoryColorDot({ style: { backgroundColor: categoryColor } }),
 						categoryText: { inner: categoryName },
 					},
 				},
