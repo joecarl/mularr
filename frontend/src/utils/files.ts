@@ -4,3 +4,9 @@ export function isVideoFile(filename: string): boolean {
 	const ext = filename.split('.').pop()?.toLowerCase() || '';
 	return VIDEO_EXTENSIONS.includes(ext);
 }
+
+/** Joins a directory and a file name using POSIX separators (backend paths are POSIX). */
+export function joinPath(dir?: string, name?: string): string {
+	if (!dir || !name) return '';
+	return `${dir.replace(/\/+$/, '')}/${name}`;
+}

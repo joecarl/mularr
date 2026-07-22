@@ -1,0 +1,75 @@
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 11px;">
+
+	<!-- File name -->
+	<div
+		style="border-bottom: 1px solid var(--ui-shadow); padding-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+		<span data-cb="fileIcon"></span>
+		<span data-cb="valName" style="font-weight: bold; word-break: break-word;"></span>
+	</div>
+
+	<!-- Details table -->
+	<table style="border-collapse: collapse; width: 100%;">
+		<colgroup>
+			<col style="width: 110px; white-space: nowrap;">
+			<col>
+			<col style="width: 110px; white-space: nowrap;">
+			<col>
+		</colgroup>
+		<tbody>
+			<tr>
+				<td class="shared-details-label">Hash:</td>
+				<td colspan="3" data-cb="valHash"
+					style="font-family: monospace; font-size: 10px; word-break: break-all; padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="shared-details-label">Size:</td>
+				<td data-cb="valSize" style="padding: 2px 8px 2px 0;"></td>
+				<td class="shared-details-label">Upload Priority:</td>
+				<td data-cb="valUpPrio" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="shared-details-label">Rating:</td>
+				<td data-cb="valRating" style="padding: 2px 8px 2px 0;"></td>
+				<td class="shared-details-label">On Queue:</td>
+				<td data-cb="valOnQueue" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="shared-details-label">Requests:</td>
+				<td data-cb="valRequests" style="padding: 2px 8px 2px 0;"></td>
+				<td class="shared-details-label">Accepts:</td>
+				<td data-cb="valAccepts" style="padding: 2px 0;"></td>
+			</tr>
+			<tr>
+				<td class="shared-details-label">Transferred:</td>
+				<td data-cb="valTransferred" style="padding: 2px 8px 2px 0;"></td>
+				<td class="shared-details-label">Complete Sources:</td>
+				<td data-cb="valCompleteSources" style="padding: 2px 0;"></td>
+			</tr>
+			<tr data-cb="commentRow">
+				<td class="shared-details-label" style="vertical-align: top;">Comment:</td>
+				<td colspan="3" data-cb="valComment" style="word-break: break-word; padding: 2px 0;"></td>
+			</tr>
+			<tr data-cb="filePathRow">
+				<td class="shared-details-label" style="vertical-align: top;">File Path:</td>
+				<td colspan="3" data-cb="valFilePath"
+					style="font-family: monospace; font-size: 10px; word-break: break-all; padding: 2px 0;"></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<!-- ED2K link (conditional) -->
+	<div data-cb="ed2kSection" style="display: none;">
+		<div style="color: #888; margin-bottom: 3px;">ed2k Link:</div>
+		<div style="display: flex; gap: 5px; align-items: flex-start;">
+			<div data-cb="valEd2kLink"
+				style="flex: 1; font-family: monospace; font-size: 10px; word-break: break-all; background: var(--ui-light); border: 1px solid var(--ui-shadow); padding: 3px 4px; max-height: 52px; overflow-y: auto; line-height: 1.5;">
+			</div>
+			<button class="ui-btn" data-cb="copyLinkBtn">Copy</button>
+		</div>
+	</div>
+
+	<!-- Footer -->
+	<div style="display: flex; justify-content: flex-end; padding-top: 4px;">
+		<button class="ui-btn" data-cb="btnClose">Close</button>
+	</div>
+</div>
