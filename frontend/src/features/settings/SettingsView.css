@@ -119,4 +119,12 @@
 		padding-top: 10px;
 		gap: 5px;
 	}
+
+	.settings-daemon-version {
+		align-self: center;
+		color: var(--ui-text-disabled);
+		opacity: 0.6;
+		white-space: nowrap;
+		padding: 0 0.5em;
+	}
 }

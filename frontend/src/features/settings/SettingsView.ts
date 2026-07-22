@@ -3,6 +3,7 @@ import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SharedDirectoryEntry } from '../../services/AmuleApiService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { DialogService } from '../../services/DialogService';
+import { smartLoad } from '../../utils/scheduling';
 import { SharedDirsSettings } from './components/SharedDirsSettings';
 import { BlacklistSettings } from './components/BlacklistSettings';
 import tpl from './SettingsView.html';
@@ -76,6 +77,13 @@ export const SettingsView = component(() => {
 	const lockedTempDir = signal(false);
 	const lockedSharedDirs = signal(false);
 	const sharedDirs = signal<SharedDirectoryEntry[]>([]);
+
+	const amuleVersion = signal('');
+	const loadAmuleVersion = smartLoad(async () => {
+		const info = await apiService.getInfo();
+		amuleVersion.set(info.version || '');
+	}, 'amule-info');
+	loadAmuleVersion();
 
 	const loadConfig = async () => {
 		try {
@@ -336,6 +344,9 @@ export const SettingsView = component(() => {
 			_ref: (el) => {
 				bindControlledCheckbox(el, startMinimized);
 			},
+		},
+		amuleVersionLabel: {
+			inner: () => (amuleVersion.get() ? `aMule v${amuleVersion.get()}` : ''),
 		},
 		restartDaemonBtn: {
 			disabled: restartingDaemon,
