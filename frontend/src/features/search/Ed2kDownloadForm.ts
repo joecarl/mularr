@@ -40,7 +40,7 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 	const handleBulkImport = () => {
 		dialogService.open({
 			title: 'Bulk Import ED2K Links',
-			width: '500px',
+			width: '750px',
 			render: (close) =>
 				BulkDownloadDialog({
 					onConfirm: async (links) => {
