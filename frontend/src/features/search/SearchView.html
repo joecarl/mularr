@@ -22,7 +22,18 @@
 
 		<button class="ui-btn" data-cb="refreshBtn">Update Results</button>
 
-		<div style="width: 1px; height: 20px; background: #808080;"></div>
+		<div style="width: 1px; height: 20px; background: #808080; margin: 0 5px;"></div>
+
+		<div data-cb="providerFilterBlock" class="ui-inline-input-block" style="display: none;">
+			<label>Provider:</label>
+			<select data-cb="providerFilterSelect">
+				<option value="all">All</option>
+				<option value="amule">aMule</option>
+				<option value="telegram">Telegram</option>
+			</select>
+		</div>
+
+		<div style="width: 1px; height: 20px; background: #808080; margin: 0 5px;"></div>
 		<button class="ui-btn" data-cb="downloadSelectedBtn" disabled>
 			<span class="icon-img icon-download"></span> Download Selected
 		</button>

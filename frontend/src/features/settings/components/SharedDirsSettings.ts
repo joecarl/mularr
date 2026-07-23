@@ -1,4 +1,4 @@
-import { bindControlledCheckbox, bindControlledInput, component, inject, signal, WritableSignal } from 'chispa';
+import { component, inject, refBindCheckbox, refBindInput, signal, WritableSignal } from 'chispa';
 import { SharedDirectoryEntry } from '../../../services/AmuleApiService';
 import { DialogService } from '../../../services/DialogService';
 import tpl from './SharedDirsSettings.html';
@@ -58,15 +58,11 @@ export const SharedDirsSettings = component<SharedDirsSettingsProps>(({ sharedDi
 		},
 		newSharedDirPath: {
 			disabled: () => isLocked(),
-			_ref: (el) => {
-				bindControlledInput(el, newPath);
-			},
+			_ref: refBindInput(newPath),
 		},
 		newSharedDirRecursive: {
 			disabled: () => isLocked(),
-			_ref: (el) => {
-				bindControlledCheckbox(el, newRecursive);
-			},
+			_ref: refBindCheckbox(newRecursive),
 		},
 		addSharedDirBtn: {
 			disabled: () => isLocked(),

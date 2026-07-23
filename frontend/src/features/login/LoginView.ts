@@ -1,4 +1,4 @@
-import { bindControlledInput, component, signal } from 'chispa';
+import { refBindInput, component, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AuthApiService } from '../../services/AuthApiService';
 import tpl from './LoginView.html';
@@ -35,14 +35,10 @@ export const LoginView = component<ILoginViewProps>(({ onLogin }) => {
 			onsubmit: handleSubmit,
 		},
 		username: {
-			_ref: (el) => {
-				bindControlledInput(el, username);
-			},
+			_ref: refBindInput(username),
 		},
 		password: {
-			_ref: (el) => {
-				bindControlledInput(el, password);
-			},
+			_ref: refBindInput(password),
 		},
 		errorMsg: {
 			inner: () => error.get(),

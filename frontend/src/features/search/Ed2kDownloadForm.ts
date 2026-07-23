@@ -1,4 +1,4 @@
-import { component, signal, bindControlledInput } from 'chispa';
+import { component, signal, refBindInput } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { DialogService } from '../../services/DialogService';
 import { MediaApiService, type AddDownloadResponse } from '../../services/MediaApiService';
@@ -27,7 +27,10 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 			downloadLink.set('');
 			onAdded?.();
 			if (result.duplicate) {
-				await dialogService.alert(`This link matches a file that is ${duplicateStatusLabel(result.duplicate)} as "${result.duplicate.name}".`, 'Duplicate Download');
+				await dialogService.alert(
+					`This link matches a file that is ${duplicateStatusLabel(result.duplicate)} as "${result.duplicate.name}".`,
+					'Duplicate Download'
+				);
 			}
 		} catch (e: any) {
 			await dialogService.alert('Error adding download: ' + e.message, 'Download Error');
@@ -49,7 +52,10 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 							.filter((d): d is NonNullable<AddDownloadResponse['duplicate']> => !!d);
 						if (duplicates.length > 0) {
 							const lines = duplicates.map((d) => `• ${truncateName(d.name)}`);
-							await dialogService.alert(`${duplicates.length} of ${links.length} links match files already in transfers:\n${lines.join('\n')}`, 'Duplicate Downloads');
+							await dialogService.alert(
+								`${duplicates.length} of ${links.length} links match files already in transfers:\n${lines.join('\n')}`,
+								'Duplicate Downloads'
+							);
 						}
 					},
 					onCancel: close,
@@ -59,9 +65,7 @@ export const Ed2kDownloadForm = component<Ed2kDownloadFormProps>(({ onAdded }) =
 
 	return tpl.fragment({
 		downloadInput: {
-			_ref: (el): void => {
-				bindControlledInput(el, downloadLink);
-			},
+			_ref: refBindInput(downloadLink),
 		},
 		downloadBtn: { onclick: handleDownload },
 		bulkDownloadBtn: { onclick: handleBulkImport },

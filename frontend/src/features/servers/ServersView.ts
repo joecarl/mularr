@@ -1,4 +1,4 @@
-import { bindControlledInput, component, componentList, computed, effect, Signal, signal } from 'chispa';
+import { component, componentList, computed, effect, refBindInput, Signal, signal } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, Server } from '../../services/AmuleApiService';
 import { ContextMenuService, ContextMenuItem } from '../../services/ContextMenuService';
@@ -247,10 +247,7 @@ export const ServersView = component(() => {
 
 	const removeServers = async (list: Server[]) => {
 		if (list.length === 0) return;
-		const label =
-			list.length === 1
-				? `server ${list[0].name ? `"${list[0].name}" ` : ''}(${list[0].ip}:${list[0].port})`
-				: `${list.length} servers`;
+		const label = list.length === 1 ? `server ${list[0].name ? `"${list[0].name}" ` : ''}(${list[0].ip}:${list[0].port})` : `${list.length} servers`;
 		const ok = await dialogService.confirm(`Remove ${label} from the list?`, 'Remove Servers');
 		if (!ok) return;
 		try {
@@ -344,9 +341,7 @@ export const ServersView = component(() => {
 		refreshBtn: { onclick: loadServers },
 		addServerBtn: { onclick: openAddServerDialog },
 		updateUrlInput: {
-			_ref: (el) => {
-				bindControlledInput(el, updateUrl);
-			},
+			_ref: refBindInput(updateUrl),
 			onkeydown: (e: KeyboardEvent) => {
 				if (e.key === 'Enter') updateServerList();
 			},

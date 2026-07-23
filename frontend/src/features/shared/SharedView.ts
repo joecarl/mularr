@@ -1,4 +1,4 @@
-import { component, computed, componentList, effect, signal, bindControlledInput, Signal } from 'chispa';
+import { component, computed, componentList, effect, signal, Signal, refBindInput } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, AmuleFile } from '../../services/AmuleApiService';
 import { DialogService } from '../../services/DialogService';
@@ -230,9 +230,7 @@ export const SharedView = component(() => {
 
 		refreshBtn: { onclick: loadShared },
 		nameFilterInput: {
-			_ref: (el) => {
-				bindControlledInput(el, nameFilter);
-			},
+			_ref: refBindInput(nameFilter),
 		},
 		sharedCountLabel: {
 			inner: shownCountLabel,

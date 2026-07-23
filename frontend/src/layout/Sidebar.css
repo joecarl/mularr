@@ -119,12 +119,13 @@
 			.nav-link {
 				color: var(--sidebar-text-primary);
 				text-decoration: none;
-				padding: 4px 6px;
+				padding: 3px 6px;
 				display: flex;
 				align-items: center;
 				gap: 6px;
 				font-size: 11px;
 				cursor: pointer;
+				border: 1px solid transparent;
 
 				.nav-icon {
 					width: 16px;

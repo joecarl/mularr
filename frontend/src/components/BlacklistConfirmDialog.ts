@@ -1,4 +1,4 @@
-import { bindControlledInput, component, signal } from 'chispa';
+import { refBindInput, component, signal } from 'chispa';
 import type { BlacklistCandidate } from '../services/BlacklistService';
 import { fbytes } from '../utils/formats';
 import tpl from './BlacklistConfirmDialog.html';
@@ -34,9 +34,7 @@ export const BlacklistConfirmDialog = component<BlacklistConfirmDialogProps>(({ 
 			inner: consequences,
 		},
 		reasonInput: {
-			_ref: (el) => {
-				bindControlledInput(el, reason);
-			},
+			_ref: refBindInput(reason),
 		},
 		btnOk: {
 			onclick: () => onConfirm(reason.get().trim()),

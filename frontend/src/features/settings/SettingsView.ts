@@ -1,4 +1,4 @@
-import { component, signal, bindControlledInput, bindControlledSelect, bindControlledCheckbox, effect } from 'chispa';
+import { component, signal, effect, refBindCheckbox, refBindInput, refBindSelect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleApiService, SharedDirectoryEntry } from '../../services/AmuleApiService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
@@ -149,201 +149,61 @@ export const SettingsView = component(() => {
 	};
 
 	return tpl.fragment({
-		themeSelect: {
-			_ref: (el) => {
-				bindControlledSelect(el, theme);
-			},
-		},
-		intervalInput: {
-			_ref: (el) => {
-				bindControlledInput(el, interval);
-			},
-		},
-		detailedTransferProgress: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, detailedTransferProgress);
-			},
-		},
-		nick: {
-			_ref: (el) => {
-				bindControlledInput(el, nick);
-			},
-		},
+		themeSelect: { _ref: refBindSelect(theme) },
+		intervalInput: { _ref: refBindInput(interval) },
+		detailedTransferProgress: { _ref: refBindCheckbox(detailedTransferProgress) },
+		nick: { _ref: refBindInput(nick) },
 		tcpPort: {
 			disabled: lockedPorts,
-			_ref: (el) => {
-				bindControlledInput(el, tcpPort);
-			},
+			_ref: refBindInput(tcpPort),
 		},
 		udpPort: {
 			disabled: lockedPorts,
-			_ref: (el) => {
-				bindControlledInput(el, udpPort);
-			},
+			_ref: refBindInput(udpPort),
 		},
-		maxSources: {
-			_ref: (el) => {
-				bindControlledInput(el, maxSources);
-			},
-		},
-		maxConnections: {
-			_ref: (el) => {
-				bindControlledInput(el, maxConnections);
-			},
-		},
-		maxConnectionsPerFiveSeconds: {
-			_ref: (el) => {
-				bindControlledInput(el, maxConnectionsPerFiveSeconds);
-			},
-		},
-		slotAllocation: {
-			_ref: (el) => {
-				bindControlledInput(el, slotAllocation);
-			},
-		},
-		queueSizePref: {
-			_ref: (el) => {
-				bindControlledInput(el, queueSizePref);
-			},
-		},
-		fileBufferSizePref: {
-			_ref: (el) => {
-				bindControlledInput(el, fileBufferSizePref);
-			},
-		},
-		maxDownload: {
-			_ref: (el) => {
-				bindControlledInput(el, maxDownload);
-			},
-		},
-		maxUpload: {
-			_ref: (el) => {
-				bindControlledInput(el, maxUpload);
-			},
-		},
-		downloadCap: {
-			_ref: (el) => {
-				bindControlledInput(el, downloadCap);
-			},
-		},
-		uploadCap: {
-			_ref: (el) => {
-				bindControlledInput(el, uploadCap);
-			},
-		},
+		maxSources: { _ref: refBindInput(maxSources) },
+		maxConnections: { _ref: refBindInput(maxConnections) },
+		maxConnectionsPerFiveSeconds: { _ref: refBindInput(maxConnectionsPerFiveSeconds) },
+		slotAllocation: { _ref: refBindInput(slotAllocation) },
+		queueSizePref: { _ref: refBindInput(queueSizePref) },
+		fileBufferSizePref: { _ref: refBindInput(fileBufferSizePref) },
+		maxDownload: { _ref: refBindInput(maxDownload) },
+		maxUpload: { _ref: refBindInput(maxUpload) },
+		downloadCap: { _ref: refBindInput(downloadCap) },
+		uploadCap: { _ref: refBindInput(uploadCap) },
 		incomingDir: {
 			disabled: lockedIncomingDir,
-			_ref: (el) => {
-				bindControlledInput(el, incomingDir);
-			},
+			_ref: refBindInput(incomingDir),
 		},
 		tempDir: {
 			disabled: lockedTempDir,
-			_ref: (el) => {
-				bindControlledInput(el, tempDir);
-			},
+			_ref: refBindInput(tempDir),
 		},
-		netEd2k: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, netEd2k);
-			},
-		},
-		netKad: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, netKad);
-			},
-		},
-		autoconnect: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, autoconnect);
-			},
-		},
-		reconnect: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, reconnect);
-			},
-		},
-		upnp: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, upnp);
-			},
-		},
-		obfuscationRequested: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, obfuscationRequested);
-			},
-		},
-		obfuscationRequired: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, obfuscationRequired);
-			},
-		},
-		smartIdCheck: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, smartIdCheck);
-			},
-		},
-		ich: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, ich);
-			},
-		},
-		allocateFullFile: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, allocateFullFile);
-			},
-		},
-		ipFilterClients: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, ipFilterClients);
-			},
-		},
-		ipFilterServers: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, ipFilterServers);
-			},
-		},
-		filterLanIps: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, filterLanIps);
-			},
-		},
-		paranoidFiltering: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, paranoidFiltering);
-			},
-		},
-		ipFilterAutoLoad: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, ipFilterAutoLoad);
-			},
-		},
-		ipFilterUrl: {
-			_ref: (el) => {
-				bindControlledInput(el, ipFilterUrl);
-			},
-		},
-		filterLevel: {
-			_ref: (el) => {
-				bindControlledInput(el, filterLevel);
-			},
-		},
-		ipFilterSystem: {
-			_ref: (el) => {
-				bindControlledCheckbox(el, ipFilterSystem);
-			},
-		},
+		netEd2k: { _ref: refBindCheckbox(netEd2k) },
+		netKad: { _ref: refBindCheckbox(netKad) },
+		autoconnect: { _ref: refBindCheckbox(autoconnect) },
+		reconnect: { _ref: refBindCheckbox(reconnect) },
+		upnp: { _ref: refBindCheckbox(upnp) },
+		obfuscationRequested: { _ref: refBindCheckbox(obfuscationRequested) },
+		obfuscationRequired: { _ref: refBindCheckbox(obfuscationRequired) },
+		smartIdCheck: { _ref: refBindCheckbox(smartIdCheck) },
+		ich: { _ref: refBindCheckbox(ich) },
+		allocateFullFile: { _ref: refBindCheckbox(allocateFullFile) },
+		ipFilterClients: { _ref: refBindCheckbox(ipFilterClients) },
+		ipFilterServers: { _ref: refBindCheckbox(ipFilterServers) },
+		filterLanIps: { _ref: refBindCheckbox(filterLanIps) },
+		paranoidFiltering: { _ref: refBindCheckbox(paranoidFiltering) },
+		ipFilterAutoLoad: { _ref: refBindCheckbox(ipFilterAutoLoad) },
+		ipFilterUrl: { _ref: refBindInput(ipFilterUrl) },
+		filterLevel: { _ref: refBindInput(filterLevel) },
+		ipFilterSystem: { _ref: refBindCheckbox(ipFilterSystem) },
 		showSplash: {
 			onclick: handleNostalgiaClick,
-			_ref: (el) => {
-				bindControlledCheckbox(el, showSplash);
-			},
+			_ref: refBindCheckbox(showSplash),
 		},
 		startMinimized: {
 			onclick: handleNostalgiaClick,
-			_ref: (el) => {
-				bindControlledCheckbox(el, startMinimized);
-			},
+			_ref: refBindCheckbox(startMinimized),
 		},
 		amuleVersionLabel: {
 			inner: () => (amuleVersion.get() ? `aMule v${amuleVersion.get()}` : ''),

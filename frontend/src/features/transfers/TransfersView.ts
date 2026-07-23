@@ -1,4 +1,4 @@
-import { component, signal, computed, bindControlledSelect, effect } from 'chispa';
+import { component, signal, computed, refBindSelect, effect } from 'chispa';
 import { services } from '../../services/container/ServiceContainer';
 import { AmuleUpDownClient } from '../../services/AmuleApiService';
 import { Transfer } from '../../services/MediaApiService';
@@ -150,9 +150,7 @@ export const TransfersView = component(() => {
 		},
 		catSelect: {
 			disabled: isDisabled,
-			_ref: (el) => {
-				bindControlledSelect(el, selectCategoryName, ctgOptions);
-			},
+			_ref: refBindSelect(selectCategoryName, ctgOptions),
 			onchange: (e: any) => changeCategory(e.target.value),
 		},
 		selectionCountLabel: {
@@ -181,9 +179,7 @@ export const TransfersView = component(() => {
 		},
 
 		mobileSortSelect: {
-			_ref: (el: HTMLSelectElement) => {
-				bindControlledSelect(el, mgr.mobileSortValue, MOBILE_SORT_OPTIONS);
-			},
+			_ref: refBindSelect(mgr.mobileSortValue, MOBILE_SORT_OPTIONS),
 		},
 		thName: { onclick: () => mgr.sort('name') },
 		thSize: { onclick: () => mgr.sort('size') },

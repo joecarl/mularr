@@ -1,4 +1,4 @@
-import { bindControlledInput, bindControlledSelect, component, SelectOption, signal } from 'chispa';
+import { refBindInput, refBindSelect, component, SelectOption, signal } from 'chispa';
 import { EXTENSION_TYPES, ExtensionType } from '../../../services/ExtensionsApiService';
 import tpl from './AddExtensionForm.html';
 
@@ -36,14 +36,10 @@ export const AddExtensionForm = component<AddExtensionFormProps>(({ onSave, onCa
 			style: { display: () => (extensionType.get() === 'telegram_indexer' ? 'none' : '') },
 		},
 		url: {
-			_ref: (el) => {
-				bindControlledInput(el, url);
-			},
+			_ref: refBindInput(url),
 		},
 		extensionType: {
-			_ref: (el) => {
-				bindControlledSelect(el, extensionType, EXTENSION_TYPE_OPTIONS);
-			},
+			_ref: refBindSelect(extensionType, EXTENSION_TYPE_OPTIONS),
 		},
 		btnCancel: {
 			onclick: onCancel,

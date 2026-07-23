@@ -1,4 +1,4 @@
-import { component, signal, bindControlledInput, bindControlledSelect, onUnmount, effect, computed, componentList, Signal } from 'chispa';
+import { component, signal, refBindInput, refBindSelect, onUnmount, effect, computed, componentList, Signal } from 'chispa';
 import { getFileIcon } from '../../utils/icons';
 import { fbytes } from '../../utils/formats';
 import { ListManager, RowSelectionManager } from '../../utils/ListManager';
@@ -7,6 +7,7 @@ import { services } from '../../services/container/ServiceContainer';
 import { DialogService } from '../../services/DialogService';
 import { LocalPrefsService } from '../../services/LocalPrefsService';
 import { MediaApiService, SearchResult } from '../../services/MediaApiService';
+import { ExtensionsApiService } from '../../services/ExtensionsApiService';
 import { getProviderIcon, getProviderName } from '../../services/ProvidersApiService';
 import { ContextMenuItem, ContextMenuService } from '../../services/ContextMenuService';
 import { ClipboardService } from '../../services/ClipboardService';
@@ -15,12 +16,7 @@ import { Ed2kDownloadForm } from './Ed2kDownloadForm';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
-function buildContextMenuActions(
-	result: SearchResult,
-	selectionMgr: RowSelectionManager,
-	list: SearchResult[],
-	onBlacklisted: () => void
-): ContextMenuItem[] {
+function buildContextMenuActions(result: SearchResult, selectionMgr: RowSelectionManager, list: SearchResult[], onBlacklisted: () => void): ContextMenuItem[] {
 	const actions: ContextMenuItem[] = [];
 	const selected = selectionMgr.selectedHashes.get();
 	const targets = selected.size > 0 ? list.filter((r) => r.hash && selected.has(r.hash)) : [result];
@@ -187,6 +183,26 @@ export const SearchView = component(() => {
 		prefs.set('search.type', searchType.get());
 	});
 
+	// Provider filter (only shown when the Telegram indexer extension is enabled)
+	const providerFilter = signal('all');
+	const telegramEnabled = signal(false);
+	services
+		.get(ExtensionsApiService)
+		.getExtensions()
+		.then((list) => telegramEnabled.set(list.some((x) => x.type === 'telegram_indexer' && !!x.enabled)))
+		.catch(() => {});
+
+	const visibleResults = computed(() => {
+		const f = providerFilter.get();
+		const items = mgr.sortedItems.get();
+		return f === 'all' ? items : items.filter((r) => r.provider === f);
+	});
+
+	effect(() => {
+		providerFilter.get();
+		mgr.clearSelection();
+	});
+
 	const searchProgress = signal(0);
 	const downloadingHashes = signal<Set<string>>(new Set());
 	const blacklistedCount = signal(0);
@@ -313,24 +329,26 @@ export const SearchView = component(() => {
 		thType: { onclick: () => mgr.sort('type') },
 
 		searchInput: {
-			_ref: (el) => {
-				bindControlledInput(el, searchQuery);
-			},
+			_ref: refBindInput(searchQuery),
 			onkeydown: (e: KeyboardEvent) => {
 				if (e.key === 'Enter') performSearch();
 			},
 		},
 		typeSelect: {
-			_ref: (el) => {
-				bindControlledSelect(el, searchType);
-			},
+			_ref: refBindSelect(searchType),
 		},
 		searchBtn: { onclick: performSearch },
 		refreshBtn: { onclick: loadResults },
+		providerFilterBlock: {
+			style: { display: () => (telegramEnabled.get() ? '' : 'none') },
+		},
+		providerFilterSelect: {
+			_ref: refBindSelect(providerFilter),
+		},
 		resultsList: { inner: statusLog },
 		resultsContainer: {
 			inner: () =>
-				ResultsRows(mgr.sortedItems, { onDownload: (hash) => download(hash), downloadingHashes, selectionMgr: mgr, onBlacklisted: loadResults }),
+				ResultsRows(visibleResults, { onDownload: (hash) => download(hash), downloadingHashes, selectionMgr: mgr, onBlacklisted: loadResults }),
 		},
 		ed2kForm: Ed2kDownloadForm({ onAdded: loadResults }),
 		downloadSelectedBtn: {
@@ -344,9 +362,7 @@ export const SearchView = component(() => {
 			},
 		},
 		mobileSortSelect: {
-			_ref: (el: HTMLSelectElement) => {
-				bindControlledSelect(el, mgr.mobileSortValue, MOBILE_SORT_OPTIONS);
-			},
+			_ref: refBindSelect(mgr.mobileSortValue, MOBILE_SORT_OPTIONS),
 		},
 		searchProgressContainer: {
 			style: {

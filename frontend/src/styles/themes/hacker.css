@@ -144,18 +144,20 @@
 
 		.nav-link {
 			/* Force color override here as well if needed, though variable handles it */
-			/* box-shadow for hover effect */
-			&:hover {
-				background-color: var(--sidebar-item-hover);
-				color: var(--ui-text);
-				box-shadow: 0 0 5px #00ff00;
-			}
 
 			&.active-link {
 				background-color: var(--ui-hl);
-				color: var(--ui-hl-text);
+				color: var(--ui-hl-text) !important;
 				box-shadow: 0 0 10px #00ff00;
 				font-weight: bold;
+			}
+
+			/* box-shadow for hover effect */
+			&:hover {
+				background-color: var(--sidebar-item-hover);
+				color: var(--ui-text) !important;
+				border: 1px solid var(--ui-hl) !important;
+				box-shadow: 0 0 5px #00ff00;
 			}
 		}
 

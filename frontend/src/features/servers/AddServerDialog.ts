@@ -1,6 +1,5 @@
-import { component, signal } from 'chispa';
+import { component, signal, refBindInput } from 'chispa';
 import tpl from './AddServerDialog.html';
-import { bindInput } from '../../utils/chispaHelpers';
 
 export interface AddServerDialogProps {
 	onConfirm: (server: { ip: string; port: number; name?: string }) => void;
@@ -22,9 +21,9 @@ export const AddServerDialog = component<AddServerDialogProps>(({ onConfirm, onC
 
 	return tpl.fragment({
 		form: { onsubmit: handleSubmit },
-		name: { _ref: bindInput(formName) },
-		ip: { _ref: bindInput(formIp) },
-		port: { _ref: bindInput(formPort) },
+		name: { _ref: refBindInput(formName) },
+		ip: { _ref: refBindInput(formIp) },
+		port: { _ref: refBindInput(formPort) },
 		btnCancel: { onclick: onCancel },
 	});
 });

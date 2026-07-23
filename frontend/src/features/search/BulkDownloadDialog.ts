@@ -1,4 +1,4 @@
-import { bindControlledInput, component, signal } from 'chispa';
+import { refBindInput, component, signal } from 'chispa';
 import tpl from './BulkDownloadDialog.html';
 
 export interface BulkDownloadDialogProps {
@@ -11,9 +11,7 @@ export const BulkDownloadDialog = component<BulkDownloadDialogProps>(({ onConfir
 
 	return tpl.fragment({
 		linksInput: {
-			_ref: (el) => {
-				bindControlledInput(el, value);
-			},
+			_ref: refBindInput(value),
 		},
 		btnDownload: {
 			onclick: () => {

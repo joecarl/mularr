@@ -1,4 +1,4 @@
-import { bindControlledInput, component, signal } from 'chispa';
+import { refBindInput, component, signal } from 'chispa';
 import { Category } from '../../../services/CategoriesApiService';
 import tpl from './CategoryFormModal.html';
 
@@ -43,29 +43,19 @@ export const CategoryFormModal = component<CategoryFormModalProps>(({ initialDat
 	return tpl.fragment({
 		form: { onsubmit: handleSubmit },
 		name: {
-			_ref: (el) => {
-				bindControlledInput(el, formName);
-			},
+			_ref: refBindInput(formName),
 		},
 		path: {
-			_ref: (el) => {
-				bindControlledInput(el, formPath);
-			},
+			_ref: refBindInput(formPath),
 		},
 		color: {
-			_ref: (el) => {
-				bindControlledInput(el, formColor);
-			},
+			_ref: refBindInput(formColor),
 		},
 		priority: {
-			_ref: (el) => {
-				bindControlledInput(el, formPriority);
-			},
+			_ref: refBindInput(formPriority),
 		},
 		comment: {
-			_ref: (el) => {
-				bindControlledInput(el, formComment);
-			},
+			_ref: refBindInput(formComment),
 		},
 		btnCancel: { onclick: onCancel },
 	});
