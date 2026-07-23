@@ -142,8 +142,8 @@ export class AmuledService {
 	}
 
 	private waitForEcPort(timeoutMs: number): Promise<boolean> {
-		const ecPort = parseInt(process.env.AMULE_PORT || '4712');
-		const ecHost = process.env.AMULE_HOST || 'localhost';
+		const ecPort = parseInt(process.env.AMULE_EC_CLIENT_PORT || '4712');
+		const ecHost = process.env.AMULE_EC_CLIENT_HOST || 'localhost';
 		const interval = 400;
 		const deadline = Date.now() + timeoutMs;
 

@@ -6,7 +6,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
-import { AmulecmdService } from './AmulecmdService';
 import { buildEd2kLink, parseEd2kLink } from './eD2kTools';
 import { ChunkInfo, TransferSource, TransferSourceNameCount } from './mediaprovider/types';
 
@@ -120,20 +119,15 @@ function findByHash<T extends AmuleFile>(downloads: T[], hash: string): T | null
 }
 
 export class AmuleService {
-	private readonly host = process.env.AMULE_HOST || 'localhost';
-	private readonly port = process.env.AMULE_PORT || '4712';
-	private readonly password = process.env.AMULE_PASSWORD || 'secret';
+	private readonly host = process.env.AMULE_EC_CLIENT_HOST || 'localhost';
+	private readonly port = process.env.AMULE_EC_CLIENT_PORT || '4712';
+	private readonly password = process.env.AMULE_EC_CLIENT_PASSWORD || 'secret';
 	private readonly client = new AmuleClient({ host: this.host, port: parseInt(this.port), password: this.password, timeout: 5000, requestTimeout: 5000 });
-	private readonly amulecmdService: AmulecmdService | null = null;
 	private db: MainDB;
 
 	constructor() {
 		this.db = container.get(MainDB);
 		//this.client.connection.setDebug(true);
-		// Enable fallback logic for amulecmd unless disabled
-		if (process.env.AMULECMD_FALLBACK !== 'false') {
-			this.amulecmdService = new AmulecmdService();
-		}
 	}
 
 	async getVersion() {
@@ -175,11 +169,7 @@ export class AmuleService {
 			};
 		} catch (error: any) {
 			console.error('❌ EC Client Stats Error:', error.message);
-			// Fallback to amulecmd if EC fails
-			if (this.amulecmdService) {
-				return this.amulecmdService.getStats();
-			}
-			return { raw: 'Stats error and fallback disabled' };
+			return { raw: 'Stats error' };
 		}
 	}
 
@@ -201,9 +191,6 @@ export class AmuleService {
 			return { list: servers, connectedServer };
 		} catch (error: any) {
 			console.error('❌ EC Client Servers Error:', error.message);
-			if (this.amulecmdService) {
-				return this.amulecmdService.getServers();
-			}
 			return { raw: 'Error getting servers', list: [] };
 		}
 	}
@@ -456,9 +443,6 @@ export class AmuleService {
 			};
 		} catch (error: any) {
 			console.error('❌ EC Client Transfers Error:', error.message);
-			// if (this.amulecmdService) {
-			// 	return this.amulecmdService.getTransfers();
-			// }
 			return { raw: 'Error getting transfers', list: [], categories: [] };
 		}
 	}
@@ -539,9 +523,6 @@ export class AmuleService {
 			return { raw: 'No results yet', list: [] };
 		} catch (e: any) {
 			console.error('Get Search Results Error:', e);
-			if (this.amulecmdService) {
-				return this.amulecmdService.getSearchResults();
-			}
 			return { raw: 'Error fetching results', list: [] };
 		}
 	}
@@ -570,10 +551,6 @@ export class AmuleService {
 		} catch (e: any) {
 			console.error('❌ EC Client Upload Queue Error:', e.message);
 			return { raw: 'Error fetching upload queue', list: [] };
-			// No fallback for uploads since amulecmd doesn't provide this info
-			// if (this.amulecmdService) {
-			// 	return this.amulecmdService.getUploadQueue();
-			// }
 		}
 	}
 
@@ -592,7 +569,7 @@ export class AmuleService {
 
 		try {
 			if (!fileRefData) {
-				throw new Error('File ref error, skipping direct add and going to fallback');
+				throw new Error('File ref error, cannot add download');
 			} else if (!fileRefData.isEd2kLink) {
 				// This will only work if the hash is in the last search results.
 				await this.client.downloadSearchResult(Buffer.from(link, 'hex'));
@@ -602,11 +579,7 @@ export class AmuleService {
 				console.log(`Added download for ed2k link`);
 			}
 		} catch (e) {
-			console.warn('❌ EC Client failed to add download, falling back to amulecmd:', e);
-
-			if (this.amulecmdService) {
-				this.amulecmdService.addDownload(link);
-			}
+			console.error('❌ EC Client failed to add download:', e);
 		}
 
 		if (hash) {
@@ -633,11 +606,7 @@ export class AmuleService {
 			await this.client.deleteDownload(Buffer.from(hash, 'hex'));
 			// Remove from DB if successfully deleted from client
 		} catch (e) {
-			console.warn('❌ EC Client removeDownload failed, falling back to amulecmd:', e);
-
-			if (this.amulecmdService) {
-				await this.amulecmdService.removeDownload(hash);
-			}
+			console.error('❌ EC Client removeDownload failed:', e);
 		}
 
 		try {
@@ -703,7 +672,7 @@ export class AmuleService {
 			return cats || [];
 		} catch (e: any) {
 			console.error('❌ EC Client getCategories Error:', e.message);
-			// No reliable fallback via amulecmd - return empty list
+			// Return empty list on error
 			return [];
 		}
 	}

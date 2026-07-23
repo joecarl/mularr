@@ -52,8 +52,13 @@ services:
             - API_KEY= # example: supersecretapikey. Used to authenticate API requests from other apps without login (needed for torznab integration, for example. API_KEY can also be used as password with the username 'apikey' for the qbittorrent api)
             - JWT_SECRET= # example: supersecretjwtkey. Used to sign JSON Web Tokens for API authentication (if not set, a random secret will be generated on startup, which means any existing tokens will become invalid after a restart)
 
-            # Customize how Mularr connects to aMule via EC (most likely you don't need to set these)
-            # Set these ONLY if Mularr will connect to an external aMule instance
-            - AMULE_HOST=localhost
-            - AMULE_PORT=4712
-            - AMULE_PASSWORD=secret
+            # [EXPERIMENTAL] External connection (EC) client settings used by Mularr to reach aMule.
+            # Mularr is designed to work with the aMule instance it manages internally, so you should
+            # NOT set these unless you fully understand the implications. Changing them means connecting
+            # to an external aMule instance, a use case Mularr does not currently fully support or test.
+            # AMULE_EC_CLIENT_PASSWORD is only the client password used to authenticate the EC connection;
+            # it is NOT used to modify the internal aMule configuration. To change the EC password itself,
+            # edit the aMule configuration file (amule.conf) manually.
+            - AMULE_EC_CLIENT_HOST=localhost
+            - AMULE_EC_CLIENT_PORT=4712
+            - AMULE_EC_CLIENT_PASSWORD=secret
