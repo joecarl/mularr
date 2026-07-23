@@ -85,6 +85,7 @@ export interface ConfigValues {
 	smartIdCheck?: boolean;
 	ich?: boolean;
 	allocateFullFile?: boolean;
+	previewPrio?: boolean;
 	ipFilterClients?: boolean;
 	ipFilterServers?: boolean;
 	filterLanIps?: boolean;

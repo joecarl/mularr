@@ -60,6 +60,7 @@ export const SettingsView = component(() => {
 	const smartIdCheck = signal(true);
 	const ich = signal(true);
 	const allocateFullFile = signal(false);
+	const previewPrio = signal(false);
 	const ipFilterClients = signal(true);
 	const ipFilterServers = signal(true);
 	const filterLanIps = signal(true);
@@ -115,6 +116,7 @@ export const SettingsView = component(() => {
 				smartIdCheck.set(v.smartIdCheck ?? true);
 				ich.set(v.ich ?? true);
 				allocateFullFile.set(v.allocateFullFile ?? false);
+				previewPrio.set(v.previewPrio ?? false);
 				ipFilterClients.set(v.ipFilterClients ?? true);
 				ipFilterServers.set(v.ipFilterServers ?? true);
 				filterLanIps.set(v.filterLanIps ?? true);
@@ -189,6 +191,7 @@ export const SettingsView = component(() => {
 		smartIdCheck: { _ref: refBindCheckbox(smartIdCheck) },
 		ich: { _ref: refBindCheckbox(ich) },
 		allocateFullFile: { _ref: refBindCheckbox(allocateFullFile) },
+		previewPrio: { _ref: refBindCheckbox(previewPrio) },
 		ipFilterClients: { _ref: refBindCheckbox(ipFilterClients) },
 		ipFilterServers: { _ref: refBindCheckbox(ipFilterServers) },
 		filterLanIps: { _ref: refBindCheckbox(filterLanIps) },
@@ -250,6 +253,7 @@ export const SettingsView = component(() => {
 						smartIdCheck: smartIdCheck.get(),
 						ich: ich.get(),
 						allocateFullFile: allocateFullFile.get(),
+						previewPrio: previewPrio.get(),
 						ipFilterClients: ipFilterClients.get(),
 						ipFilterServers: ipFilterServers.get(),
 						filterLanIps: filterLanIps.get(),

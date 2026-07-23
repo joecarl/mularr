@@ -297,6 +297,7 @@ export class AmuledService {
 				config.smartIdCheck = findVal('SmartIdCheck') === '1';
 				config.ich = findVal('ICH') === '1';
 				config.allocateFullFile = findVal('AllocateFullFile') === '1';
+				config.previewPrio = findVal('PreviewPrio') === '1';
 				config.ipFilterClients = findVal('IpFilterClients') === '1';
 				config.ipFilterServers = findVal('IpFilterServers') === '1';
 				config.filterLanIps = findVal('FilterLanIPs') === '1';
@@ -357,6 +358,7 @@ export class AmuledService {
 			SmartIdCheck: fromBool(newConfig.smartIdCheck),
 			ICH: fromBool(newConfig.ich),
 			AllocateFullFile: fromBool(newConfig.allocateFullFile),
+			PreviewPrio: fromBool(newConfig.previewPrio),
 			IpFilterClients: fromBool(newConfig.ipFilterClients),
 			IpFilterServers: fromBool(newConfig.ipFilterServers),
 			FilterLanIPs: fromBool(newConfig.filterLanIps),
