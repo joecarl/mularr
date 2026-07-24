@@ -78,7 +78,8 @@ export class TelegramBotService {
 		if (posterUrl) {
 			try {
 				const resp = await axios.get(posterUrl, { responseType: 'arraybuffer' });
-				const contentType = (resp.headers['content-type'] || resp.headers['Content-Type'] || '').toLowerCase();
+				const rawContentType = resp.headers['content-type'];
+				const contentType = typeof rawContentType === 'string' ? rawContentType.toLowerCase() : '';
 				if (contentType.startsWith('image')) {
 					const buffer = Buffer.from(resp.data, 'binary');
 					await this.bot.sendPhoto(this.chatId, buffer, {
