@@ -35,6 +35,21 @@ export class GluetunService {
 	public async getPortForwarded(): Promise<number | null> {
 		try {
 			const res = await axios.get(`${this.apiBase}/portforward`, { timeout: 5000 });
+
+			// If GLUETUN_PORT_INDEX is defined with a valid integer, pick that index from the ports array
+			const portIndexRaw = process.env.GLUETUN_PORT_INDEX;
+			if (portIndexRaw !== undefined && portIndexRaw !== '') {
+				const portIndex = parseInt(portIndexRaw, 10);
+				if (!isNaN(portIndex)) {
+					const ports = res.data?.ports;
+					if (Array.isArray(ports) && ports[portIndex] != null) {
+						return ports[portIndex];
+					}
+					return null;
+				}
+			}
+
+			// Default behavior: use the single forwarded port
 			return res.data?.port || null;
 		} catch (error) {
 			return null;
