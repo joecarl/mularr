@@ -13,7 +13,8 @@
 It also includes an extension to use the **Telegram Network** as a download provider. This requires a real account (not a bot) to access groups/channels with media files.
 
 <p align="center">
-  <img src="https://games.copinstar.com/img/mularr/mularr-overview.png" alt="Overview">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-xp.png" alt="Mularr dashboard (Windows XP theme)" width="49%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-xp.png" alt="Transfers (Windows XP theme)" width="49%">
 </p>
 
 ---
@@ -26,7 +27,8 @@ It also includes an extension to use the **Telegram Network** as a download prov
     - **Notifications**: Get notified of your downloads via a Telegram bot.
     - **Provider**: Use the Telegram network for searching and downloading files.
 - 🛡️ **VPN Ready**: Built-in support for Gluetun health checks and automatic port updates.
-- **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic and Windows 11 (Experimental). Built with [Chispa](https://github.com/joecarl/chispa).
+- **Retro-Style Web Interface**: A fully responsive UI with a nostalgic Windows XP feel. Includes multiple themes like Classic, Windows 11, Hacker and Modern.
+- **Built with [Chispa](https://github.com/joecarl/chispa).**
 
 ---
 
@@ -60,10 +62,33 @@ Access the web UI at `http://localhost:8940`.
 
 ## Screenshots
 
+Mularr ships with multiple themes:
+
+### Modern & Hacker Mode
+
 <p align="center">
-  <img src="https://games.copinstar.com/img/mularr/mularr01.png" alt="Transfers">
-  <img src="https://games.copinstar.com/img/mularr/mularr02.png" alt="Settings">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-modern.png" alt="Dashboard (Modern theme)" width="49%%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-hacker.png" alt="Dashboard (Hacker Mode theme)" width="49%%">
 </p>
+<p align="center"><sub>Dashboard view</sub></p>
+
+### Windows XP
+
+<p align="center">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-xp.png" alt="Dashboard (Windows XP theme)" width="33%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-xp.png" alt="Transfers (Windows XP theme)" width="33%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-xp.png" alt="Settings (Windows XP theme)" width="33%">
+</p>
+<p align="center"><sub> Dashboard, Transfers and Settings view</sub></p>
+  
+### Windows Classic
+
+<p align="center">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-classic.png" alt="Dashboard (Windows Classic theme)" width="33%%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-classic.png" alt="Transfers (Windows Classic theme)" width="33%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-classic.png" alt="Settings (Windows Classic theme)" width="33%">
+</p>
+<p align="center"><sub> Dashboard, Transfers and Settings view</sub></p>
 
 ---
 

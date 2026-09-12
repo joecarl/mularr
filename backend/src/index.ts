@@ -31,6 +31,15 @@ import { blacklistRoutes } from './routes/blacklistRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { AuthService } from './services/AuthService';
 import { LoggerFactory } from './services/logging/Logger';
+import {
+	createMockDatabase,
+	MockAmuledService,
+	MockAmuleService,
+	MockGluetunService,
+	MockSpeedHistoryService,
+	MockSystemService,
+	MockTelegramIndexerService,
+} from './mock';
 
 const logger = LoggerFactory.create('Main');
 
@@ -43,13 +52,18 @@ process.on('unhandledRejection', (reason) => {
 logger.info(`Starting Mularr v${__APP_MANIFEST__.version}...`);
 
 const app = express();
-const { port, databasePath: dbPath } = __APP_CONFIG__;
+const { port, databasePath: dbPath, mockMode } = __APP_CONFIG__;
+if (mockMode) {
+	logger.warn(`MOCK_MODE is enabled: serving generated data, nothing connects to aMule, Gluetun or Telegram. Data directory: ${path.dirname(dbPath)}`);
+}
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // -- Initialize & register services in container ------------------------------
+// In mock mode the services that reach outside the process (aMule and its daemon, Gluetun, the public IP
+// lookups, Telegram) are swapped for the stand-ins in src/mock; everything else runs the real code on top.
 
 // Event bus goes first so any service can emit or subscribe from its constructor
 container.register(AppEvents, new AppEvents());
@@ -64,25 +78,25 @@ if (authService.isAuthEnabled()) {
 }
 
 async function main() {
-	// Initialize Main DB
-	const mainDb = new MainDB(dbPath);
+	// Initialize Main DB (the mock one is wiped and reseeded on every start)
+	const mainDb = mockMode ? createMockDatabase(dbPath) : new MainDB(dbPath);
 	container.register(MainDB, mainDb);
 
 	// Initialize Amule Service
-	const amuleService = new AmuleService();
+	const amuleService = mockMode ? new MockAmuleService() : new AmuleService();
 	container.register(AmuleService, amuleService);
 
-	const amuledService = new AmuledService();
+	const amuledService = mockMode ? new MockAmuledService() : new AmuledService();
 	container.register(AmuledService, amuledService);
 	amuledService.applySharedDirsFromEnvIfNeeded();
 	await amuledService.startDaemon();
 
 	// Initialize Gluetun Service
-	const gluetunService = new GluetunService();
+	const gluetunService = mockMode ? new MockGluetunService() : new GluetunService();
 	container.register(GluetunService, gluetunService);
 
 	// Initialize System Service
-	const systemService = new SystemService();
+	const systemService = mockMode ? new MockSystemService() : new SystemService();
 	container.register(SystemService, systemService);
 
 	// Initialize Extensions Service
@@ -96,7 +110,7 @@ async function main() {
 	}
 
 	// Initialize Telegram Indexer Service (Always init, but disconnected if no auth)
-	const indexerService = new TelegramIndexerService();
+	const indexerService = mockMode ? new MockTelegramIndexerService() : new TelegramIndexerService();
 	container.register(TelegramIndexerService, indexerService);
 	indexerService.start().catch((err) => logger.error('Error starting initial Telegram indexer check:', err));
 
@@ -110,7 +124,7 @@ async function main() {
 	container.register(MediaProviderService, mediaProviderService);
 
 	// Initialize Speed History Service (records download/upload samples for the dashboard)
-	const speedHistoryService = new SpeedHistoryService();
+	const speedHistoryService = mockMode ? new MockSpeedHistoryService() : new SpeedHistoryService();
 	container.register(SpeedHistoryService, speedHistoryService);
 	speedHistoryService.start();
 

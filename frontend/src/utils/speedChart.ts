@@ -100,7 +100,7 @@ export function drawSpeedChart(canvas: HTMLCanvasElement, series: ChartSeries[],
 	if (!ctx) return null;
 
 	// ── Options with defaults ─────────────────────────────────────────────
-	const bg = options.background ?? '#0c0c0c';
+	const bg = options.background ?? '#0c0c0cf8';
 	const gridCount = options.gridLines ?? 4;
 	const pad = {
 		top: options.padding?.top ?? 8,

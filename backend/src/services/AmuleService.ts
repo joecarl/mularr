@@ -156,7 +156,7 @@ export class AmuleService {
 			output = e.stdout || '';
 		}
 
-		// Output format: "aMule 2.3.3 ..."
+		// Output format: "aMule x.y.z ..."
 		const match = output.match(/amuled? (\d+\.\d+\.\d+)/i);
 		if (match) {
 			version = match[1];

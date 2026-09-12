@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { readFileSync } from 'fs';
+import os from 'os';
 import path from 'path/posix';
 
 export interface AppManifest {
@@ -18,11 +19,17 @@ export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
 export interface AppConfig {
+	/**
+	 * Serve generated data instead of talking to aMule, Gluetun, Telegram or the public IP lookups (see
+	 * src/mock). Meant for screenshots and UI work. So that it never reaches a real system, the database is
+	 * forced into a throwaway directory that is reseeded on every start, and bot notifications are disabled.
+	 */
+	mockMode: boolean;
 	/** HTTP and WebSocket port. */
 	port: number;
 	/** Minimum level written to the console; see services/logging/Logger.ts. */
 	logLevel: LogLevel;
-	/** Main SQLite database. The data directory (JWT secret file, indexer DB) is derived from it. */
+	/** Main SQLite database. The data directory (JWT secret file, indexer DB) is derived from it. In mock mode it lives under the OS temp directory. */
 	databasePath: string;
 	auth: {
 		username?: string;
@@ -117,11 +124,16 @@ function envPathList(name: string): string[] | undefined {
 }
 
 function loadConfig(): AppConfig {
-	const telegramBotToken = envString('TELEGRAM_BOT_TOKEN');
+	const mockMode = envBool('MOCK_MODE');
+	// Mock mode never notifies a real chat, whatever the environment says
+	const telegramBotToken = mockMode ? undefined : envString('TELEGRAM_BOT_TOKEN');
 	return {
+		mockMode,
 		port: envInt('PORT', 8940),
 		logLevel: envEnum('LOG_LEVEL', LOG_LEVELS, 'info'),
-		databasePath: envString('DATABASE_PATH') ?? path.join(__dirname, '../dev-data/database.sqlite'),
+		databasePath: mockMode
+			? path.join(os.tmpdir(), 'mularr-mock', 'database.sqlite') // DATABASE_PATH is ignored on purpose: the mock wipes its data directory on start
+			: (envString('DATABASE_PATH') ?? path.join(__dirname, '../dev-data/database.sqlite')),
 		auth: {
 			username: envString('AUTH_USERNAME'),
 			password: envString('AUTH_PASSWORD'),
