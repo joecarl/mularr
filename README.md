@@ -75,18 +75,18 @@ Mularr ships with multiple themes:
 ### Windows XP
 
 <p align="center">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-xp.png" alt="Dashboard (Windows XP theme)" width="33%">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-xp.png" alt="Transfers (Windows XP theme)" width="33%">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-xp.png" alt="Settings (Windows XP theme)" width="33%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-xp.png" alt="Dashboard (Windows XP theme)" width="32%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-xp.png" alt="Transfers (Windows XP theme)" width="32%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-xp.png" alt="Settings (Windows XP theme)" width="32%">
 </p>
 <p align="center"><sub> Dashboard, Transfers and Settings view</sub></p>
   
 ### Windows Classic
 
 <p align="center">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-classic.png" alt="Dashboard (Windows Classic theme)" width="33%%">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-classic.png" alt="Transfers (Windows Classic theme)" width="33%">
-  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-classic.png" alt="Settings (Windows Classic theme)" width="33%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/dashboard-classic.png" alt="Dashboard (Windows Classic theme)" width="32%%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/transfers-classic.png" alt="Transfers (Windows Classic theme)" width="32%">
+  <img src="https://games.copinstar.com/img/mularr/screenshots/settings-classic.png" alt="Settings (Windows Classic theme)" width="32%">
 </p>
 <p align="center"><sub> Dashboard, Transfers and Settings view</sub></p>
 
