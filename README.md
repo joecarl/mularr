@@ -142,9 +142,6 @@ cd frontend
 npm run dev
 ```
 
-> [!WARNING]
-> Do **not** run `npm install` in the root folder. Install dependencies separately in `backend/` and `frontend/`.
-
 ---
 
 ## Production Build
