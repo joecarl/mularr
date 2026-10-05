@@ -1,7 +1,8 @@
 import { Api } from 'telegram';
 import { returnBigInt } from 'telegram/Helpers';
-import type { MessageRow, TelegramAccount } from '../services/db/TelegramIndexerDB';
+import type { JoinQueueRow, MessageRow, TelegramAccount } from '../services/db/TelegramIndexerDB';
 import type { DownloadStatus } from '../services/TelegramDownloadManager';
+import type { JoinQueueStatus } from '../services/TelegramJoinManager';
 import type { AuthStatus, TelegramChatsResponse, TelegramIndexerSearchResult } from '../services/TelegramIndexerService';
 import { LoggerFactory } from '../services/logging/Logger';
 import * as F from './fixtures';
@@ -107,6 +108,28 @@ export class MockTelegramIndexerService {
 
 	deleteChat(chatId: string): void {
 		this.world.deleteTelegramChat(chatId);
+	}
+
+	// ── Join queue ────────────────────────────────────────────────────────────
+
+	getJoinQueue(): JoinQueueStatus {
+		return this.world.getTelegramJoinQueue();
+	}
+
+	addJoinLinks(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; invalid: string[] } {
+		return this.world.enqueueTelegramJoins(links, indexOnJoin);
+	}
+
+	retryJoin(id: number): void {
+		this.world.retryTelegramJoin(id);
+	}
+
+	removeJoin(id: number): void {
+		this.world.removeTelegramJoin(id);
+	}
+
+	clearFinishedJoins(): number {
+		return this.world.clearFinishedTelegramJoins();
 	}
 
 	// ── Downloads ─────────────────────────────────────────────────────────────

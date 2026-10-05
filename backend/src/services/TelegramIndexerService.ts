@@ -9,6 +9,7 @@ import { container } from './container/ServiceContainer';
 import { ChatOverview, MessageRow, TelegramIndexerDB } from './db/TelegramIndexerDB';
 import { MainDB } from './db/MainDB';
 import { TelegramDownloadManager, getDownloadableDocument } from './TelegramDownloadManager';
+import { JoinedChat, JoinQueueStatus, TelegramJoinManager } from './TelegramJoinManager';
 import { LoggerFactory } from './logging/Logger';
 import { __APP_CONFIG__ } from '../app-env';
 
@@ -51,6 +52,7 @@ export class TelegramIndexerService {
 	private client: TelegramClient | null = null;
 	private db: TelegramIndexerDB;
 	private readonly downloadManager: TelegramDownloadManager;
+	private readonly joinManager: TelegramJoinManager;
 
 	// Auth State
 	private authStatus: AuthStatus = 'disconnected';
@@ -85,6 +87,12 @@ export class TelegramIndexerService {
 			() => this.client,
 			() => this.authStatus,
 			this.db
+		);
+		this.joinManager = new TelegramJoinManager(
+			() => this.client,
+			() => this.authStatus,
+			this.db,
+			(chat, indexOnJoin) => this.onChatJoined(chat, indexOnJoin)
 		);
 	}
 
@@ -243,10 +251,12 @@ export class TelegramIndexerService {
 		this.db.updateAccount({ session });
 		this.logger.info('Telegram login successful!');
 		this.downloadManager.resumeActiveDownloads().catch((e) => this.logger.error('Error resuming active downloads:', e));
+		this.joinManager.resume();
 		this.runIndexingLoop();
 	}
 
 	public async logout() {
+		this.joinManager.stop();
 		if (this.client) {
 			await this.client.disconnect();
 			this.client = null;
@@ -310,6 +320,40 @@ export class TelegramIndexerService {
 		if (this.indexingChatId === chatId) throw new Error('The chat is being indexed right now, try again when the pass ends');
 	}
 
+	// -- Join queue --
+
+	public getJoinQueue(): JoinQueueStatus {
+		return this.joinManager.getStatus();
+	}
+
+	/** Queues channel links to join in the background, see TelegramJoinManager.addLinks. */
+	public addJoinLinks(links: string[], indexOnJoin: boolean) {
+		return this.joinManager.addLinks(links, indexOnJoin);
+	}
+
+	public retryJoin(id: number) {
+		this.joinManager.retry(id);
+	}
+
+	public removeJoin(id: number) {
+		this.joinManager.remove(id);
+	}
+
+	public clearFinishedJoins(): number {
+		return this.joinManager.clearFinished();
+	}
+
+	/**
+	 * A queued link got the account into the chat: registers it right away (the next cycle would too) and,
+	 * when asked, enables its indexing and indexes it now.
+	 */
+	private onChatJoined(chat: JoinedChat, indexOnJoin: boolean) {
+		this.db.registerChat(chat.id, chat.title, chat.type);
+		if (!indexOnJoin) return;
+		this.db.setChatIndexing(chat.id, true);
+		this.requestIndexing(chat.id);
+	}
+
 	// -- Client Actions --
 
 	private async connectClient(apiId: number, apiHash: string, sessionString: string) {
@@ -317,6 +361,7 @@ export class TelegramIndexerService {
 		await this.client.connect();
 		this.authStatus = 'connected';
 		this.downloadManager.resumeActiveDownloads().catch((e) => this.logger.error('Error resuming active downloads:', e));
+		this.joinManager.resume();
 		this.runIndexingLoop();
 	}
 

@@ -73,6 +73,11 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'fix',
 				text: 'Removing a finished download no longer sends a delete to aMule for a file it already considers complete, which could bring the daemon down.',
 			},
+			{
+				id: 16,
+				type: 'feature',
+				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away.',
+			},
 		],
 	},
 ];

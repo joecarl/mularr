@@ -1,0 +1,112 @@
+.telegram-join-queue {
+	height: 100%;
+	min-height: 200px;
+	display: flex;
+	flex-direction: column;
+
+	.header {
+		margin-bottom: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 6px 10px;
+	}
+
+	.header-title {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		min-width: 0;
+	}
+
+	.queue-note {
+		font-size: 0.85em;
+		color: var(--text-muted);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.header-tools {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+
+		.ui-btn {
+			min-width: 80px;
+		}
+	}
+
+	.ui-list {
+		thead th {
+			padding: 4px;
+			text-align: left;
+		}
+
+		tbody td {
+			padding: 4px;
+		}
+
+		.empty-cell {
+			text-align: center;
+			padding: 20px;
+			color: var(--text-muted);
+		}
+
+		td.join-details {
+			max-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	.join-status {
+		font-weight: bold;
+		white-space: nowrap;
+
+		&.is-joining {
+			color: #0066cc;
+		}
+
+		&.is-waiting {
+			color: #b36b00;
+		}
+
+		&.is-queued {
+			color: #808080;
+		}
+
+		&.is-joined {
+			color: #008000;
+		}
+
+		&.is-request {
+			color: #000080;
+		}
+
+		&.is-failed {
+			color: #cc0000;
+		}
+	}
+
+	.join-error {
+		color: #cc0000;
+	}
+
+	.row-actions {
+		display: inline-flex;
+		gap: 4px;
+
+		.ui-btn {
+			min-width: 60px;
+		}
+	}
+
+	.mobile-action {
+		min-width: 60px;
+		padding: 2px 5px;
+	}
+}

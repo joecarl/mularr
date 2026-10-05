@@ -1,6 +1,10 @@
 <div class="telegram-view ui-feature-layout-rows">
 	<div class="ui-panel-raised ui-feature-topbar">
 		<span style="font-weight: bold; margin-left: 5px;">Telegram</span>
+		<div class="view-tabs" data-cb="viewTabs">
+			<button class="ui-btn view-tab" data-cb="tabChats">Chats</button>
+			<button class="ui-btn view-tab" data-cb="tabJoinQueue">Join queue</button>
+		</div>
 		<span class="status-text">
 			Status: <span data-cb="statusBadge" style="text-transform: capitalize;">Detecting...</span>
 		</span>
@@ -70,7 +74,7 @@
 			</div>
 		</div>
 
-		<!-- Connected: the chats table component -->
+		<!-- Connected: the chats table or the join queue, by the tab chosen in the topbar -->
 		<div data-cb="panelConnected" class="connected-panel"></div>
 	</div>
 </div>

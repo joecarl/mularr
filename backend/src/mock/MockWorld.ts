@@ -10,8 +10,9 @@ import { __APP_CONFIG__ } from '../app-env';
 import { CHUNK_STATUS, type ChunkInfo, type MediaCategory, type TransferSource, type TransferSourceNameCount } from '../types/MediaTypes';
 import type { SpeedSample } from '../types/StatsTypes';
 import type { DownloadStatus } from '../services/TelegramDownloadManager';
-import type { Chat, IndexingProgress, MessageRow } from '../services/db/TelegramIndexerDB';
+import type { Chat, IndexingProgress, JoinQueueRow, MessageRow } from '../services/db/TelegramIndexerDB';
 import type { IndexingCycleStatus, TelegramChatsResponse } from '../services/TelegramIndexerService';
+import { parseJoinLink, type JoinQueueStatus } from '../services/TelegramJoinManager';
 import { buildEd2kLink } from '../services/eD2kTools';
 import { MockRandom } from './MockRandom';
 import * as F from './fixtures';
@@ -28,6 +29,11 @@ const MAX_LOG_LINES = 500;
 const TELEGRAM_CYCLE_MS = 5 * 60_000;
 /** How long an on-demand pass over a chat shows as "indexing now". */
 const TELEGRAM_INDEX_PASS_MS = 4000;
+/** How long a queued link shows as "joining", and the pause before the next one, both much shorter than the real manager's. */
+const TELEGRAM_JOIN_ATTEMPT_MS = 3000;
+const TELEGRAM_JOIN_INTERVAL_MS = 6000;
+/** The simulated FLOOD_WAIT a link containing "flood" earns on its first attempt. */
+const TELEGRAM_JOIN_FLOOD_WAIT_MS = 90_000;
 
 export interface MockServer extends AmuleServer {
 	ecid: number;
@@ -150,6 +156,11 @@ export class MockWorld {
 	private telegramCycle: IndexingCycleStatus = { running: false, currentChatId: null, lastRunAt: null, nextRunAt: null };
 	private readonly telegramDownloads = new Map<string, DownloadStatus>();
 	private readonly telegramCruise = new Map<string, number>();
+	/** Links queued to join, worked through one at a time as the real manager does (see advanceTelegramJoins). */
+	private readonly telegramJoinQueue: JoinQueueRow[] = [];
+	private nextJoinId = 1;
+	private telegramJoiningId: number | null = null;
+	private telegramJoiningUntil = 0;
 	private readonly logLines: string[] = [];
 	private readonly logListeners = new Set<(lines: string[]) => void>();
 	private search: MockSearch | null = null;
@@ -249,6 +260,7 @@ export class MockWorld {
 
 		for (const entry of this.queue) this.advanceEntry(entry, dt);
 		for (const status of this.telegramDownloads.values()) this.advanceTelegram(status, dt);
+		this.advanceTelegramJoins(now);
 		for (const client of this.uploadQueue) {
 			if (client.upSpeed) client.upSpeed = Math.round(Math.min(220 * 1024, Math.max(12 * 1024, client.upSpeed * this.rng.float(0.9, 1.1))));
 		}
@@ -850,6 +862,149 @@ export class MockWorld {
 	getTelegramDownload(hash: string): DownloadStatus | undefined {
 		this.advance();
 		return this.telegramDownloads.get(hash);
+	}
+
+	// ── Telegram join queue ───────────────────────────────────────────────────
+
+	getTelegramJoinQueue(): JoinQueueStatus {
+		this.advance();
+		return { items: this.telegramJoinQueue.map((r) => ({ ...r })), joiningId: this.telegramJoiningId };
+	}
+
+	/** As the real manager: links that parse are queued (or re-queued when failed), the rest come back as invalid. */
+	enqueueTelegramJoins(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; invalid: string[] } {
+		const added: JoinQueueRow[] = [];
+		const invalid: string[] = [];
+		const now = Date.now();
+		for (const raw of links) {
+			const link = raw.trim();
+			if (!link) continue;
+			const target = parseJoinLink(link);
+			if (!target) {
+				invalid.push(link);
+				continue;
+			}
+			const existing = this.telegramJoinQueue.find((r) => r.target === target.target);
+			if (existing) {
+				if (existing.status !== 'pending' && existing.status !== 'joined') {
+					Object.assign(existing, {
+						link,
+						status: 'pending',
+						index_on_join: indexOnJoin ? 1 : 0,
+						error: null,
+						attempts: 0,
+						added_at: now,
+						attempted_at: null,
+						next_attempt_at: null,
+					});
+				}
+				added.push(existing);
+				continue;
+			}
+			const row: JoinQueueRow = {
+				id: this.nextJoinId++,
+				link,
+				target: target.target,
+				status: 'pending',
+				index_on_join: indexOnJoin ? 1 : 0,
+				chat_id: null,
+				chat_title: null,
+				error: null,
+				attempts: 0,
+				added_at: now,
+				attempted_at: null,
+				next_attempt_at: null,
+			};
+			this.telegramJoinQueue.push(row);
+			added.push(row);
+		}
+		return { added, invalid };
+	}
+
+	retryTelegramJoin(id: number): void {
+		const row = this.telegramJoinQueue.find((r) => r.id === id);
+		if (!row) throw new Error('The link is not in the queue');
+		if (row.status !== 'failed' && row.status !== 'request_sent') return;
+		Object.assign(row, { status: 'pending', error: null, attempts: 0, next_attempt_at: null });
+	}
+
+	removeTelegramJoin(id: number): void {
+		if (this.telegramJoiningId === id) throw new Error('The link is being joined right now, try again in a moment');
+		const index = this.telegramJoinQueue.findIndex((r) => r.id === id);
+		if (index !== -1) this.telegramJoinQueue.splice(index, 1);
+	}
+
+	clearFinishedTelegramJoins(): number {
+		const before = this.telegramJoinQueue.length;
+		for (let i = before - 1; i >= 0; i--) {
+			if (this.telegramJoinQueue[i].status !== 'pending') this.telegramJoinQueue.splice(i, 1);
+		}
+		return before - this.telegramJoinQueue.length;
+	}
+
+	/**
+	 * One link at a time: the oldest due one shows as joining for a moment, then resolves by what its link
+	 * says ("expired" fails, "request" needs approval, "flood" waits once, anything else joins and shows up
+	 * as a chat), and the next one waits the pause between joins.
+	 */
+	private advanceTelegramJoins(now: number): void {
+		const due = () => this.telegramJoinQueue.find((r) => r.status === 'pending' && (r.next_attempt_at ?? 0) <= now);
+		if (this.telegramJoiningId === null) {
+			const next = due();
+			if (!next) return;
+			this.telegramJoiningId = next.id;
+			this.telegramJoiningUntil = now + TELEGRAM_JOIN_ATTEMPT_MS;
+			return;
+		}
+		if (now < this.telegramJoiningUntil) return;
+		const row = this.telegramJoinQueue.find((r) => r.id === this.telegramJoiningId);
+		this.telegramJoiningId = null;
+		if (row) this.resolveTelegramJoin(row, now);
+		const following = due();
+		if (following) following.next_attempt_at = now + TELEGRAM_JOIN_INTERVAL_MS;
+	}
+
+	private resolveTelegramJoin(row: JoinQueueRow, now: number): void {
+		const name = row.target.slice(1);
+		row.attempts++;
+		row.attempted_at = now;
+		row.next_attempt_at = null;
+		const lower = name.toLowerCase();
+		if (lower.includes('expired')) {
+			row.status = 'failed';
+			row.error = 'The invite link has expired';
+		} else if (lower.includes('request')) {
+			row.status = 'request_sent';
+			row.chat_title = this.titleFromTarget(name);
+		} else if (lower.includes('flood') && row.attempts === 1) {
+			row.error = 'Telegram asked to wait 2 min';
+			row.next_attempt_at = now + TELEGRAM_JOIN_FLOOD_WAIT_MS;
+		} else {
+			const title = this.titleFromTarget(name);
+			let chat = this.telegramChats.find((c) => c.title === title);
+			if (!chat) {
+				chat = { id: `-100${this.rng.int(1_000_000_000, 9_999_999_999)}`, title, type: 'channel', indexing_enabled: 0 };
+				this.telegramChats.push(chat);
+			}
+			if (row.index_on_join) {
+				chat.indexing_enabled = 1;
+				this.requestTelegramIndexing(chat.id);
+			}
+			row.status = 'joined';
+			row.chat_id = chat.id;
+			row.chat_title = chat.title;
+			row.error = null;
+		}
+	}
+
+	/** "my_channel_2" becomes "My Channel 2"; an invite hash just gets a generic title. */
+	private titleFromTarget(name: string): string {
+		if (!/^[a-z][a-z0-9_]+$/i.test(name)) return `Private chat ${name.slice(0, 6)}`;
+		return name
+			.split('_')
+			.filter(Boolean)
+			.map((w) => w[0].toUpperCase() + w.slice(1))
+			.join(' ');
 	}
 
 	startTelegramDownload(hash: string, row: MessageRow): void {

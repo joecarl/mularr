@@ -104,6 +104,36 @@ export interface ActiveDownloadRow {
 	error_message?: string | null;
 }
 
+/**
+ * Where a queued join stands: `pending` waits for the worker (maybe until `next_attempt_at`), `joined` is done
+ * (also when the account was already a member), `request_sent` means the chat needs an admin to approve the
+ * join request, and `failed` is final (see `error`) until the user retries it.
+ */
+export type JoinStatus = 'pending' | 'joined' | 'request_sent' | 'failed';
+
+/** A channel link the account was asked to join, see the `join_queue` table. Every `_at` is epoch ms. */
+export interface JoinQueueRow {
+	id: number;
+	/** The link as the user gave it, trimmed. */
+	link: string;
+	/** Normalized form that identifies the chat behind the link (`@name` or `+hash`), unique in the queue. */
+	target: string;
+	status: JoinStatus;
+	/** Whether to enable indexing for the chat once joined. */
+	index_on_join: number;
+	/** The joined chat, once known. */
+	chat_id: string | null;
+	chat_title: string | null;
+	/** Why the last attempt failed or was deferred; null when nothing went wrong so far. */
+	error: string | null;
+	attempts: number;
+	added_at: number;
+	/** When the last attempt ran; null while never tried. */
+	attempted_at: number | null;
+	/** When a pending link may be tried again (after a FLOOD_WAIT or a transient failure); null means right away. */
+	next_attempt_at: number | null;
+}
+
 // Quote each term so FTS5-special chars (' - : & ( ) ") match literally
 // instead of throwing; keep uppercase OR/AND/NOT as operators. Drops
 // punctuation-only terms; null when nothing usable remains.
@@ -228,6 +258,24 @@ export class TelegramIndexerDB {
 				message_id INTEGER NOT NULL,
 				media_verified_at INTEGER,
 				PRIMARY KEY (chat_id, message_id)
+			);
+		`);
+
+		// Channel links the account was asked to join, worked through in the background one at a time, see JoinQueueRow
+		this.db.exec(`
+			CREATE TABLE IF NOT EXISTS join_queue (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				link TEXT NOT NULL,
+				target TEXT NOT NULL UNIQUE,
+				status TEXT NOT NULL DEFAULT 'pending',
+				index_on_join INTEGER NOT NULL DEFAULT 0,
+				chat_id TEXT,
+				chat_title TEXT,
+				error TEXT,
+				attempts INTEGER NOT NULL DEFAULT 0,
+				added_at INTEGER NOT NULL,
+				attempted_at INTEGER,
+				next_attempt_at INTEGER
 			);
 		`);
 
@@ -637,6 +685,86 @@ export class TelegramIndexerDB {
 
 	public getActiveDownload(hash: string) {
 		return this.db.prepare<[string], ActiveDownloadRow>('SELECT * FROM active_downloads WHERE hash = ?').get(hash);
+	}
+
+	// ── Join queue ────────────────────────────────────────────────────────────
+
+	/** Every queued link, oldest first. */
+	public getJoinQueue(): JoinQueueRow[] {
+		return this.db.prepare('SELECT * FROM join_queue ORDER BY id').all() as JoinQueueRow[];
+	}
+
+	public getJoinQueueRow(id: number): JoinQueueRow | undefined {
+		return this.db.prepare('SELECT * FROM join_queue WHERE id = ?').get(id) as JoinQueueRow | undefined;
+	}
+
+	/** The oldest pending link whose wait (if any) is over at `now`, or undefined. */
+	public getNextPendingJoin(now: number): JoinQueueRow | undefined {
+		return this.db
+			.prepare(`SELECT * FROM join_queue WHERE status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?) ORDER BY id LIMIT 1`)
+			.get(now) as JoinQueueRow | undefined;
+	}
+
+	/** The earliest moment a pending link becomes due, or null when nothing is pending. */
+	public getEarliestPendingJoinAt(): number | null {
+		const row = this.db.prepare(`SELECT MIN(COALESCE(next_attempt_at, 0)) AS at FROM join_queue WHERE status = 'pending'`).get() as { at: number | null };
+		return row.at;
+	}
+
+	/**
+	 * Queues a link for its target: a new row, or the existing one brought back to pending with the new
+	 * settings unless it is already pending or joined (then it is left alone). Returns the row.
+	 */
+	public enqueueJoin(link: string, target: string, indexOnJoin: boolean, addedAt: number): JoinQueueRow {
+		const existing = this.db.prepare('SELECT * FROM join_queue WHERE target = ?').get(target) as JoinQueueRow | undefined;
+		if (existing && (existing.status === 'pending' || existing.status === 'joined')) return existing;
+		if (existing) {
+			this.db
+				.prepare(
+					`UPDATE join_queue SET link = ?, status = 'pending', index_on_join = ?, error = NULL, attempts = 0, added_at = ?, attempted_at = NULL, next_attempt_at = NULL
+					 WHERE id = ?`
+				)
+				.run(link, indexOnJoin ? 1 : 0, addedAt, existing.id);
+			return this.getJoinQueueRow(existing.id)!;
+		}
+		const result = this.db
+			.prepare('INSERT INTO join_queue (link, target, index_on_join, added_at) VALUES (?, ?, ?, ?)')
+			.run(link, target, indexOnJoin ? 1 : 0, addedAt);
+		return this.getJoinQueueRow(Number(result.lastInsertRowid))!;
+	}
+
+	/** Puts a failed or request-sent link back in the queue, to be tried right away. */
+	public resetJoin(id: number) {
+		this.db
+			.prepare(
+				`UPDATE join_queue SET status = 'pending', error = NULL, attempts = 0, next_attempt_at = NULL WHERE id = ? AND status IN ('failed', 'request_sent')`
+			)
+			.run(id);
+	}
+
+	/** Counts an attempt that reached Telegram and records its outcome. */
+	public recordJoinAttempt(
+		id: number,
+		attemptedAt: number,
+		patch: Partial<Pick<JoinQueueRow, 'status' | 'chat_id' | 'chat_title' | 'error' | 'next_attempt_at'>>
+	) {
+		const row = this.getJoinQueueRow(id);
+		if (!row) return;
+		const next = { ...row, ...patch, attempted_at: attemptedAt, attempts: row.attempts + 1 };
+		this.db
+			.prepare(
+				`UPDATE join_queue SET status = ?, chat_id = ?, chat_title = ?, error = ?, attempts = ?, attempted_at = ?, next_attempt_at = ? WHERE id = ?`
+			)
+			.run(next.status, next.chat_id, next.chat_title, next.error, next.attempts, next.attempted_at, next.next_attempt_at, id);
+	}
+
+	public deleteJoin(id: number) {
+		this.db.prepare('DELETE FROM join_queue WHERE id = ?').run(id);
+	}
+
+	/** Drops every link the worker is done with (joined, failed or waiting for an admin); returns how many went. */
+	public deleteFinishedJoins(): number {
+		return this.db.prepare(`DELETE FROM join_queue WHERE status != 'pending'`).run().changes;
 	}
 
 	public close() {

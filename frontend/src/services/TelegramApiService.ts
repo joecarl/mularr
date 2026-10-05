@@ -56,6 +56,40 @@ export interface TelegramChatsResponse {
 	cycle: TelegramIndexingCycle;
 }
 
+/**
+ * Where a queued join stands: `pending` waits for its turn (maybe until `next_attempt_at`), `joined` is done
+ * (also when the account already was a member), `request_sent` needs an admin to approve it, `failed` is final
+ * until retried.
+ */
+export type TelegramJoinStatus = 'pending' | 'joined' | 'request_sent' | 'failed';
+
+/** A channel link the account was asked to join in the background. Every `_at` is epoch ms. */
+export interface TelegramJoinItem {
+	id: number;
+	/** The link as it was given. */
+	link: string;
+	/** Normalized form (`@name` or `+hash`), unique in the queue. */
+	target: string;
+	status: TelegramJoinStatus;
+	/** Whether indexing is enabled for the chat once joined. */
+	index_on_join: boolean;
+	chat_id: string | null;
+	chat_title: string | null;
+	/** Why the last attempt failed or was deferred; null when nothing went wrong so far. */
+	error: string | null;
+	attempts: number;
+	added_at: number;
+	attempted_at: number | null;
+	/** When a pending link is tried again (after a flood wait or a transient failure); null means as soon as its turn comes. */
+	next_attempt_at: number | null;
+}
+
+export interface TelegramJoinQueueResponse {
+	items: TelegramJoinItem[];
+	/** The link being joined right now, null between attempts. */
+	joiningId: number | null;
+}
+
 export class TelegramApiService extends BaseApiService {
 	public constructor() {
 		super('/api/telegram');
@@ -123,5 +157,31 @@ export class TelegramApiService extends BaseApiService {
 	/** Removes the chat with its index; it comes back as ignored after the next cycle while the account still has it. */
 	async deleteChat(chatId: string): Promise<{ success: boolean }> {
 		return this.request<{ success: boolean }>(`/chats/${chatId}`, { method: 'DELETE' });
+	}
+
+	async getJoinQueue(): Promise<TelegramJoinQueueResponse> {
+		return this.request<TelegramJoinQueueResponse>('/join-queue');
+	}
+
+	/** Queues channel links to join one by one in the background; `invalid` holds the lines that were not understood. */
+	async addJoinLinks(links: string[], indexOnJoin: boolean): Promise<{ added: number; invalid: string[] }> {
+		return this.request<{ added: number; invalid: string[] }>('/join-queue', {
+			method: 'POST',
+			body: JSON.stringify({ links, indexOnJoin }),
+		});
+	}
+
+	/** Puts a failed (or request-sent) link back in the queue. */
+	async retryJoin(id: number): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`/join-queue/${id}/retry`, { method: 'POST' });
+	}
+
+	async removeJoin(id: number): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`/join-queue/${id}`, { method: 'DELETE' });
+	}
+
+	/** Drops every link that is joined, failed or awaiting approval. */
+	async clearFinishedJoins(): Promise<{ removed: number }> {
+		return this.request<{ removed: number }>('/join-queue/finished', { method: 'DELETE' });
 	}
 }

@@ -2,8 +2,12 @@ import { inject, component, signal, refBindInput, computed } from 'chispa';
 import { TelegramApiService, type TelegramUser } from '../../services/TelegramApiService';
 import { DialogService } from '../../services/DialogService';
 import { TelegramChatsTable } from './components/TelegramChatsTable';
+import { TelegramJoinQueue } from './components/TelegramJoinQueue';
 import tpl from './TelegramView.html';
 import './TelegramView.css';
+
+/** The panes of the signed-in view, picked with the topbar tabs. */
+type Tab = 'chats' | 'join-queue';
 
 /** Telegram account: sign-in flow, the chats that get indexed, and whether Telegram takes part in searches. */
 export const TelegramView = component(() => {
@@ -17,6 +21,7 @@ export const TelegramView = component(() => {
 	const loading = signal(false);
 	const errorMessage = signal('');
 	const searchEnabled = signal(true);
+	const tab = signal<Tab>('chats');
 
 	// Input Signals
 	const apiId = signal('');
@@ -116,6 +121,10 @@ export const TelegramView = component(() => {
 	refreshStatus();
 
 	return tpl.fragment({
+		// Tabs only make sense while signed in; each pane is created when chosen, so only the visible one polls
+		viewTabs: { style: { display: () => (isConnected.get() ? '' : 'none') } },
+		tabChats: { onclick: () => tab.set('chats'), classes: { active: () => tab.get() === 'chats' } },
+		tabJoinQueue: { onclick: () => tab.set('join-queue'), classes: { active: () => tab.get() === 'join-queue' } },
 		btnRefresh: { onclick: refreshStatus },
 		btnLogout: {
 			onclick: logout,
@@ -167,10 +176,14 @@ export const TelegramView = component(() => {
 		panelWaitingPassword: {
 			style: { display: () => (isWaitingPassword.get() ? '' : 'none') },
 		},
-		// The table only exists while signed in: it loads on creation and its poller stops on unmount
+		// The panes only exist while signed in and while their tab is active: they load on creation and their pollers stop on unmount
 		panelConnected: {
 			style: { display: () => (isConnected.get() ? '' : 'none') },
-			inner: () => (isConnected.get() ? TelegramChatsTable({ onError: (message) => errorMessage.set(message) }) : null),
+			inner: () => {
+				if (!isConnected.get()) return null;
+				const onError = (message: string) => errorMessage.set(message);
+				return tab.get() === 'chats' ? TelegramChatsTable({ onError }) : TelegramJoinQueue({ onError });
+			},
 		},
 
 		// Inputs use _ref for manual binding

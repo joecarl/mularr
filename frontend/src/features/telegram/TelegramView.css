@@ -15,6 +15,21 @@
 		}
 	}
 
+	.view-tabs {
+		display: flex;
+		gap: 2px;
+		margin-left: 12px;
+	}
+
+	.view-tab {
+		min-width: 70px;
+	}
+
+	.view-tab.active {
+		font-weight: bold;
+		text-decoration: underline;
+	}
+
 	.error-banner {
 		padding: 10px;
 		background: #ffcccc;

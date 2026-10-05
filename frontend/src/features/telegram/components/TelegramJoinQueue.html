@@ -1,0 +1,61 @@
+<div class="telegram-join-queue">
+	<div class="header">
+		<div class="header-title">
+			<strong>Queued links</strong>
+			<span class="queue-note" data-cb="queueNote"></span>
+		</div>
+		<div class="header-tools">
+			<button class="ui-btn" data-cb="btnJoin">Join channels…</button>
+			<button class="ui-btn" data-cb="btnClear">Clear finished</button>
+		</div>
+	</div>
+
+	<div class="ui-table-container" style="flex: 1">
+		<table class="ui-list">
+			<thead>
+				<tr>
+					<th class="is-mobile-primary">Link</th>
+					<th style="width: 110px">Status</th>
+					<th style="width: 200px">Chat</th>
+					<th>Details</th>
+					<th style="width: 90px">Added</th>
+					<th style="width: 150px; text-align: center">Action</th>
+				</tr>
+			</thead>
+			<tbody data-cb="queueList">
+				<tr data-cb="queueRow">
+					<td class="is-mobile-primary">
+						<span data-cb="linkText"></span>
+						<div class="mobile-info-block">
+							<div class="mobile-info-row">
+								<span data-cb="mobStatus" class="join-status"></span>
+								<span data-cb="mobChat"></span>
+							</div>
+							<div class="mobile-info-row" data-cb="mobDetails"></div>
+							<div class="mobile-info-row" style="margin-top: 5px; gap: 10px">
+								<div style="flex: 1"></div>
+								<button class="ui-btn mobile-action" data-cb="mobRetryBtn">Retry</button>
+								<button class="ui-btn mobile-action" data-cb="mobRemoveBtn">Remove</button>
+							</div>
+						</div>
+					</td>
+					<td>
+						<span data-cb="statusBadge" class="join-status"></span>
+					</td>
+					<td data-cb="chatCol"></td>
+					<td data-cb="detailsCol" class="join-details"></td>
+					<td data-cb="addedCol"></td>
+					<td style="text-align: center">
+						<span class="row-actions">
+							<button class="ui-btn row-action" data-cb="retryBtn">Retry</button>
+							<button class="ui-btn row-action" data-cb="removeBtn">Remove</button>
+						</span>
+					</td>
+				</tr>
+				<tr data-cb="emptyRow">
+					<td colspan="6" class="is-mobile-primary empty-cell" data-cb="emptyText"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
