@@ -6,6 +6,16 @@ export interface Chat {
 	title: string;
 	type: string;
 	indexing_enabled: number;
+	/**
+	 * Public username of the channel (lowercase, no @) as of the last indexing cycle; null for private chats.
+	 * Lets the join queue skip links of chats the account is already in, see getValidChatIdByUsername.
+	 */
+	username: string | null;
+	/**
+	 * 1 when the chat is no longer among the account dialogs (left, deleted, banned...): the indexing cycle
+	 * sets it and clears it again if the chat comes back. Such a chat keeps its rows but does not count as joined.
+	 */
+	invalid: number;
 }
 
 export interface IndexingProgress {
@@ -239,6 +249,8 @@ export class TelegramIndexerDB {
 			'ALTER TABLE indexing_progress ADD COLUMN last_checked_at INTEGER',
 			'ALTER TABLE indexing_progress ADD COLUMN last_indexed_at INTEGER',
 			'ALTER TABLE indexing_progress ADD COLUMN last_error TEXT',
+			'ALTER TABLE chats ADD COLUMN username TEXT',
+			'ALTER TABLE chats ADD COLUMN invalid INTEGER NOT NULL DEFAULT 0',
 		];
 		for (const sql of migrations) {
 			try {
@@ -461,15 +473,34 @@ export class TelegramIndexerDB {
 
 	// ── Chats ─────────────────────────────────────────────────────────────────
 
-	/** Adds the chat, or picks up its new title (its messages are re-indexed under it, see reindexWhere). */
-	public registerChat(id: string, title: string, type: string) {
-		const existing = this.db.prepare('SELECT title FROM chats WHERE id = ?').get(id) as Pick<Chat, 'title'> | undefined;
+	/**
+	 * Adds the chat, or picks up its new title (its messages are re-indexed under it, see reindexWhere) and
+	 * username; a chat marked invalid becomes valid again, since the account has it. An `undefined` username
+	 * leaves the stored one alone.
+	 */
+	public registerChat(id: string, title: string, type: string, username?: string | null) {
+		const existing = this.db.prepare('SELECT title, username, invalid FROM chats WHERE id = ?').get(id) as
+			Pick<Chat, 'title' | 'username' | 'invalid'> | undefined;
 		if (!existing) {
-			this.db.prepare('INSERT INTO chats (id, title, type) VALUES (?, ?, ?)').run(id, title, type);
+			this.db.prepare('INSERT INTO chats (id, title, type, username) VALUES (?, ?, ?, ?)').run(id, title, type, username ?? null);
 			return;
 		}
+		if (username !== undefined && username !== existing.username) this.db.prepare('UPDATE chats SET username = ? WHERE id = ?').run(username, id);
+		if (existing.invalid) this.db.prepare('UPDATE chats SET invalid = 0 WHERE id = ?').run(id);
 		if (existing.title === title) return;
 		this.reindexWhere('chat_id = ?', [id], () => this.db.prepare('UPDATE chats SET title = ? WHERE id = ?').run(title, id));
+	}
+
+	/** Marks as invalid every chat not among `presentIds` (the account dialogs), see Chat.invalid; returns how many changed. */
+	public markChatsInvalidNotIn(presentIds: string[]): number {
+		return this.db.prepare('UPDATE chats SET invalid = 1 WHERE invalid = 0 AND id NOT IN (SELECT value FROM json_each(?))').run(JSON.stringify(presentIds))
+			.changes;
+	}
+
+	/** The chat the account is in under this public username (lowercase, no @), if any; invalid chats (see Chat.invalid) do not count. */
+	public getValidChatIdByUsername(username: string): string | undefined {
+		const row = this.db.prepare('SELECT id FROM chats WHERE username = ? AND invalid = 0').get(username.toLowerCase()) as Pick<Chat, 'id'> | undefined;
+		return row?.id;
 	}
 
 	public getIndexingEnabledChats(): Array<Pick<Chat, 'id' | 'title'>> {
@@ -653,7 +684,7 @@ export class TelegramIndexerDB {
 	public getChatsOverview(): ChatOverview[] {
 		return this.db
 			.prepare(
-				`SELECT c.id, c.title, c.type, c.indexing_enabled,
+				`SELECT c.id, c.title, c.type, c.indexing_enabled, c.username, c.invalid,
 					COALESCE(m.message_count, 0) AS message_count,
 					COALESCE(m.media_count, 0)   AS media_count,
 					COALESCE(m.media_size, 0)    AS media_size,

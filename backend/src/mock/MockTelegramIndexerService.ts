@@ -116,7 +116,7 @@ export class MockTelegramIndexerService {
 		return this.world.getTelegramJoinQueue();
 	}
 
-	addJoinLinks(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; invalid: string[] } {
+	addJoinLinks(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; alreadyJoined: string[]; invalid: string[] } {
 		return this.world.enqueueTelegramJoins(links, indexOnJoin);
 	}
 

@@ -135,11 +135,13 @@ export const TelegramJoinQueue = component<TelegramJoinQueueProps>(({ onError })
 					onConfirm: async (links, indexOnJoin) => {
 						close();
 						try {
-							const { added, invalid } = await api.addJoinLinks(links, indexOnJoin);
+							const { added, alreadyJoined, invalid } = await api.addJoinLinks(links, indexOnJoin);
 							loadQueue();
-							if (invalid.length > 0) {
-								const kept = added === 1 ? '1 link was queued.' : `${added} links were queued.`;
-								await dialogs.alert(`${kept}\n\nThese lines were not understood and were skipped:\n${invalid.join('\n')}`, 'Join channels');
+							if (alreadyJoined.length > 0 || invalid.length > 0) {
+								const parts = [added === 1 ? '1 link was queued.' : `${added} links were queued.`];
+								if (alreadyJoined.length > 0) parts.push(`The account is already a member of these, skipped:\n${alreadyJoined.join('\n')}`);
+								if (invalid.length > 0) parts.push(`These lines were not understood and were skipped:\n${invalid.join('\n')}`);
+								await dialogs.alert(parts.join('\n\n'), 'Join channels');
 							}
 						} catch (e: any) {
 							onError(e.message || 'Error queuing the links');

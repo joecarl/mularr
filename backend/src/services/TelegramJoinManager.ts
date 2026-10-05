@@ -80,6 +80,15 @@ export interface JoinedChat {
 	id: string;
 	title: string;
 	type: 'channel' | 'group';
+	/** Public username (lowercase, no @), null for private chats. See Chat.username. */
+	username: string | null;
+}
+
+/** The public username of a channel or group entity (lowercase, no @): the main one, else the first active alias; null without one. */
+export function usernameOf(entity: unknown): string | null {
+	if (!(entity instanceof Api.Channel)) return null; // basic groups (Api.Chat) have no username
+	const name = entity.username ?? entity.usernames?.find((u) => u.active)?.username ?? entity.usernames?.[0]?.username;
+	return name ? name.toLowerCase() : null;
 }
 
 /** The queue as the UI shows it. */
@@ -123,12 +132,15 @@ export class TelegramJoinManager {
 	}
 
 	/**
-	 * Queues the links that parse (see parseJoinLink) and wakes the worker. A link whose chat is already
-	 * queued or joined is left as it is; a failed one goes back to pending. Returns what was queued and
-	 * the lines that were not understood.
+	 * Queues the links that parse (see parseJoinLink) and wakes the worker. A public link whose chat the
+	 * account already has (a valid chat with that username, as the indexing cycle recorded it) is skipped
+	 * without touching Telegram (`alreadyJoined`); invite links cannot be checked without asking, so they
+	 * are queued and the worker finds out. A link whose chat is already queued or joined is left as it is; a failed one goes
+	 * back to pending. Returns what was queued, the links skipped and the lines that were not understood.
 	 */
-	public addLinks(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; invalid: string[] } {
+	public addJoinLinks(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; alreadyJoined: string[]; invalid: string[] } {
 		const added: JoinQueueRow[] = [];
+		const alreadyJoined: string[] = [];
 		const invalid: string[] = [];
 		const now = Date.now();
 		for (const raw of links) {
@@ -139,13 +151,18 @@ export class TelegramJoinManager {
 				invalid.push(link);
 				continue;
 			}
+			if (target.kind === 'username' && this.db.getValidChatIdByUsername(target.value)) {
+				alreadyJoined.push(link);
+				continue;
+			}
 			added.push(this.db.enqueueJoin(link, target.target, indexOnJoin, now));
 		}
+		if (alreadyJoined.length > 0) this.logger.info(`Skipped ${alreadyJoined.length} channel links the account is already a member of`);
 		if (added.length > 0) {
 			this.logger.info(`Queued ${added.length} channel links to join`);
 			this.wake();
 		}
-		return { added, invalid };
+		return { added, alreadyJoined, invalid };
 	}
 
 	/** Puts a failed (or request-sent) link back in the queue. */
@@ -307,5 +324,5 @@ function chatFromUpdates(updates: Api.TypeUpdates): Api.TypeChat | undefined {
 function toJoinedChat(chat: Api.TypeChat): JoinedChat {
 	const title = 'title' in chat && typeof chat.title === 'string' ? chat.title : utils.getPeerId(chat);
 	const type = chat instanceof Api.Channel && !chat.megagroup ? 'channel' : 'group';
-	return { id: utils.getPeerId(chat), title, type };
+	return { id: utils.getPeerId(chat), title, type, username: usernameOf(chat) };
 }

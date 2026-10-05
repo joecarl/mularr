@@ -76,7 +76,7 @@ export const CHANGELOG: ChangelogVersion[] = [
 			{
 				id: 16,
 				type: 'feature',
-				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away.',
+				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away. Links of chats the account is already in are skipped.',
 			},
 			{
 				id: 17,

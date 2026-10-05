@@ -21,6 +21,10 @@ export interface TelegramChat {
 	title: string;
 	type: string;
 	indexing_enabled: boolean;
+	/** Public username of the channel (no @), null for private chats. */
+	username: string | null;
+	/** The chat is no longer among the account dialogs (left, deleted...); it keeps its index but is not joined. */
+	invalid: boolean;
 	/** A pass over this chat is running right now. */
 	indexing_now: boolean;
 	/** Indexed messages (text or media). */
@@ -163,9 +167,12 @@ export class TelegramApiService extends BaseApiService {
 		return this.request<TelegramJoinQueueResponse>('/join-queue');
 	}
 
-	/** Queues channel links to join one by one in the background; `invalid` holds the lines that were not understood. */
-	async addJoinLinks(links: string[], indexOnJoin: boolean): Promise<{ added: number; invalid: string[] }> {
-		return this.request<{ added: number; invalid: string[] }>('/join-queue', {
+	/**
+	 * Queues channel links to join one by one in the background. `alreadyJoined` holds the public links of chats the
+	 * account is already in (skipped), `invalid` the lines that were not understood.
+	 */
+	async addJoinLinks(links: string[], indexOnJoin: boolean): Promise<{ added: number; alreadyJoined: string[]; invalid: string[] }> {
+		return this.request<{ added: number; alreadyJoined: string[]; invalid: string[] }>('/join-queue', {
 			method: 'POST',
 			body: JSON.stringify({ links, indexOnJoin }),
 		});

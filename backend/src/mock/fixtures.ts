@@ -278,10 +278,10 @@ export const TELEGRAM_ACCOUNT: TelegramAccount = {
 };
 
 export const TELEGRAM_CHATS: Chat[] = [
-	{ id: '-1001234567890', title: 'Open Source ISOs', type: 'channel', indexing_enabled: 1 },
-	{ id: '-1001234567891', title: 'Public Domain & Open Cinema', type: 'channel', indexing_enabled: 1 },
-	{ id: '-1001234567892', title: 'Creative Commons Music', type: 'group', indexing_enabled: 1 },
-	{ id: '-1001234567893', title: 'Friends & Family', type: 'group', indexing_enabled: 0 },
+	{ id: '-1001234567890', title: 'Open Source ISOs', type: 'channel', indexing_enabled: 1, username: 'open_source_isos', invalid: 0 },
+	{ id: '-1001234567891', title: 'Public Domain & Open Cinema', type: 'channel', indexing_enabled: 1, username: 'open_cinema', invalid: 0 },
+	{ id: '-1001234567892', title: 'Creative Commons Music', type: 'group', indexing_enabled: 1, username: null, invalid: 0 },
+	{ id: '-1001234567893', title: 'Friends & Family', type: 'group', indexing_enabled: 0, username: null, invalid: 0 },
 ];
 
 /**

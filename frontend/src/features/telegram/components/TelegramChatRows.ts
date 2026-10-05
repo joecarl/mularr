@@ -31,7 +31,13 @@ export const ChatRows = componentList<ChatItem, ChatRowProps>(
 		const { now, mgr, onToggleChat, onIndexNow, menuItems } = props!;
 		const ctxMenu = inject(ContextMenuService);
 		const isSelected = computed(() => mgr.selectedHashes.get().has(c.get().hash));
-		const statusText = () => (c.get().indexing_now ? 'Indexing now…' : c.get().indexing_enabled ? 'Indexing' : 'Ignored');
+		// An invalid chat (no longer in the account) shows as such; it is always disabled by then
+		const statusText = () => {
+			const chat = c.get();
+			if (chat.indexing_now) return 'Indexing now…';
+			if (chat.invalid) return 'Not in account';
+			return chat.indexing_enabled ? 'Indexing' : 'Ignored';
+		};
 		const statusClasses = {
 			'is-running': () => c.get().indexing_now,
 			'is-indexing': () => !c.get().indexing_now && c.get().indexing_enabled,

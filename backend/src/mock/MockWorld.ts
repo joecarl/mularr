@@ -871,9 +871,13 @@ export class MockWorld {
 		return { items: this.telegramJoinQueue.map((r) => ({ ...r })), joiningId: this.telegramJoiningId };
 	}
 
-	/** As the real manager: links that parse are queued (or re-queued when failed), the rest come back as invalid. */
-	enqueueTelegramJoins(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; invalid: string[] } {
+	/**
+	 * As the real manager: links that parse are queued (or re-queued when failed), public links of chats the
+	 * account already has are skipped, the rest come back as invalid.
+	 */
+	enqueueTelegramJoins(links: string[], indexOnJoin: boolean): { added: JoinQueueRow[]; alreadyJoined: string[]; invalid: string[] } {
 		const added: JoinQueueRow[] = [];
+		const alreadyJoined: string[] = [];
 		const invalid: string[] = [];
 		const now = Date.now();
 		for (const raw of links) {
@@ -882,6 +886,10 @@ export class MockWorld {
 			const target = parseJoinLink(link);
 			if (!target) {
 				invalid.push(link);
+				continue;
+			}
+			if (target.kind === 'username' && this.telegramChats.some((c) => c.username === target.value && !c.invalid)) {
+				alreadyJoined.push(link);
 				continue;
 			}
 			const existing = this.telegramJoinQueue.find((r) => r.target === target.target);
@@ -918,7 +926,7 @@ export class MockWorld {
 			this.telegramJoinQueue.push(row);
 			added.push(row);
 		}
-		return { added, invalid };
+		return { added, alreadyJoined, invalid };
 	}
 
 	retryTelegramJoin(id: number): void {
@@ -983,7 +991,14 @@ export class MockWorld {
 			const title = this.titleFromTarget(name);
 			let chat = this.telegramChats.find((c) => c.title === title);
 			if (!chat) {
-				chat = { id: `-100${this.rng.int(1_000_000_000, 9_999_999_999)}`, title, type: 'channel', indexing_enabled: 0 };
+				chat = {
+					id: `-100${this.rng.int(1_000_000_000, 9_999_999_999)}`,
+					title,
+					type: 'channel',
+					indexing_enabled: 0,
+					username: /^[a-z]/i.test(name) ? name.toLowerCase() : null,
+					invalid: 0,
+				};
 				this.telegramChats.push(chat);
 			}
 			if (row.index_on_join) {

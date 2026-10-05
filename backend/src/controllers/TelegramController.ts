@@ -129,8 +129,8 @@ export class TelegramController {
 		try {
 			const { links, indexOnJoin } = req.body;
 			if (!Array.isArray(links) || !links.every((l) => typeof l === 'string')) return res.status(400).json({ error: 'Missing links' });
-			const { added, invalid } = this.service.addJoinLinks(links, indexOnJoin === true);
-			res.json({ added: added.length, invalid });
+			const { added, alreadyJoined, invalid } = this.service.addJoinLinks(links, indexOnJoin === true);
+			res.json({ added: added.length, alreadyJoined, invalid });
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}

@@ -9,7 +9,7 @@ import { container } from './container/ServiceContainer';
 import { ChatOverview, MessageRow, TelegramIndexerDB } from './db/TelegramIndexerDB';
 import { MainDB } from './db/MainDB';
 import { TelegramDownloadManager, getDownloadableDocument } from './TelegramDownloadManager';
-import { JoinedChat, JoinQueueStatus, TelegramJoinManager } from './TelegramJoinManager';
+import { JoinedChat, JoinQueueStatus, TelegramJoinManager, usernameOf } from './TelegramJoinManager';
 import { LoggerFactory } from './logging/Logger';
 import { __APP_CONFIG__ } from '../app-env';
 
@@ -326,9 +326,9 @@ export class TelegramIndexerService {
 		return this.joinManager.getStatus();
 	}
 
-	/** Queues channel links to join in the background, see TelegramJoinManager.addLinks. */
+	/** Queues channel links to join in the background, see TelegramJoinManager.addJoinLinks. */
 	public addJoinLinks(links: string[], indexOnJoin: boolean) {
-		return this.joinManager.addLinks(links, indexOnJoin);
+		return this.joinManager.addJoinLinks(links, indexOnJoin);
 	}
 
 	public retryJoin(id: number) {
@@ -348,7 +348,7 @@ export class TelegramIndexerService {
 	 * when asked, enables its indexing and indexes it now.
 	 */
 	private onChatJoined(chat: JoinedChat, indexOnJoin: boolean) {
-		this.db.registerChat(chat.id, chat.title, chat.type);
+		this.db.registerChat(chat.id, chat.title, chat.type, chat.username);
 		if (!indexOnJoin) return;
 		this.db.setChatIndexing(chat.id, true);
 		this.requestIndexing(chat.id);
@@ -401,6 +401,7 @@ export class TelegramIndexerService {
 			// ... (rest of function unchanged until end) ...
 
 			// First pass: Register all chats
+			const presentIds: string[] = [];
 			for (const dialog of dialogs) {
 				const chatId = dialog.id?.toString();
 				if (!chatId) continue;
@@ -413,8 +414,12 @@ export class TelegramIndexerService {
 				if (dialog.isChannel) type = 'channel';
 				if (dialog.isGroup) type = 'group';
 
-				this.db.registerChat(chatId, name, type);
+				this.db.registerChat(chatId, name, type, usernameOf(dialog.entity));
+				presentIds.push(chatId);
 			}
+			// Chats the account no longer has (left, deleted...) keep their rows but are flagged, see Chat.invalid
+			const gone = this.db.markChatsInvalidNotIn(presentIds);
+			if (gone > 0) this.logger.info(`${gone} chats are no longer among the account dialogs; marked invalid`);
 
 			// Chats asked for explicitly go first; the set is cleared as they are taken
 			const requested = new Set(this.priorityChats);
