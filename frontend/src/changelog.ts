@@ -78,6 +78,11 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'feature',
 				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away.',
 			},
+			{
+				id: 17,
+				type: 'fix',
+				text: 'Telegram: renaming a chat or a topic on Telegram no longer leaves stale entries in the search index, which could end in a "database disk image is malformed" error when clearing or deleting the chat. The index is rebuilt once after this update and repairs itself if the error ever shows up again.',
+			},
 		],
 	},
 ];

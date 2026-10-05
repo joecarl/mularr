@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import { LoggerFactory } from '../logging/Logger';
 
 export interface Chat {
 	id: string;
@@ -150,7 +151,18 @@ export function toFtsMatchExpr(query: string): string | null {
 	return expr.length > 0 ? expr : null;
 }
 
+/**
+ * Bumped when the search index has to be rebuilt once on existing installs; kept in PRAGMA user_version.
+ *   1 — names (chat_title, topic_name) used to be read live at delete time, which left stale entries behind
+ *       whenever a chat or topic had been renamed since it was indexed (see reindexWhere).
+ */
+const INDEX_VERSION = 1;
+
+/** The columns of messages_fts in the order the view yields them; also what the index statements feed. */
+const FTS_COLUMNS = 'chat_id, chat_title, topic_id, topic_name, message_id, sender_id, date, text, file_name';
+
 export class TelegramIndexerDB {
+	private readonly logger = LoggerFactory.create(this);
 	private db: Database.Database;
 
 	constructor(dbPath: string) {
@@ -367,6 +379,62 @@ export class TelegramIndexerDB {
 				);
 			END;
 		`);
+
+		// Indexes built before INDEX_VERSION may hold stale entries; one rebuild brings them in line with the content
+		const indexVersion = this.db.pragma('user_version', { simple: true }) as number;
+		if (indexVersion < INDEX_VERSION) {
+			if (indexVersion > 0 || this.countMessages() > 0)
+				this.logger.info('Rebuilding the Telegram search index once to drop stale entries left by renamed chats and topics...');
+			this.rebuildIndex();
+			this.db.pragma(`user_version = ${INDEX_VERSION}`);
+		}
+	}
+
+	// ── Search index maintenance ──────────────────────────────────────────────
+
+	private countMessages(): number {
+		return (this.db.prepare('SELECT COUNT(*) AS n FROM messages_content').get() as { n: number }).n;
+	}
+
+	/** Rebuilds the FTS index from messages_view: the one cure once its entries no longer match the content. */
+	public rebuildIndex() {
+		this.db.exec(`INSERT INTO messages_fts(messages_fts) VALUES('rebuild')`);
+	}
+
+	/**
+	 * Runs `fn`; if SQLite reports the index as corrupt (what FTS5 does once its entries disagree with the
+	 * content, "database disk image is malformed"), rebuilds the index and runs `fn` again. A statement that
+	 * failed inside a transaction was rolled back, so the retry starts clean.
+	 */
+	private withIndexRepair<T>(fn: () => T): T {
+		try {
+			return fn();
+		} catch (e: any) {
+			if (typeof e?.code !== 'string' || !e.code.startsWith('SQLITE_CORRUPT')) throw e;
+			this.logger.warn(`The Telegram search index is corrupt (${e.message}); rebuilding it and retrying`);
+			this.rebuildIndex();
+			return fn();
+		}
+	}
+
+	/**
+	 * Re-indexes the messages selected by `where` around a change of a name they are indexed with. FTS5
+	 * only removes an entry when it is handed the exact values that were indexed, and the triggers read the
+	 * names live from chats/topics, so a rename has to go through here: the entries are dropped while the
+	 * view still yields the old name, `change` applies it, and the rows are indexed again with the new one.
+	 */
+	private reindexWhere(where: string, params: unknown[], change: () => void) {
+		this.withIndexRepair(() =>
+			this.db.transaction(() => {
+				this.db
+					.prepare(
+						`INSERT INTO messages_fts(messages_fts, rowid, ${FTS_COLUMNS}) SELECT 'delete', id, ${FTS_COLUMNS} FROM messages_view WHERE ${where}`
+					)
+					.run(...params);
+				change();
+				this.db.prepare(`INSERT INTO messages_fts(rowid, ${FTS_COLUMNS}) SELECT id, ${FTS_COLUMNS} FROM messages_view WHERE ${where}`).run(...params);
+			})()
+		);
 	}
 
 	// ── Account ───────────────────────────────────────────────────────────────
@@ -393,16 +461,15 @@ export class TelegramIndexerDB {
 
 	// ── Chats ─────────────────────────────────────────────────────────────────
 
+	/** Adds the chat, or picks up its new title (its messages are re-indexed under it, see reindexWhere). */
 	public registerChat(id: string, title: string, type: string) {
-		this.db
-			.prepare(
-				`
-				INSERT INTO chats (id, title, type) 
-				VALUES (?, ?, ?) 
-				ON CONFLICT(id) DO UPDATE SET title = ?
-			`
-			)
-			.run(id, title, type, title);
+		const existing = this.db.prepare('SELECT title FROM chats WHERE id = ?').get(id) as Pick<Chat, 'title'> | undefined;
+		if (!existing) {
+			this.db.prepare('INSERT INTO chats (id, title, type) VALUES (?, ?, ?)').run(id, title, type);
+			return;
+		}
+		if (existing.title === title) return;
+		this.reindexWhere('chat_id = ?', [id], () => this.db.prepare('UPDATE chats SET title = ? WHERE id = ?').run(title, id));
 	}
 
 	public getIndexingEnabledChats(): Array<Pick<Chat, 'id' | 'title'>> {
@@ -444,14 +511,23 @@ export class TelegramIndexerDB {
 			.run(chatId, checkedAt, error);
 	}
 
+	/**
+	 * Adds the topic or picks up its new name. Messages of the topic indexed so far (under the old name, or
+	 * with no name when the topic was unknown) are re-indexed, see reindexWhere.
+	 */
 	public registerTopic(chatId: string, topicId: number, topicName: string) {
-		this.db
-			.prepare(
-				`INSERT INTO topics (chat_id, topic_id, topic_name)
-				 VALUES (?, ?, ?)
-				 ON CONFLICT(chat_id, topic_id) DO UPDATE SET topic_name = ?`
-			)
-			.run(chatId, topicId, topicName, topicName);
+		const existing = this.db.prepare('SELECT topic_name FROM topics WHERE chat_id = ? AND topic_id = ?').get(chatId, topicId) as
+			{ topic_name: string | null } | undefined;
+		if (existing && existing.topic_name === topicName) return;
+		this.reindexWhere('chat_id = ? AND topic_id = ?', [chatId, topicId], () =>
+			this.db
+				.prepare(
+					`INSERT INTO topics (chat_id, topic_id, topic_name)
+					 VALUES (?, ?, ?)
+					 ON CONFLICT(chat_id, topic_id) DO UPDATE SET topic_name = excluded.topic_name`
+				)
+				.run(chatId, topicId, topicName)
+		);
 	}
 
 	public insertMessages(messages: MessageInput[]) {
@@ -473,19 +549,7 @@ export class TelegramIndexerDB {
 			}
 		});
 
-		insertMany(messages);
-	}
-
-	public search(query: string, limit: number = 20): MessageRow[] {
-		const match = toFtsMatchExpr(query);
-		if (match === null) return [];
-		return this.db
-			.prepare(
-				`
-				SELECT * FROM messages_fts WHERE messages_fts MATCH ? ORDER BY rank LIMIT ?
-			`
-			)
-			.all(match, limit) as MessageRow[];
+		this.withIndexRepair(() => insertMany(messages));
 	}
 
 	public getMessage(chatId: string, messageId: number): MessageRow | undefined {
@@ -517,9 +581,11 @@ export class TelegramIndexerDB {
 		const match = toFtsMatchExpr(query);
 		if (match === null) return { rows: [], nextCursor: null };
 
-		const rows = this.db
-			.prepare(
-				`
+		const rows = this.withIndexRepair(
+			() =>
+				this.db
+					.prepare(
+						`
 				SELECT mv.*, mm.media_verified_at, bm25(messages_fts) AS score
 				FROM messages_fts
 				JOIN messages_view mv ON mv.id = messages_fts.rowid
@@ -532,8 +598,9 @@ export class TelegramIndexerDB {
 				ORDER BY messages_fts.rowid
 				LIMIT ?
 			`
-			)
-			.all(match, cursorId, limit) as MessageRow[];
+					)
+					.all(match, cursorId, limit) as MessageRow[]
+		);
 
 		const nextCursor = rows.length === limit ? rows[rows.length - 1].id : null;
 		return { rows, nextCursor };
@@ -562,7 +629,7 @@ export class TelegramIndexerDB {
 				deleteMetadata.run(r.chat_id, r.message_id);
 			}
 		});
-		deleteMany(refs);
+		this.withIndexRepair(() => deleteMany(refs));
 	}
 
 	public getContext(chatId: string, messageId: number, window: number = 5): MessageRow[] {
@@ -624,20 +691,24 @@ export class TelegramIndexerDB {
 	 * FTS rows go via the delete trigger.
 	 */
 	public clearChatIndex(chatId: string) {
-		this.db.transaction(() => {
-			this.db.prepare('DELETE FROM messages_content WHERE chat_id = ?').run(chatId);
-			this.db.prepare('DELETE FROM messages_metadata WHERE chat_id = ?').run(chatId);
-			this.db.prepare('DELETE FROM topics WHERE chat_id = ?').run(chatId);
-			this.db.prepare('DELETE FROM indexing_progress WHERE chat_id = ?').run(chatId);
-		})();
+		this.withIndexRepair(() => this.db.transaction(() => this.purgeChatIndexRows(chatId))());
 	}
 
 	/** Removes the chat and everything indexed for it; registerChat brings it back (disabled) if the account still has it. */
 	public deleteChat(chatId: string) {
-		this.db.transaction(() => {
-			this.clearChatIndex(chatId);
-			this.db.prepare('DELETE FROM chats WHERE id = ?').run(chatId);
-		})();
+		this.withIndexRepair(() =>
+			this.db.transaction(() => {
+				this.purgeChatIndexRows(chatId);
+				this.db.prepare('DELETE FROM chats WHERE id = ?').run(chatId);
+			})()
+		);
+	}
+
+	private purgeChatIndexRows(chatId: string) {
+		this.db.prepare('DELETE FROM messages_content WHERE chat_id = ?').run(chatId);
+		this.db.prepare('DELETE FROM messages_metadata WHERE chat_id = ?').run(chatId);
+		this.db.prepare('DELETE FROM topics WHERE chat_id = ?').run(chatId);
+		this.db.prepare('DELETE FROM indexing_progress WHERE chat_id = ?').run(chatId);
 	}
 
 	// Active Downloads management
