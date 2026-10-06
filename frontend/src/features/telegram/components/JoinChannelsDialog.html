@@ -1,16 +1,12 @@
-<div style="display: flex; flex-direction: column; font-size: 12px">
+<div style="display: flex; flex-direction: column;">
 	<div style="margin-bottom: 10px; line-height: 1.4">
-		Paste one link per line: <code>t.me/name</code>, <code>@name</code> or invite links such as <code>t.me/+hash</code>. mularr joins them one by one in the
+		Paste one link per line: <code>t.me/name</code>, <code>@name</code> or invite links such as
+		<code>t.me/+hash</code>. Mularr joins them one by one in the
 		background, pausing between joins and for as long as Telegram asks whenever it limits the account.
 	</div>
-	<textarea
-		data-cb="linksInput"
-		rows="8"
-		class="ui-input"
-		spellcheck="false"
+	<textarea data-cb="linksInput" rows="8" class="ui-input" spellcheck="false"
 		placeholder="https://t.me/example_channel&#10;@another_channel&#10;https://t.me/+AbCdEfGh12345"
-		style="width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace"
-	></textarea>
+		style="width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace"></textarea>
 	<label style="display: inline-flex; align-items: center; gap: 4px; margin: 10px 0 15px; cursor: pointer">
 		<input type="checkbox" data-cb="indexCheck" /> Enable indexing once joined
 	</label>
