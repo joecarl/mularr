@@ -1,7 +1,9 @@
 <div>
 	<p style="margin: 0 0 12px 0; font-size: 0.9em">
-		Tells Mularr how to work with <span data-cb="appName"></span>: which search providers its automatic searches use and, optionally, the <b>wanted</b> list
-		sync, where Mularr periodically reads the monitored items without a file, searches the providers for them and publishes the matching releases in its
+		Tells Mularr how to work with <span data-cb="appName"></span>: which search providers its automatic searches use
+		and, optionally, the <b>wanted</b> list
+		sync, where Mularr periodically reads the monitored items without a file, searches the providers for them and
+		publishes the matching releases in its
 		Torznab RSS feed, where <span data-cb="appName2"></span> picks them up on its next RSS sync.
 	</p>
 
@@ -10,18 +12,19 @@
 			<input type="checkbox" data-cb="syncCheckbox" />
 			<span>Sync the wanted list of this instance</span>
 		</label>
-		<span style="display: block; font-size: 0.82em; color: #666; margin-top: 3px"
-			>Needs the instance URL and API key. Leave it off to only choose the search providers below.</span
-		>
+		<span style="display: block; font-size: 0.82em; color: #666; margin-top: 3px">Needs the instance URL and API
+			key. Leave it off to only choose the search providers below.</span>
 	</div>
 	<div data-cb="syncFields">
 		<div class="form-group" style="margin-bottom: 10px">
 			<label style="display: block; margin-bottom: 3px">URL:</label>
-			<input data-cb="urlInput" type="url" placeholder="http://sonarr:8989" style="width: 100%; font-family: monospace" />
+			<input data-cb="urlInput" type="url" placeholder="http://sonarr:8989"
+				style="width: 100%; font-family: monospace" />
 		</div>
 		<div class="form-group" style="margin-bottom: 10px">
 			<label style="display: block; margin-bottom: 3px">API Key (Settings &gt; General):</label>
-			<input data-cb="apiKeyInput" type="password" autocomplete="off" style="width: 100%; font-family: monospace" />
+			<input data-cb="apiKeyInput" type="password" autocomplete="off"
+				style="width: 100%; font-family: monospace" />
 		</div>
 		<div class="form-group" style="margin-bottom: 10px">
 			<label style="display: block; margin-bottom: 3px">Sync interval (minutes):</label>
@@ -38,10 +41,19 @@
 				<span data-cb="providerName"></span>
 			</label>
 		</div>
-		<span style="display: block; font-size: 0.82em; color: #666; margin-top: 3px"
-			>Used by the periodic search of the wanted titles and by the automatic searches <span data-cb="appName3"></span> itself runs through the Torznab
-			indexer (<span data-cb="searchKind"></span>). Leave out a network whose results are too unreliable for unattended downloads; only providers with an
-			enabled extension are listed. With none selected the wanted list is never searched and the indexer answers those searches with no results.</span
-		>
+		<span style="display: block; font-size: 0.82em; color: #666; margin-top: 3px">Used by the periodic search of the
+			wanted titles and by the automatic searches <span data-cb="appName3"></span> itself runs through the Torznab
+			indexer (<span data-cb="searchKind"></span>). Leave out a network whose results are too unreliable for
+			unattended downloads; only providers with an
+			enabled extension are listed. With none selected the wanted list is never searched and the indexer answers
+			those searches with no results.</span>
+	</div>
+	<div class="form-group" data-cb="indexerPathGroup" style="margin-top: 10px; margin-bottom: 4px">
+		<label style="display: block; margin-bottom: 3px">Indexer API Path for this instance only (optional):</label>
+		<div style="display: flex; gap: 5px; align-items: center">
+			<input data-cb="indexerPathInput" type="text" disabled style="flex: 1; font-family: monospace" />
+			<button class="ui-btn" data-cb="indexerPathCopyBtn" type="button">Copy</button>
+		</div>
+		<span data-cb="indexerPathHint" style="display: block; font-size: 0.82em; color: #666; margin-top: 3px"></span>
 	</div>
 </div>

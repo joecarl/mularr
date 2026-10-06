@@ -6,6 +6,8 @@ export const indexerRoutes = () => {
 	const controller = new IndexerController();
 
 	router.get('/', controller.handle);
+	// Same indexer, scoped to one Sonarr/Radarr extension's provider selection (see IndexerController.resolveUrlExtension)
+	router.get('/ext/:extensionId', controller.handle);
 
 	return router;
 };

@@ -32,10 +32,7 @@ export interface ArrExtensionConfig {
 	intervalMinutes: number;
 	/**
 	 * Search providers of this instance: the ones its wanted titles are periodically looked up on, and the ones
-	 * the automatic searches of its app reach through the Torznab indexer (see arrSearchProvidersFor). E.g.
-	 * without aMule when its results are too unreliable for unattended downloads. Empty: the wanted list is read
-	 * but never searched, and the indexer answers the app's searches with nothing. Absent in configs saved before
-	 * this existed: every provider.
+	 * the automatic searches of its app reach through the Torznab indexer.
 	 */
 	searchProviders?: SearchProviderId[];
 }

@@ -46,7 +46,7 @@ export const CHANGELOG: ChangelogVersion[] = [
 			{
 				id: 5,
 				type: 'improvement',
-				text: 'Search providers can be chosen per search in the Search view and per Sonarr/Radarr extension, where the selection applies both to the wanted sync and to the automatic searches that app runs through the indexer (Sonarr extensions to TV searches, Radarr extensions to movie searches). The wanted sync itself is optional: with it off, the extension needs no URL or API key.',
+				text: 'Search providers can be chosen per search in the Search view and per Sonarr/Radarr extension, where the selection applies both to the wanted sync and to the automatic searches that app runs through the indexer (Sonarr extensions to TV searches, Radarr extensions to movie searches; with several instances of one app, each can use the indexer path shown in its extension to apply only its own selection). The wanted sync itself is optional: with it off, the extension needs no URL or API key.',
 			},
 			{ id: 6, type: 'improvement', text: 'Transfer details and the indexer feed show the network and origin (search provider) of each download.' },
 			{

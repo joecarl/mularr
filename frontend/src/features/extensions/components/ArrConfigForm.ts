@@ -3,11 +3,14 @@ import {
 	ARR_SYNC_MIN_INTERVAL_MINUTES,
 	EXTENSION_TYPES,
 	ExtensionsApiService,
+	TORZNAB_API_PATH,
+	arrTorznabApiPath,
 	parseArrConfig,
 	type ArrExtensionConfig,
 } from '../../../services/ExtensionsApiService';
 import { SEARCH_PROVIDER_IDS, getProviderIcon, getProviderName, type SearchProviderId } from '../../../services/ProvidersApiService';
 import { MediaApiService } from '../../../services/MediaApiService';
+import { ClipboardService } from '../../../services/ClipboardService';
 import type { ConfigFormProps, ConfigFormValues } from './ConfigForm';
 import tpl from './ArrConfigForm.html';
 
@@ -22,6 +25,8 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 	const appName = EXTENSION_TYPES[type]?.label ?? type;
 
 	const syncWanted = signal(stored.syncWanted);
+	// Known once the extension exists: the path carries its id
+	const indexerPath = extension ? arrTorznabApiPath(extension.id) : null;
 	const url = signal(extension?.url ?? '');
 	const apiKey = signal(stored.apiKey);
 	const interval = signal(String(stored.intervalMinutes));
@@ -86,6 +91,12 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 		// Every extension of the app applies to its kind of search: the indexer tells the app from the request, not the instance
 		searchKind: {
 			inner: type === 'sonarr' ? 'TV searches, together with any other Sonarr extension' : 'movie searches, together with any other Radarr extension',
+		},
+		indexerPathGroup: { style: { display: indexerPath ? '' : 'none' } },
+		indexerPathInput: { value: indexerPath ?? '' },
+		indexerPathCopyBtn: { onclick: () => indexerPath && inject(ClipboardService).copy(indexerPath) },
+		indexerPathHint: {
+			inner: `With several ${appName} instances, set this as the API Path of the Torznab indexer in this one so its automatic searches use only the providers selected above. The default ${TORZNAB_API_PATH} path applies the selection of every ${appName} extension.`,
 		},
 		providersList: {
 			inner: () =>

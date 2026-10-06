@@ -64,6 +64,17 @@ export function isArrExtensionType(type: string): boolean {
 export const ARR_SYNC_DEFAULT_INTERVAL_MINUTES = 60;
 export const ARR_SYNC_MIN_INTERVAL_MINUTES = 15;
 
+/** Torznab indexer path, where the request's app tells which extensions apply. Must match the mount in backend/src/index.ts. */
+export const TORZNAB_API_PATH = '/api/as-torznab-indexer';
+
+/**
+ * Torznab indexer path pinned to one sonarr/radarr extension's provider selection, for setups with several
+ * instances of the same app. Must match the route in backend/src/routes/indexerRoutes.ts.
+ */
+export function arrTorznabApiPath(extensionId: number): string {
+	return `${TORZNAB_API_PATH}/ext/${extensionId}`;
+}
+
 /**
  * Settings of a sonarr/radarr extension, stored as { syncWanted, apiKey, intervalMinutes, searchProviders } in its config.
  * Must match ArrExtensionConfig in backend/src/services/arrsync/ArrSyncService.ts.
