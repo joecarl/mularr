@@ -16,6 +16,8 @@ import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
 import { MediaProviderService, MediaSearchService } from './services/mediaprovider';
 import { ArrSyncService } from './services/arrsync/ArrSyncService';
+import { ProviderFeedService } from './services/indexerfeed/ProviderFeedService';
+import { HispashareService } from './services/hispashare/HispashareService';
 import { ExtensionsService } from './services/ExtensionsService';
 import { SpeedHistoryService } from './services/SpeedHistoryService';
 import { WsBroadcastService } from './services/WsBroadcastService';
@@ -105,6 +107,9 @@ async function main() {
 	const extensionsService = new ExtensionsService();
 	container.register(ExtensionsService, extensionsService);
 
+	// Hispashare API client shared by the search provider and the feed poller
+	container.register(HispashareService, new HispashareService());
+
 	// Initialize Telegram Service (Optional)
 	if (__APP_CONFIG__.telegramBot) {
 		const { token, chatId, topicId } = __APP_CONFIG__.telegramBot;
@@ -133,6 +138,12 @@ async function main() {
 	const arrSyncService = new ArrSyncService();
 	container.register(ArrSyncService, arrSyncService);
 	if (!mockMode) arrSyncService.start();
+
+	// Initialize provider feeds (the providers' own new releases into the Torznab RSS: Hispashare polled on a
+	// timer, Telegram pushed by its indexer). The poller reaches the internet, so it is not started in mock mode.
+	const providerFeedService = new ProviderFeedService();
+	container.register(ProviderFeedService, providerFeedService);
+	if (!mockMode) providerFeedService.start();
 
 	// Initialize Speed History Service (records download/upload samples for the dashboard)
 	const speedHistoryService = mockMode ? new MockSpeedHistoryService() : new SpeedHistoryService();

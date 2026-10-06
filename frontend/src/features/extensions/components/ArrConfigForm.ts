@@ -24,15 +24,16 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 	const apiKey = signal(stored.apiKey);
 	const interval = signal(String(stored.intervalMinutes));
 
-	// Providers the sync can use right now; empty until they are loaded. A config saved without a selection
-	// (or a new extension) starts with all of them checked.
+	// Providers the sync can use right now; empty until they are loaded. A new extension starts with none
+	// checked (the periodic search is opted into per provider); a config saved before the selection existed
+	// behaves as "all", so it shows all of them checked.
 	const availableProviders = signal<SearchProviderId[]>([]);
 	const selectedProviders = new Set<string>(stored.searchProviders ?? []);
 	inject(MediaApiService)
 		.getSearchProviders()
 		.catch(() => [...SEARCH_PROVIDER_IDS])
 		.then((ids) => {
-			if (stored.searchProviders === undefined) ids.forEach((id) => selectedProviders.add(id));
+			if (extension && stored.searchProviders === undefined) ids.forEach((id) => selectedProviders.add(id));
 			availableProviders.set(ids);
 		});
 
@@ -49,7 +50,6 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 		if (available.length > 0) {
 			// Only providers listed can be kept: one whose extension was disabled meanwhile is dropped
 			config.searchProviders = available.filter((id) => selectedProviders.has(id));
-			if (config.searchProviders.length === 0) return { error: 'Select at least one search provider' };
 		} else if (stored.searchProviders !== undefined) {
 			config.searchProviders = stored.searchProviders; // list not loaded yet: keep what was stored
 		}

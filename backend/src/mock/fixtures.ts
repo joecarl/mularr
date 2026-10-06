@@ -275,6 +275,7 @@ export const TELEGRAM_ACCOUNT: TelegramAccount = {
 	apiHash: '0123456789abcdef0123456789abcdef',
 	session: 'mock-session',
 	searchEnabled: true,
+	feedEnabled: false,
 };
 
 export const TELEGRAM_CHATS: Chat[] = [

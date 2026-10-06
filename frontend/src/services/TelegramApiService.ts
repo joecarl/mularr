@@ -13,6 +13,8 @@ export interface TelegramStatus {
 	user?: TelegramUser;
 	/** Whether searches reach the Telegram index; independent of being signed in. */
 	searchEnabled: boolean;
+	/** Whether video files the indexer finds in already indexed chats are published in the indexer feed. */
+	feedEnabled: boolean;
 }
 
 /** A chat of the account with what the index holds for it. Every `_at` is epoch ms. */
@@ -132,6 +134,13 @@ export class TelegramApiService extends BaseApiService {
 
 	async setSearchEnabled(enabled: boolean): Promise<{ success: boolean }> {
 		return this.request<{ success: boolean }>('/search-enabled', {
+			method: 'PUT',
+			body: JSON.stringify({ enabled }),
+		});
+	}
+
+	async setFeedEnabled(enabled: boolean): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>('/feed-enabled', {
 			method: 'PUT',
 			body: JSON.stringify({ enabled }),
 		});

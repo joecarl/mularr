@@ -92,6 +92,8 @@ export interface TelegramAccount {
 	session: string | null;
 	/** Whether searches reach the Telegram index. Independent of being signed in. */
 	searchEnabled: boolean;
+	/** Whether video files the indexer finds in already indexed chats are published in the indexer feed (see services/indexerfeed). */
+	feedEnabled: boolean;
 }
 
 interface AccountRow {
@@ -99,9 +101,10 @@ interface AccountRow {
 	api_hash: string | null;
 	session: string | null;
 	search_enabled: number;
+	feed_enabled: number;
 }
 
-const DEFAULT_ACCOUNT: TelegramAccount = { apiId: null, apiHash: null, session: null, searchEnabled: true };
+const DEFAULT_ACCOUNT: TelegramAccount = { apiId: null, apiHash: null, session: null, searchEnabled: true, feedEnabled: false };
 
 export interface ActiveDownloadRow {
 	hash: string;
@@ -267,9 +270,15 @@ export class TelegramIndexerDB {
 				api_id INTEGER,
 				api_hash TEXT,
 				session TEXT,
-				search_enabled INTEGER NOT NULL DEFAULT 1
+				search_enabled INTEGER NOT NULL DEFAULT 1,
+				feed_enabled INTEGER NOT NULL DEFAULT 0
 			);
 		`);
+		try {
+			this.db.exec('ALTER TABLE account ADD COLUMN feed_enabled INTEGER NOT NULL DEFAULT 0');
+		} catch {
+			// Column already exists — ignore
+		}
 
 		// Operational per-message metadata that plays no part in search. Kept apart from
 		// messages_content so writing it never fires the FTS update trigger; add here any
@@ -453,9 +462,15 @@ export class TelegramIndexerDB {
 
 	/** The stored account, or the defaults (nothing stored, search enabled) before the first sign-in. */
 	public getAccount(): TelegramAccount {
-		const row = this.db.prepare('SELECT api_id, api_hash, session, search_enabled FROM account WHERE id = 1').get() as AccountRow | undefined;
+		const row = this.db.prepare('SELECT api_id, api_hash, session, search_enabled, feed_enabled FROM account WHERE id = 1').get() as AccountRow | undefined;
 		if (!row) return { ...DEFAULT_ACCOUNT };
-		return { apiId: row.api_id, apiHash: row.api_hash, session: row.session, searchEnabled: row.search_enabled === 1 };
+		return {
+			apiId: row.api_id,
+			apiHash: row.api_hash,
+			session: row.session,
+			searchEnabled: row.search_enabled === 1,
+			feedEnabled: row.feed_enabled === 1,
+		};
 	}
 
 	/** Stores the given fields of the account, keeping the others as they are. */
@@ -463,12 +478,12 @@ export class TelegramIndexerDB {
 		const next = { ...this.getAccount(), ...patch };
 		this.db
 			.prepare(
-				`INSERT INTO account (id, api_id, api_hash, session, search_enabled)
-				 VALUES (1, ?, ?, ?, ?)
+				`INSERT INTO account (id, api_id, api_hash, session, search_enabled, feed_enabled)
+				 VALUES (1, ?, ?, ?, ?, ?)
 				 ON CONFLICT(id) DO UPDATE SET api_id = excluded.api_id, api_hash = excluded.api_hash,
-				 	session = excluded.session, search_enabled = excluded.search_enabled`
+				 	session = excluded.session, search_enabled = excluded.search_enabled, feed_enabled = excluded.feed_enabled`
 			)
-			.run(next.apiId, next.apiHash, next.session, next.searchEnabled ? 1 : 0);
+			.run(next.apiId, next.apiHash, next.session, next.searchEnabled ? 1 : 0, next.feedEnabled ? 1 : 0);
 	}
 
 	// ── Chats ─────────────────────────────────────────────────────────────────

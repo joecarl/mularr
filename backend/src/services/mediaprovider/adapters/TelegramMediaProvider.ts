@@ -43,6 +43,12 @@ function toAmuleDownloadStatus(downloadStatus?: DownloadStatus): number {
 	}
 }
 
+/** Origin label of a Telegram file: the chat, with the forum topic when the message sits in one. */
+export function telegramSourceName(chatTitle?: string | null, topicName?: string | null): string | undefined {
+	if (!chatTitle) return undefined;
+	return topicName ? `${chatTitle} › ${topicName}` : chatTitle;
+}
+
 // ---------------------------------------------------------------------------
 // Helper: build a MediaTransfer from a Telegram DB record
 // ---------------------------------------------------------------------------
@@ -103,9 +109,7 @@ function buildTelegramTransfer(dbRecord: DownloadDbRecord, indexer: TelegramInde
 		sourceName: (() => {
 			if (parts.length < 2) return undefined;
 			const msg = parts.length >= 3 ? indexer.getFileInfo(parts[1], parseInt(parts[2])) : undefined;
-			const chatTitle = msg?.chat_title || indexer.getChatTitle(parts[1]);
-			const topicName = msg?.topic_name || undefined;
-			return chatTitle ? (topicName ? `${chatTitle} › ${topicName}` : chatTitle) : undefined;
+			return telegramSourceName(msg?.chat_title || indexer.getChatTitle(parts[1]), msg?.topic_name);
 		})(),
 	};
 }
@@ -173,7 +177,7 @@ export class TelegramMediaProvider implements IMediaProvider {
 				downloadStatus: toAmuleDownloadStatus(this.indexer.getDownloadStatus(r.hash)),
 				type: r.type || '',
 				provider: 'telegram',
-				sourceName: r.chatTitle ? (r.topicName ? `${r.chatTitle} › ${r.topicName}` : r.chatTitle) : undefined,
+				sourceName: telegramSourceName(r.chatTitle, r.topicName),
 				providerData: r,
 			};
 		});

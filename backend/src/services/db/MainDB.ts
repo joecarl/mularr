@@ -375,7 +375,7 @@ export class MainDB {
 	}
 
 	// ---------------------------------------------------------
-	// Indexer feed (releases found by the *arr wanted sync)
+	// Indexer feed (releases found by the *arr wanted sync and the provider feeds)
 	// ---------------------------------------------------------
 
 	/** Inserts new items and refreshes name/size/link/sources of known ones, keeping their discovered_at. */
@@ -414,6 +414,40 @@ export class MainDB {
 			}
 		});
 		insertAll(items);
+	}
+
+	/**
+	 * Inserts the items whose hash is not in the feed yet and leaves the known ones as they are: a release the
+	 * wanted sync found keeps its title and snapshot. Returns how many were added.
+	 */
+	public insertIndexerFeedItemsIfNew(items: Omit<IndexerFeedRecord, 'discovered_at'>[]): number {
+		if (items.length === 0) return 0;
+		const stmt = this.db.prepare(`
+			INSERT OR IGNORE INTO indexer_feed (hash, name, size, link, provider, source_count, media_type, query, imdb_id, job_key, search_result, discovered_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`);
+		const now = new Date().toISOString();
+		const insertAll = this.db.transaction((rows: Omit<IndexerFeedRecord, 'discovered_at'>[]) => {
+			let added = 0;
+			for (const r of rows) {
+				added += stmt.run(
+					r.hash.toLowerCase(),
+					r.name,
+					r.size,
+					r.link,
+					r.provider,
+					r.source_count,
+					r.media_type,
+					r.query,
+					r.imdb_id,
+					r.job_key,
+					r.search_result,
+					now
+				).changes;
+			}
+			return added;
+		});
+		return insertAll(items);
 	}
 
 	/** WHERE clause and its parameters for the given filters (empty clause when there are none). */
@@ -474,5 +508,15 @@ export class MainDB {
 	/** Removes items first discovered before the given instant. Returns how many were removed. */
 	public pruneIndexerFeed(olderThan: Date): number {
 		return this.db.prepare('DELETE FROM indexer_feed WHERE discovered_at < ?').run(olderThan.toISOString()).changes;
+	}
+
+	/** Keeps only the `keep` most recently discovered items carrying the job key (a provider feed's). Returns how many were removed. */
+	public pruneIndexerFeedJobKey(jobKey: string, keep: number): number {
+		return this.db
+			.prepare(
+				`DELETE FROM indexer_feed WHERE job_key = ?
+				 AND hash NOT IN (SELECT hash FROM indexer_feed WHERE job_key = ? ORDER BY discovered_at DESC, hash LIMIT ?)`
+			)
+			.run(jobKey, jobKey, keep).changes;
 	}
 }

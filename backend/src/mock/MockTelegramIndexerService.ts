@@ -3,7 +3,7 @@ import { returnBigInt } from 'telegram/Helpers';
 import type { JoinQueueRow, MessageRow, TelegramAccount } from '../services/db/TelegramIndexerDB';
 import type { DownloadStatus } from '../services/TelegramDownloadManager';
 import type { JoinQueueStatus } from '../services/TelegramJoinManager';
-import type { AuthStatus, TelegramChatsResponse, TelegramIndexerSearchResult } from '../services/TelegramIndexerService';
+import type { AuthStatus, NewFilesListener, TelegramChatsResponse, TelegramIndexerSearchResult } from '../services/TelegramIndexerService';
 import { LoggerFactory } from '../services/logging/Logger';
 import * as F from './fixtures';
 import { getMockWorld } from './MockWorld';
@@ -27,6 +27,7 @@ export class MockTelegramIndexerService {
 			status: this.authStatus,
 			user: this.authStatus === 'connected' ? this.currentUser() : null,
 			searchEnabled: this.isSearchEnabled(),
+			feedEnabled: this.isFeedEnabled(),
 		};
 	}
 
@@ -37,6 +38,17 @@ export class MockTelegramIndexerService {
 	setSearchEnabled(enabled: boolean): void {
 		this.account.searchEnabled = enabled;
 	}
+
+	isFeedEnabled(): boolean {
+		return this.account.feedEnabled;
+	}
+
+	setFeedEnabled(enabled: boolean): void {
+		this.account.feedEnabled = enabled;
+	}
+
+	/** The simulated indexing never reports new files, so the feed stays as seeded. */
+	onNewFilesIndexed(_listener: NewFilesListener): void {}
 
 	private currentUser(): Api.User {
 		const { id, firstName, lastName, username, phone } = F.TELEGRAM_USER;

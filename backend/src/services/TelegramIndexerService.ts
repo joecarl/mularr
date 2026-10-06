@@ -6,7 +6,7 @@ import { Logger } from 'telegram/extensions';
 import { FloodWaitError } from 'telegram/errors/RPCErrorList';
 import { Dialog } from 'telegram/tl/custom/dialog';
 import { container } from './container/ServiceContainer';
-import { ChatOverview, MessageRow, TelegramIndexerDB } from './db/TelegramIndexerDB';
+import { ChatOverview, MessageInput, MessageRow, TelegramIndexerDB } from './db/TelegramIndexerDB';
 import { MainDB } from './db/MainDB';
 import { TelegramDownloadManager, getDownloadableDocument } from './TelegramDownloadManager';
 import { JoinedChat, JoinQueueStatus, TelegramJoinManager, usernameOf } from './TelegramJoinManager';
@@ -34,6 +34,9 @@ export interface TelegramChatsResponse {
 	chats: TelegramChatStatus[];
 	cycle: IndexingCycleStatus;
 }
+
+/** Receives the files a pass stored in a chat indexed before, see TelegramIndexerService.onNewFilesIndexed. */
+export type NewFilesListener = (rows: MessageRow[]) => void;
 
 export interface TelegramIndexerSearchResult {
 	hash: string;
@@ -67,6 +70,7 @@ export class TelegramIndexerService {
 	private nextCycleTimer: NodeJS.Timeout | null = null;
 	/** Chats asked to be indexed without waiting for the timer; they go first in the next cycle. */
 	private readonly priorityChats = new Set<string>();
+	private readonly newFilesListeners: NewFilesListener[] = [];
 	private readonly BATCH_SIZE = 50;
 	private readonly RATE_LIMIT_DELAY = 1000;
 	private readonly CYCLE_INTERVAL_MS = 5 * 60 * 1000;
@@ -114,6 +118,7 @@ export class TelegramIndexerService {
 			// phoneNumber: this.tempPhone, // For UI feedback
 			user: this.client && this.authStatus === 'connected' ? await this.client.getMe() : null, // Return user info if connected
 			searchEnabled: this.isSearchEnabled(),
+			feedEnabled: this.isFeedEnabled(),
 		};
 	}
 
@@ -160,6 +165,26 @@ export class TelegramIndexerService {
 
 	public setSearchEnabled(enabled: boolean) {
 		this.db.updateAccount({ searchEnabled: enabled });
+	}
+
+	// -- Indexer feed flag --
+
+	/** Whether newly indexed files are published in the indexer feed; see TelegramAccount.feedEnabled. */
+	public isFeedEnabled(): boolean {
+		return this.db.getAccount().feedEnabled;
+	}
+
+	public setFeedEnabled(enabled: boolean) {
+		this.db.updateAccount({ feedEnabled: enabled });
+	}
+
+	/**
+	 * Called with the files (messages with a name and size) a pass stores in a chat that had been indexed
+	 * before, once per pass. The first pass over a chat, which backfills its whole history, is not reported:
+	 * those are not new files, only newly indexed ones.
+	 */
+	public onNewFilesIndexed(listener: NewFilesListener) {
+		this.newFilesListeners.push(listener);
 	}
 
 	// -- Auth Flow Methods --
@@ -546,6 +571,9 @@ export class TelegramIndexerService {
 		let hasMore = true;
 		/** The error that stopped the pass, kept for the chats list; null when it ran to the end. */
 		let lastError: string | null = null;
+		// Files stored by this pass, reported to the listeners at the end; a first pass is a backfill, not news (see onNewFilesIndexed)
+		const reportNewFiles = lastId > 0 && this.newFilesListeners.length > 0;
+		const newFiles: MessageRow[] = [];
 
 		// Correct strategy:
 		// Use `minId: lastId` (and `limit` for batching).
@@ -574,66 +602,14 @@ export class TelegramIndexerService {
 
 				this.logger.debug(`Fetched ${messages.length} messages for ${chatName}.`);
 
-				const messagesToInsert = [];
+				const messagesToInsert: MessageInput[] = [];
 				let maxIdInBatch = lastId;
 
 				for (const msg of messages) {
 					if (msg.id <= lastId) continue; // Should be handled by minId, but safety check
-
-					// Analyze media
-					let hasMedia: boolean = false;
-					let mediaType: string | undefined = undefined;
-					let fileName: string | undefined = undefined;
-					let fileSize: number | undefined = undefined;
-
-					if (msg.media) {
-						hasMedia = true;
-						mediaType = msg.media.className;
-
-						// Safe casting or type checking would be better, but for GramJS explicit types we can do check:
-						if (msg.media.className === 'MessageMediaDocument' && 'document' in msg.media) {
-							const doc = msg.media.document;
-							if (doc instanceof Api.Document) {
-								// It's a file
-								fileSize = doc.size.toJSNumber();
-								//fileName = doc.attributes?.find((a: any) => a.className === 'DocumentAttributeFilename')?.fileName;
-								for (const attr of doc.attributes) {
-									if (attr instanceof Api.DocumentAttributeFilename) {
-										fileName = attr.fileName;
-									}
-								}
-								if (!fileName) {
-									// Try to guess based on mime type or use default
-									fileName = `file_${doc.id}`;
-								}
-							}
-						} else if (msg.media.className === 'MessageMediaPhoto') {
-							mediaType = 'Photo';
-						}
-					}
-
-					const text = msg.message || '';
-					if (!text && !hasMedia) continue;
-
-					messagesToInsert.push({
-						chatId: chatId,
-						// In Telegram forum supergroups two cases exist:
-						// 1) Reply to a specific message inside the topic:
-						//    replyToTopId = topic ID, replyToMsgId = the replied-to message.
-						// 2) Message posted directly to the topic (no specific reply):
-						//    forumTopic = true, replyToTopId NOT set, replyToMsgId = topic ID.
-						// Using only replyToTopId causes case 2 to be stored as topic 0.
-						topicId: msg.replyTo?.replyToTopId ?? (msg.replyTo?.forumTopic ? msg.replyTo!.replyToMsgId : undefined) ?? 0,
-						messageId: msg.id,
-						senderId: msg.senderId ? msg.senderId.toString() : 'unknown',
-						date: msg.date,
-						text: text,
-						hasMedia,
-						mediaType,
-						fileName,
-						fileSize,
-					});
-
+					const input = this.toMessageInput(msg, chatId);
+					if (!input) continue;
+					messagesToInsert.push(input);
 					if (msg.id > maxIdInBatch) {
 						maxIdInBatch = msg.id;
 					}
@@ -643,6 +619,7 @@ export class TelegramIndexerService {
 					this.db.insertMessages(messagesToInsert);
 					this.db.updateLastMessageId(chatId, maxIdInBatch, Date.now());
 					lastId = maxIdInBatch;
+					if (reportNewFiles) newFiles.push(...this.readStoredFiles(chatId, messagesToInsert));
 				} else {
 					// We got messages but none were suitable or all were old?
 					// With minId and reverse=true, this shouldn't happen unless they are empty.
@@ -677,6 +654,85 @@ export class TelegramIndexerService {
 		}
 
 		this.db.recordChatCheck(chatId, Date.now(), lastError);
+		if (newFiles.length > 0) this.emitNewFilesIndexed(newFiles, chatName);
+	}
+
+	/** The row to store for a message, or null when it carries neither text nor media. */
+	private toMessageInput(msg: Api.Message, chatId: string): MessageInput | null {
+		// Analyze media
+		let hasMedia: boolean = false;
+		let mediaType: string | undefined = undefined;
+		let fileName: string | undefined = undefined;
+		let fileSize: number | undefined = undefined;
+
+		if (msg.media) {
+			hasMedia = true;
+			mediaType = msg.media.className;
+
+			// Safe casting or type checking would be better, but for GramJS explicit types we can do check:
+			if (msg.media.className === 'MessageMediaDocument' && 'document' in msg.media) {
+				const doc = msg.media.document;
+				if (doc instanceof Api.Document) {
+					// It's a file
+					fileSize = doc.size.toJSNumber();
+					for (const attr of doc.attributes) {
+						if (attr instanceof Api.DocumentAttributeFilename) {
+							fileName = attr.fileName;
+						}
+					}
+					if (!fileName) {
+						// Try to guess based on mime type or use default
+						fileName = `file_${doc.id}`;
+					}
+				}
+			} else if (msg.media.className === 'MessageMediaPhoto') {
+				mediaType = 'Photo';
+			}
+		}
+
+		const text = msg.message || '';
+		if (!text && !hasMedia) return null;
+
+		return {
+			chatId: chatId,
+			// In Telegram forum supergroups two cases exist:
+			// 1) Reply to a specific message inside the topic:
+			//    replyToTopId = topic ID, replyToMsgId = the replied-to message.
+			// 2) Message posted directly to the topic (no specific reply):
+			//    forumTopic = true, replyToTopId NOT set, replyToMsgId = topic ID.
+			// Using only replyToTopId causes case 2 to be stored as topic 0.
+			topicId: msg.replyTo?.replyToTopId ?? (msg.replyTo?.forumTopic ? msg.replyTo!.replyToMsgId : undefined) ?? 0,
+			messageId: msg.id,
+			senderId: msg.senderId ? msg.senderId.toString() : 'unknown',
+			date: msg.date,
+			text: text,
+			hasMedia,
+			mediaType,
+			fileName,
+			fileSize,
+		};
+	}
+
+	/** The just-stored messages that carry a file, read back from the view so the rows carry the chat and topic names. */
+	private readStoredFiles(chatId: string, stored: MessageInput[]): MessageRow[] {
+		const rows: MessageRow[] = [];
+		for (const m of stored) {
+			if (!m.fileName || !m.fileSize) continue;
+			const row = this.db.getMessage(chatId, m.messageId);
+			if (row) rows.push(row);
+		}
+		return rows;
+	}
+
+	/** A listener failing must not count as an indexing error of the chat. */
+	private emitNewFilesIndexed(rows: MessageRow[], chatName: string) {
+		for (const listener of this.newFilesListeners) {
+			try {
+				listener(rows);
+			} catch (err) {
+				this.logger.error(`A new-files listener failed for ${chatName}:`, err);
+			}
+		}
 	}
 
 	private async fetchWithFloodWait<T>(fn: () => Promise<T>): Promise<T> {

@@ -5,8 +5,9 @@
 export type IndexerFeedMediaType = 'tv' | 'movie';
 
 /**
- * A release discovered by the *arr wanted sync. Served by the Torznab endpoint on RSS requests, which is
- * how Sonarr/Radarr pick up new releases without searching. Column names as stored in the indexer_feed table.
+ * A release discovered by the *arr wanted sync or taken from a provider's own feed of new releases. Served by
+ * the Torznab endpoint on RSS requests, which is how Sonarr/Radarr pick up new releases without searching.
+ * Column names as stored in the indexer_feed table.
  */
 export interface IndexerFeedItem {
 	hash: string;
@@ -17,11 +18,14 @@ export interface IndexerFeedItem {
 	provider: string;
 	source_count: number;
 	media_type: IndexerFeedMediaType;
-	/** Search query that produced the hit, for debugging. */
+	/** Search query that produced the hit, for debugging; null for releases taken from a provider feed. */
 	query: string | null;
-	/** IMDb id of the wanted title the hit was found for ("tt0133093"); null when the *arr reported none. */
+	/** IMDb id of the title the release belongs to ("tt0133093"); null when neither the *arr nor the provider reported one. */
 	imdb_id: string | null;
-	/** Wanted title the hit was found for (see WantedItem.key); null for rows written before this existed. */
+	/**
+	 * Wanted title the hit was found for (see WantedItem.key), or `feed:<source>` for a release taken from that
+	 * provider's feed (see ProviderFeedStatus.jobKey); null for rows written before this existed.
+	 */
 	job_key: string | null;
 	/**
 	 * JSON snapshot of the MediaSearchResult the release was discovered as. Attached to the download when the
@@ -49,7 +53,7 @@ export interface ArrSyncExtensionStatus {
 	/** False when the stored config has no usable API key; such an extension is never synced. */
 	configured: boolean;
 	intervalMinutes: number | null;
-	/** Ids of the search providers this extension's titles are looked up on; null when it searches all of them. */
+	/** Ids of the search providers this extension's titles are looked up on; empty when it is never searched, null when it searches all of them. */
 	searchProviders: string[] | null;
 	/** A run for this extension is in progress. */
 	running: boolean;
@@ -102,4 +106,37 @@ export interface ArrSyncStatusResponse {
 	running: boolean;
 	/** Why the last due run was postponed (aMule restarting, a UI search in progress), null otherwise. */
 	postponedReason: string | null;
+}
+
+/**
+ * Providers whose own new releases feed the indexer, next to the wanted sync: Hispashare is polled for its
+ * most recently updated titles, Telegram publishes the video files its indexer finds in chats indexed before.
+ */
+export type ProviderFeedSource = 'hispashare' | 'telegram';
+
+/** State of one provider feed, kept in memory by ProviderFeedService (reset on restart). */
+export interface ProviderFeedStatus {
+	source: ProviderFeedSource;
+	/** Switched on: the Hispashare extension is enabled with its feed option, or the Telegram feed toggle is on. */
+	enabled: boolean;
+	/** Minutes between two polls; null for Telegram, which publishes files as its indexer finds them. */
+	intervalMinutes: number | null;
+	/** A poll is in progress (Hispashare only). */
+	running: boolean;
+	/** Last poll (Hispashare), or last indexing pass that published files (Telegram). */
+	lastRunAt: string | null;
+	/** When the next poll is due; null when it will not run, and always for Telegram. */
+	nextRunAt: string | null;
+	/** Releases added to the feed by the last run. */
+	added: number | null;
+	/** Releases from this source currently in the feed. */
+	inFeed: number;
+	/** Value the feed rows of this source carry as job_key; filters the feed listing to them. */
+	jobKey: string;
+	/** Message of the failure that ended the last run, null when it succeeded. */
+	error: string | null;
+}
+
+export interface ProviderFeedStatusResponse {
+	sources: ProviderFeedStatus[];
 }

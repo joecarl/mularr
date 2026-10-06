@@ -34,6 +34,9 @@ export type {
 	ArrSyncStatusResponse,
 	WantedItem,
 	WantedListResponse,
+	ProviderFeedSource,
+	ProviderFeedStatus,
+	ProviderFeedStatusResponse,
 } from '../../../backend/src/types/IndexerFeedTypes';
 export type { AuthStatus } from '../../../backend/src/types/AuthTypes';
 

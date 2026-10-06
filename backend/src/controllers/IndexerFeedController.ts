@@ -2,15 +2,17 @@ import { Request, Response } from 'express';
 import { container } from '../services/container/ServiceContainer';
 import { MainDB, type IndexerFeedMediaType } from '../services/db/MainDB';
 import { ArrSyncService } from '../services/arrsync/ArrSyncService';
+import { ProviderFeedService } from '../services/indexerfeed/ProviderFeedService';
 import type { IndexerFeedListResponse } from '../types/IndexerFeedTypes';
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 
-/** Web UI endpoints to inspect and manage the indexer feed and the *arr wanted sync that fills it. */
+/** Web UI endpoints to inspect and manage the indexer feed, the *arr wanted sync and the provider feeds that fill it. */
 export class IndexerFeedController {
 	private readonly db = container.get(MainDB);
 	private readonly arrSyncService = container.get(ArrSyncService);
+	private readonly providerFeedService = container.get(ProviderFeedService);
 
 	list = (req: Request, res: Response) => {
 		try {
@@ -65,6 +67,14 @@ export class IndexerFeedController {
 	syncStatus = (_req: Request, res: Response) => {
 		try {
 			res.json(this.arrSyncService.getStatus());
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	};
+
+	providerFeeds = (_req: Request, res: Response) => {
+		try {
+			res.json(this.providerFeedService.getStatus());
 		} catch (e: any) {
 			res.status(500).json({ error: e.message });
 		}

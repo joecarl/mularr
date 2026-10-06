@@ -2,8 +2,8 @@
 	<div class="ui-panel-raised ui-feature-topbar">
 		<span style="font-weight: bold; margin-left: 5px">Indexer Feed</span>
 		<div class="view-tabs">
-			<button class="ui-btn view-tab" data-cb="tabWanted">Wanted</button>
 			<button class="ui-btn view-tab" data-cb="tabFeed">Feed</button>
+			<button class="ui-btn view-tab" data-cb="tabWanted">Wanted</button>
 		</div>
 		<div style="flex: 1"></div>
 		<div data-cb="feedFilters" class="feed-filters">
@@ -27,8 +27,8 @@
 		<button class="ui-btn ui-btn-icon ui-columns-btn" data-cb="columnsBtn" title="Choose columns">▦</button>
 	</div>
 
-	<!-- Wanted sync status, one card per Sonarr/Radarr extension -->
-	<div class="ui-panel-raised sync-panel">
+	<!-- Wanted sync status, one card per Sonarr/Radarr extension (Wanted tab) -->
+	<div class="ui-panel-raised sync-panel" data-cb="wantedSyncPanel">
 		<div class="sync-panel-header">
 			<span style="font-weight: bold">Wanted sync</span>
 			<span data-cb="postponedNote" class="sync-note"></span>
@@ -57,6 +57,38 @@
 			<div data-cb="syncEmpty" class="sync-empty">
 				No Sonarr/Radarr extensions configured. Add one in <b>Extensions</b> and Mularr will fill this feed from
 				its wanted list.
+			</div>
+		</div>
+	</div>
+
+	<!-- Provider feeds: new releases the providers report on their own, one card per source (Feed tab) -->
+	<div class="ui-panel-raised sync-panel" data-cb="providerFeedsPanel">
+		<div class="sync-panel-header">
+			<span style="font-weight: bold">Provider feeds</span>
+			<span class="sync-note">Newest releases of the providers themselves, enabled in the Hispashare extension and in the
+				Telegram view</span>
+		</div>
+		<div class="sync-cards" data-cb="feedCards">
+			<div data-cb="feedCard" class="ui-panel-sunken sync-card">
+				<div class="sync-card-header">
+					<span data-cb="fCardIcon"></span>
+					<span data-cb="fCardName" class="sync-card-name"></span>
+					<span data-cb="fCardBadge" class="sync-badge"></span>
+				</div>
+				<div class="sync-card-grid">
+					<span class="sync-k">Last run</span>
+					<span data-cb="fCardLastRun" class="sync-v"></span>
+					<span class="sync-k" data-cb="fCardNextRunKey">Next poll</span>
+					<span data-cb="fCardNextRun" class="sync-v"></span>
+					<span class="sync-k">Added last run</span>
+					<span data-cb="fCardAdded" class="sync-v"></span>
+					<span class="sync-k">In feed</span>
+					<span class="sync-v">
+						<button class="ui-btn" style="min-width: 40px; height: 20px; padding: 0 6px" data-cb="fCardInFeedBtn"
+							title="Show these releases in the feed"></button>
+					</span>
+				</div>
+				<div data-cb="fCardError" class="sync-card-error"></div>
 			</div>
 		</div>
 	</div>

@@ -83,6 +83,11 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'fix',
 				text: 'Telegram: renaming a chat or a topic on Telegram no longer leaves stale entries in the search index, which could end in a "database disk image is malformed" error when clearing or deleting the chat. The index is rebuilt once after this update and repairs itself if the error ever shows up again.',
 			},
+			{
+				id: 18,
+				type: 'feature',
+				text: 'Indexer feed: besides the Sonarr/Radarr wanted sync, the feed can now carry the newest releases of the providers themselves. A Hispashare extension can poll the catalogue periodically (option in its settings) and Telegram can publish the video files its indexer finds in already indexed chats (toggle in the Telegram view). Each source keeps its latest 1000 releases; their state shows in the Indexer Feed view.',
+			},
 		],
 	},
 ];

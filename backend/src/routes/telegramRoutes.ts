@@ -11,6 +11,7 @@ export const telegramRoutes = () => {
 	router.post('/auth/password', controller.submitPassword);
 	router.post('/logout', controller.logout);
 	router.put('/search-enabled', controller.setSearchEnabled);
+	router.put('/feed-enabled', controller.setFeedEnabled);
 
 	router.get('/chats', controller.getChats);
 	router.put('/chats/:chatId/indexing', controller.updateChatIndexing);

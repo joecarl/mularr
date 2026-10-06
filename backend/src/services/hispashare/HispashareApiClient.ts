@@ -42,28 +42,6 @@ export interface HispashareTitle {
 	releases: HispashareRelease[];
 }
 
-/** Stored as the 'hispashare' extension's `config` JSON. The API base URL lives in the extension's `url`. */
-export interface HispashareExtensionConfig {
-	/** Personal token from https://www.hispashare.org/token/ */
-	token: string;
-}
-
-/** Validates a config object as received from the API. Throws a message fit for the user on invalid input. */
-export function validateHispashareConfig(config: Record<string, unknown>): HispashareExtensionConfig {
-	const token = typeof config.token === 'string' ? config.token.trim() : '';
-	if (!token) throw new Error('token is required');
-	return { token };
-}
-
-/** Parses a stored config; null when it is missing or unusable (no token). */
-export function parseHispashareConfig(config?: string | null): HispashareExtensionConfig | null {
-	try {
-		return validateHispashareConfig(JSON.parse(config || '{}'));
-	} catch {
-		return null;
-	}
-}
-
 /** What the API reported last about the token's quota. */
 export interface HispashareRateLimit {
 	/** Requests per hour, null until the first response. */
@@ -77,6 +55,21 @@ export interface HispashareRateLimit {
 /** Thrown when a request is not sent because of the quota (a 429, or the reserve for interactive searches). */
 export class HispashareRateLimitError extends Error {}
 
+/** One page of `GET /titles`, see listRecentTitles. */
+export interface HispashareTitlesPage {
+	titles: HispashareTitle[];
+	/** Cursor of the next page, null on the last one. */
+	nextCursor: string | null;
+	hasMore: boolean;
+}
+
+/** Body of the title endpoints; the paging fields come with `/titles` only. */
+interface TitlesBody {
+	data?: unknown;
+	next_cursor?: string | null;
+	has_more?: boolean;
+}
+
 const REQUEST_TIMEOUT_MS = 20_000;
 /** Identical requests within this window are served from memory and cost no quota. */
 const CACHE_TTL_MS = 15 * 60_000;
@@ -89,7 +82,7 @@ export class HispashareApiClient {
 	private readonly logger = LoggerFactory.create(this);
 	private readonly baseUrl: string;
 	readonly rateLimit: HispashareRateLimit = { limit: null, remaining: null, retryUntil: null };
-	private readonly cache = new Map<string, { expiresAt: number; titles: HispashareTitle[] }>();
+	private readonly cache = new Map<string, { expiresAt: number; body: TitlesBody }>();
 
 	constructor(
 		baseUrl: string,
@@ -99,29 +92,42 @@ export class HispashareApiClient {
 	}
 
 	/** Titles whose title or original title contains `q` (first page, newest updates first). */
-	searchTitles(q: string, interactive: boolean): Promise<HispashareTitle[]> {
-		return this.get('/titles', { q }, interactive);
+	async searchTitles(q: string, interactive: boolean): Promise<HispashareTitle[]> {
+		return titlesOf(await this.get('/titles', { q }, interactive));
 	}
 
 	/** Titles catalogued under an IMDb id; usually zero or one. */
-	titlesByImdb(imdbId: string, interactive: boolean): Promise<HispashareTitle[]> {
-		return this.get(`/titles/imdb/${encodeURIComponent(imdbId)}`, {}, interactive);
+	async titlesByImdb(imdbId: string, interactive: boolean): Promise<HispashareTitle[]> {
+		return titlesOf(await this.get(`/titles/imdb/${encodeURIComponent(imdbId)}`, {}, interactive));
+	}
+
+	/**
+	 * A page of the whole catalogue, most recently updated titles first; `cursor` continues the previous page.
+	 * A background request (it keeps the interactive reserve) that bypasses the cache: the first page is
+	 * exactly what changes between two polls of the feed.
+	 */
+	async listRecentTitles(cursor?: string): Promise<HispashareTitlesPage> {
+		const params: Record<string, string> = { sort_by: 'updated_at', sort_order: 'desc' };
+		if (cursor) params.cursor = cursor;
+		const body = await this.get('/titles', params, false, false);
+		return { titles: titlesOf(body), nextCursor: typeof body.next_cursor === 'string' ? body.next_cursor : null, hasMore: body.has_more === true };
 	}
 
 	/** Validates the token with the cheapest authenticated call and refreshes the quota counters. Costs one request. */
 	async checkToken(): Promise<HispashareRateLimit> {
-		await this.get('/titles', { q: '' }, true, true);
+		await this.get('/titles', { q: '' }, true, false);
 		return this.rateLimit;
 	}
 
-	private async get(path: string, params: Record<string, string>, interactive: boolean, skipCache = false): Promise<HispashareTitle[]> {
+	/** `cache` false neither reads nor stores the response: for requests whose answer is expected to change. */
+	private async get(path: string, params: Record<string, string>, interactive: boolean, cache = true): Promise<TitlesBody> {
 		const url = new URL(`${this.baseUrl}${path}`);
 		for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 		const key = url.toString();
 
-		const cached = this.cache.get(key);
-		if (cached && !skipCache) {
-			if (cached.expiresAt > Date.now()) return cached.titles;
+		const cached = cache ? this.cache.get(key) : undefined;
+		if (cached) {
+			if (cached.expiresAt > Date.now()) return cached.body;
 			this.cache.delete(key);
 		}
 
@@ -156,10 +162,9 @@ export class HispashareApiClient {
 		if (response.status === 401) throw new Error('Invalid Hispashare token');
 		if (!response.ok) throw new Error(`${response.status} ${response.statusText} from ${url.pathname}`);
 
-		const body = (await response.json()) as { data?: unknown };
-		const titles = Array.isArray(body.data) ? (body.data as HispashareTitle[]) : [];
-		this.cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, titles });
-		return titles;
+		const body = (await response.json()) as TitlesBody;
+		if (cache) this.cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, body });
+		return body;
 	}
 
 	private readRateLimitHeaders(response: Response): void {
@@ -169,4 +174,8 @@ export class HispashareApiClient {
 		if (Number.isFinite(remaining)) this.rateLimit.remaining = remaining;
 		if (response.status !== 429) this.rateLimit.retryUntil = null;
 	}
+}
+
+function titlesOf(body: TitlesBody): HispashareTitle[] {
+	return Array.isArray(body.data) ? (body.data as HispashareTitle[]) : [];
 }

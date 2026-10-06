@@ -9,7 +9,7 @@ import './TelegramView.css';
 /** The panes of the signed-in view, picked with the topbar tabs. */
 type Tab = 'chats' | 'join-queue';
 
-/** Telegram account: sign-in flow, the chats that get indexed, and whether Telegram takes part in searches. */
+/** Telegram account: sign-in flow, the chats that get indexed, and whether Telegram takes part in searches and in the indexer feed. */
 export const TelegramView = component(() => {
 	// Services
 	const api = inject(TelegramApiService);
@@ -21,6 +21,7 @@ export const TelegramView = component(() => {
 	const loading = signal(false);
 	const errorMessage = signal('');
 	const searchEnabled = signal(true);
+	const feedEnabled = signal(false);
 	const tab = signal<Tab>('chats');
 
 	// Input Signals
@@ -40,6 +41,7 @@ export const TelegramView = component(() => {
 			authStatus.set(newStatus);
 			user.set(res.user ?? null);
 			searchEnabled.set(res.searchEnabled);
+			feedEnabled.set(res.feedEnabled);
 		} catch (e) {
 			errorMessage.set('Failed to connect to backend service.');
 		}
@@ -106,6 +108,15 @@ export const TelegramView = component(() => {
 		}
 	};
 
+	const toggleFeedEnabled = async () => {
+		try {
+			await api.setFeedEnabled(!feedEnabled.get());
+			await refreshStatus();
+		} catch (e: any) {
+			errorMessage.set(e.message || 'Error updating the indexer feed');
+		}
+	};
+
 	// Computed properties
 	const isConnected = computed(() => authStatus.get() === 'connected');
 	const isDisconnected = computed(() => authStatus.get() === 'disconnected');
@@ -138,6 +149,15 @@ export const TelegramView = component(() => {
 		btnToggleSearchEnabled: {
 			onclick: toggleSearchEnabled,
 			inner: () => (searchEnabled.get() ? 'Disable' : 'Enable'),
+		},
+
+		feedEnabledState: {
+			inner: () => (feedEnabled.get() ? 'Enabled' : 'Disabled'),
+			style: { color: () => (feedEnabled.get() ? '#008000' : '#800000') },
+		},
+		btnToggleFeedEnabled: {
+			onclick: toggleFeedEnabled,
+			inner: () => (feedEnabled.get() ? 'Disable' : 'Enable'),
 		},
 
 		errorBanner: {

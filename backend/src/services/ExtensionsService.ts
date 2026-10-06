@@ -2,7 +2,8 @@ import { MainDB, Extension, ValidationResult } from '../services/db/MainDB';
 import { container } from './container/ServiceContainer';
 import { AppEvent, AppEvents, isAppEvent } from './AppEvents';
 import { createArrApiClient, isArrExtensionType, validateArrConfig } from './arrsync/ArrSyncService';
-import { HispashareApiClient, validateHispashareConfig } from './hispashare/HispashareApiClient';
+import { HispashareApiClient } from './hispashare/HispashareApiClient';
+import { validateHispashareConfig } from './hispashare/HispashareService';
 import { LoggerFactory } from './logging/Logger';
 
 function isHttpUrl(value: string): boolean {

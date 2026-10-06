@@ -116,6 +116,8 @@ Sonarr/Radarr discover new episodes and releases through the indexer's RSS feed,
 
 In **Extensions**, add a **Sonarr** or **Radarr** extension with the instance URL and API key. Mularr will periodically search the providers for the missing titles and publish the matches in its Torznab feed, where Sonarr/Radarr grab them on their next RSS sync. The interval is configurable per instance (default 60 minutes).
 
+The feed can also include new releases reported by the providers themselves: enable it in the **Hispashare** extension settings (the catalogue is polled periodically) or with the **Indexer feed** toggle in the Telegram view (new video files from indexed chats). The **Indexer Feed** view shows the state of each source.
+
 ## Hispashare provider
 
 [Hispashare](https://www.hispashare.org/) catalogues eD2k releases by title, with IMDb ids. In **Extensions**, add a **Hispashare** extension with the personal token from [hispashare.org/token](https://www.hispashare.org/token/). Its releases then show up in searches next to aMule's, linked to their Hispashare page, and are downloaded by aMule like any other eD2k file. The Sonarr/Radarr sync looks titles up by IMDb id on Hispashare when it knows it, and so do their automatic searches: with Hispashare enabled the indexer accepts IMDb ids and answers them from the Hispashare catalogue.

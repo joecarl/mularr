@@ -13,10 +13,18 @@
 		</span>
 		<div style="flex: 1;"></div>
 		<!-- Whether searches reach Telegram -->
-		<span class="ui-inline-input-block">
+		<span class="ui-inline-input-block" style="padding-right: 1.5em">
 			<span>Search provider:</span>
 			<span data-cb="searchEnabledState" style="font-weight: bold;"></span>
 			<button class="ui-btn" data-cb="btnToggleSearchEnabled"></button>
+		</span>
+		<!-- Whether new video files of indexed chats are published in the indexer feed for Sonarr/Radarr -->
+		<span class="ui-inline-input-block"
+			title="Publish the video files found in already indexed chats in the Torznab feed Sonarr/Radarr read"
+			style="padding-right: 1.5em">
+			<span>Indexer feed:</span>
+			<span data-cb="feedEnabledState" style="font-weight: bold;"></span>
+			<button class="ui-btn" data-cb="btnToggleFeedEnabled"></button>
 		</span>
 		<button class="ui-btn" data-cb="btnRefresh">Refresh</button>
 		<button class="ui-btn" data-cb="btnLogout">Logout</button>

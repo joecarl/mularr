@@ -24,17 +24,32 @@ export const EXTENSION_TYPES: Record<ExtensionType, { label: string; requiresUrl
 /** Must match HISPASHARE_DEFAULT_API_URL in backend/src/services/hispashare/HispashareApiClient.ts. */
 export const HISPASHARE_DEFAULT_API_URL = 'https://api.hispashare.org';
 
-/** Settings of the hispashare extension, stored as { token } in its config. */
+/** Must match HISPASHARE_FEED_*_INTERVAL_MINUTES in backend/src/services/hispashare/HispashareService.ts. */
+export const HISPASHARE_FEED_DEFAULT_INTERVAL_MINUTES = 30;
+export const HISPASHARE_FEED_MIN_INTERVAL_MINUTES = 10;
+
+/**
+ * Settings of the hispashare extension, stored as { token, feedEnabled, feedIntervalMinutes } in its config.
+ * Must match HispashareExtensionConfig in backend/src/services/hispashare/HispashareService.ts.
+ */
 export interface HispashareExtensionConfig {
 	token: string;
+	/** Publish the catalogue's newest releases in the indexer feed, polled every feedIntervalMinutes. */
+	feedEnabled: boolean;
+	feedIntervalMinutes: number;
 }
 
 export function parseHispashareConfig(config?: string): HispashareExtensionConfig {
+	const defaults: HispashareExtensionConfig = { token: '', feedEnabled: false, feedIntervalMinutes: HISPASHARE_FEED_DEFAULT_INTERVAL_MINUTES };
 	try {
 		const parsed = JSON.parse(config || '{}');
-		return { token: typeof parsed.token === 'string' ? parsed.token : '' };
+		return {
+			token: typeof parsed.token === 'string' ? parsed.token : defaults.token,
+			feedEnabled: parsed.feedEnabled === true,
+			feedIntervalMinutes: Number.isInteger(parsed.feedIntervalMinutes) ? parsed.feedIntervalMinutes : defaults.feedIntervalMinutes,
+		};
 	} catch {
-		return { token: '' };
+		return defaults;
 	}
 }
 
@@ -56,7 +71,7 @@ export const ARR_SYNC_MIN_INTERVAL_MINUTES = 15;
 export interface ArrExtensionConfig {
 	apiKey: string;
 	intervalMinutes: number;
-	/** Search providers the wanted titles are looked up on; undefined (configs saved before it existed) means all. */
+	/** Search providers the wanted titles are periodically looked up on; empty means never, undefined (configs saved before it existed) means all. */
 	searchProviders?: string[];
 }
 

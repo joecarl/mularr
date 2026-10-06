@@ -1,5 +1,5 @@
 import { BaseApiService } from './BaseApiService';
-import type { ArrSyncStatusResponse, IndexerFeedListResponse, IndexerFeedMediaType, WantedListResponse } from './apiTypes';
+import type { ArrSyncStatusResponse, IndexerFeedListResponse, IndexerFeedMediaType, ProviderFeedStatusResponse, WantedListResponse } from './apiTypes';
 
 export type {
 	ArrSyncExtensionStatus,
@@ -7,6 +7,9 @@ export type {
 	IndexerFeedItem,
 	IndexerFeedListResponse,
 	IndexerFeedMediaType,
+	ProviderFeedSource,
+	ProviderFeedStatus,
+	ProviderFeedStatusResponse,
 	WantedItem,
 	WantedListResponse,
 } from './apiTypes';
@@ -15,13 +18,13 @@ export interface IndexerFeedListParams {
 	type?: IndexerFeedMediaType;
 	/** Case-insensitive substring of the release name. */
 	search?: string;
-	/** Only releases found for this wanted title (WantedItem.key). */
+	/** Only releases found for this wanted title (WantedItem.key) or taken from this provider feed (ProviderFeedStatus.jobKey). */
 	jobKey?: string;
 	offset?: number;
 	limit?: number;
 }
 
-/** Feed served to Sonarr/Radarr by the Torznab endpoint, and the *arr wanted sync that fills it. */
+/** Feed served to Sonarr/Radarr by the Torznab endpoint, and the *arr wanted sync and provider feeds that fill it. */
 export class IndexerFeedApiService extends BaseApiService {
 	constructor() {
 		super('/api/indexer-feed');
@@ -58,5 +61,10 @@ export class IndexerFeedApiService extends BaseApiService {
 	/** Requests a run of one Sonarr/Radarr extension; runs right away or after the current run. */
 	async runSync(extensionId: number): Promise<{ success: boolean; status: ArrSyncStatusResponse }> {
 		return this.request<{ success: boolean; status: ArrSyncStatusResponse }>(`/sync/${extensionId}`, { method: 'POST' });
+	}
+
+	/** State of the feeds built from the providers' own new releases (Hispashare polling, Telegram indexer). */
+	async getProviderFeeds(): Promise<ProviderFeedStatusResponse> {
+		return this.request<ProviderFeedStatusResponse>('/sources');
 	}
 }

@@ -5,6 +5,7 @@ import {
 	type ArrSyncStatusResponse,
 	type IndexerFeedItem,
 	type IndexerFeedMediaType,
+	type ProviderFeedStatus,
 	type WantedItem,
 	type WantedListResponse,
 } from '../../services/IndexerFeedApiService';
@@ -48,8 +49,17 @@ function parseSearchResult(item: IndexerFeedItem): SourceInfo {
 function badgeOf(s: ArrSyncExtensionStatus): { text: string; color: string } {
 	if (!s.enabled) return { text: 'Disabled', color: '#808080' };
 	if (!s.configured) return { text: 'No API key', color: '#ff4d4d' };
+	if (s.searchProviders?.length === 0) return { text: 'Not searched', color: '#808080' };
 	if (s.running) return { text: 'Running', color: '#2b7bd6' };
 	if (s.queued) return { text: 'Queued', color: '#2b7bd6' };
+	if (s.error) return { text: 'Error', color: '#ff4d4d' };
+	if (!s.lastRunAt) return { text: 'Pending', color: '#808080' };
+	return { text: 'OK', color: '#008000' };
+}
+
+function feedBadgeOf(s: ProviderFeedStatus): { text: string; color: string } {
+	if (!s.enabled) return { text: 'Disabled', color: '#808080' };
+	if (s.running) return { text: 'Running', color: '#2b7bd6' };
 	if (s.error) return { text: 'Error', color: '#ff4d4d' };
 	if (!s.lastRunAt) return { text: 'Pending', color: '#808080' };
 	return { text: 'OK', color: '#008000' };
@@ -135,6 +145,8 @@ const FeedRows = componentList<IndexerFeedItem, FeedRowProps>(
  * Two views of the *arr integration: the wanted titles read live from Sonarr/Radarr, with what the sync
  * did about each, and the feed the Torznab endpoint serves them on their RSS sync. Together they answer
  * "why doesn't Sonarr grab X": not wanted, not searched yet, searched with no hits, or in the feed already.
+ * The feed is also fed by the providers' own new releases (Hispashare polling, the Telegram indexer), whose
+ * state shows next to the sync cards.
  */
 export const IndexerFeedView = component(() => {
 	const api = inject(IndexerFeedApiService);
@@ -147,7 +159,7 @@ export const IndexerFeedView = component(() => {
 	// Multi-selection of feed rows (click, Ctrl/Cmd+click, Shift+click); the server keeps the order, so no sorting here
 	const feedMgr = new ListManager<IndexerFeedItem>({ defaultColumn: 'discovered_at', skipSort: () => true });
 
-	const tab = signal<Tab>('wanted');
+	const tab = signal<Tab>('feed');
 
 	// Wanted listing
 	const wanted = signal<WantedListResponse | null>(null);
@@ -161,6 +173,7 @@ export const IndexerFeedView = component(() => {
 	const jobFilter = signal<{ key: string; title: string } | null>(null);
 	// Sync status
 	const status = signal<ArrSyncStatusResponse | null>(null);
+	const feeds = signal<ProviderFeedStatus[]>([]);
 	const now = signal(Date.now());
 
 	const loadWanted = smartLoad(async () => {
@@ -200,17 +213,19 @@ export const IndexerFeedView = component(() => {
 		loadCurrentTab();
 	};
 
-	// Status is polled; when a run ends, the current tab is reloaded so new releases show up without a click
+	// Status is polled; when a run (sync or feed poll) ends, the current tab is reloaded so new releases show up without a click
 	let wasRunning = false;
 	const loadStatus = smartLoad(async () => {
-		const res = await api.getSyncStatus();
-		status.set(res);
+		const [sync, feedRes] = await Promise.all([api.getSyncStatus(), api.getProviderFeeds()]);
+		status.set(sync);
+		feeds.set(feedRes.sources);
 		now.set(Date.now());
-		if (wasRunning && !res.running) await loadCurrentTab();
-		wasRunning = res.running;
+		const running = sync.running || feedRes.sources.some((s) => s.running);
+		if (wasRunning && !running) await loadCurrentTab();
+		wasRunning = running;
 	}, 'indexer-feed-status');
 
-	loadWanted();
+	// The Feed tab loads itself through the filters effect below; the Wanted tab loads when it is opened
 	smartPoll(loadStatus, STATUS_POLL_MS);
 
 	// The feed follows its filters: this also performs the initial load. The reload is deferred so the
@@ -231,6 +246,12 @@ export const IndexerFeedView = component(() => {
 
 	const showFeedForWanted = (w: WantedItem) => {
 		jobFilter.set({ key: w.key, title: w.title });
+		tab.set('feed');
+	};
+
+	/** Feed restricted to the releases a provider feed published. */
+	const showFeedForSource = (s: ProviderFeedStatus) => {
+		jobFilter.set({ key: s.jobKey, title: `${getProviderName(s.source)} feed` });
 		tab.set('feed');
 	};
 
@@ -337,6 +358,9 @@ export const IndexerFeedView = component(() => {
 		wantedTable: { _ref: (el) => wantedColumns.attach(el) },
 		feedTable: { _ref: (el) => feedColumns.attach(el) },
 
+		// Each tab shows the cards of what fills its view: the wanted sync next to the wanted titles, the provider feeds next to the feed
+		wantedSyncPanel: { style: showWhen(() => tab.get() === 'wanted') },
+		providerFeedsPanel: { style: showWhen(onFeedTab) },
 		postponedNote: { inner: () => (status.get()?.postponedReason ? `Postponed: ${status.get()!.postponedReason}` : '') },
 		syncCards: {
 			inner: () => {
@@ -351,7 +375,10 @@ export const IndexerFeedView = component(() => {
 							cardName: { inner: s.name, title: s.name },
 							cardType: { inner: s.type === 'sonarr' ? 'Sonarr' : 'Radarr' },
 							cardBadge: { inner: badge.text, style: { color: badge.color } },
-							cardRunBtn: { onclick: () => runSync(s), disabled: !s.enabled || !s.configured || s.running || s.queued },
+							cardRunBtn: {
+								onclick: () => runSync(s),
+								disabled: !s.enabled || !s.configured || s.searchProviders?.length === 0 || s.running || s.queued,
+							},
 							cardLastRun: {
 								inner: s.lastRunAt
 									? `${relativeTime(s.lastRunAt, nowMs)}${s.lastDurationMs !== null ? ` (took ${Math.round(s.lastDurationMs / 1000)} s)` : ''}`
@@ -363,8 +390,45 @@ export const IndexerFeedView = component(() => {
 								title: s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : '',
 							},
 							cardCounts: { inner: counts },
-							cardProviders: { inner: s.searchProviders ? s.searchProviders.map((p) => getProviderName(p)).join(', ') : 'all' },
+							cardProviders: {
+								inner: s.searchProviders ? s.searchProviders.map((p) => getProviderName(p)).join(', ') || 'none' : 'all',
+							},
 							cardError: { inner: s.error ?? '', style: { display: s.error ? '' : 'none' } },
+						},
+					});
+				});
+			},
+		},
+
+		feedCards: {
+			inner: () => {
+				const nowMs = now.get();
+				return feeds.get().map((s) => {
+					const badge = feedBadgeOf(s);
+					const polled = s.source === 'hispashare';
+					return tpl.feedCard({
+						nodes: {
+							fCardIcon: { inner: getProviderIcon(s.source) },
+							fCardName: { inner: getProviderName(s.source), title: s.jobKey },
+							fCardBadge: { inner: badge.text, style: { color: badge.color } },
+							fCardLastRun: {
+								inner: s.lastRunAt ? relativeTime(s.lastRunAt, nowMs) : 'never',
+								title: s.lastRunAt ? new Date(s.lastRunAt).toLocaleString() : '',
+							},
+							fCardNextRunKey: { inner: polled ? 'Next poll' : 'Trigger' },
+							fCardNextRun: {
+								inner: !polled
+									? 'each indexing pass over a chat'
+									: s.running
+										? 'running now'
+										: s.nextRunAt
+											? `${relativeTime(s.nextRunAt, nowMs)} (every ${s.intervalMinutes} min)`
+											: '-',
+								title: s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : '',
+							},
+							fCardAdded: { inner: s.added === null ? '-' : String(s.added) },
+							fCardInFeedBtn: { inner: String(s.inFeed), onclick: () => showFeedForSource(s), disabled: s.inFeed === 0 },
+							fCardError: { inner: s.error ?? '', style: { display: s.error ? '' : 'none' } },
 						},
 					});
 				});

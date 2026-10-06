@@ -41,7 +41,7 @@ const EMPTY_FEED_PLACEHOLDER: MediaSearchResult[] = [
  * - Searches (`q`, `imdbid`, `artist`/`album`): a live search on the providers.
  * - RSS syncs, the same actions with no search terms, which the *arr send every few minutes to learn
  *   about new releases. eD2k has no such feed, so it is served from the indexer_feed table filled by
- *   the *arr wanted sync (see services/arrsync).
+ *   the *arr wanted sync (see services/arrsync) and the provider feeds (see services/indexerfeed).
  */
 export class IndexerController {
 	private readonly logger = LoggerFactory.create(this);

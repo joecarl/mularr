@@ -24,8 +24,9 @@ export interface ArrExtensionConfig {
 	/** Minutes between two sync runs of this instance. */
 	intervalMinutes: number;
 	/**
-	 * Search providers the wanted titles are looked up on, e.g. without aMule when its results are too
-	 * unreliable for an unattended feed. Absent in configs saved before this existed: every provider.
+	 * Search providers the wanted titles are periodically looked up on, e.g. without aMule when its results
+	 * are too unreliable for an unattended feed. Empty: the instance's wanted list is read but never searched.
+	 * Absent in configs saved before this existed: every provider.
 	 */
 	searchProviders?: SearchProviderId[];
 }
@@ -52,15 +53,18 @@ export function validateArrConfig(config: Record<string, unknown>): ArrExtension
 		if (!Array.isArray(config.searchProviders) || !config.searchProviders.every(isSearchProviderId)) {
 			throw new Error(`searchProviders must be an array of ${SEARCH_PROVIDER_IDS.join(', ')}`);
 		}
-		const searchProviders = [...new Set(config.searchProviders)];
-		if (searchProviders.length === 0) throw new Error('At least one search provider must be selected');
-		normalized.searchProviders = searchProviders;
+		normalized.searchProviders = [...new Set(config.searchProviders)];
 	}
 	return normalized;
 }
 
 function isSearchProviderId(value: unknown): value is SearchProviderId {
 	return typeof value === 'string' && (SEARCH_PROVIDER_IDS as readonly string[]).includes(value);
+}
+
+/** Whether the wanted titles of this config are searched anywhere (every provider when the list is absent). */
+export function hasSearchProviders(config: ArrExtensionConfig): boolean {
+	return config.searchProviders === undefined || config.searchProviders.length > 0;
 }
 
 /** Client for the given app; the extension's `url` is the instance base URL. */
@@ -92,8 +96,8 @@ const FIRST_TICK_DELAY_MS = 30_000;
 const MAX_QUERIES_PER_RUN = 10;
 /** Hits kept per query, best-sourced first, so a generic title does not flood the feed. */
 const MAX_RESULTS_PER_QUERY = 50;
-/** Feed items older than this are dropped; the *arr have had plenty of RSS syncs to see them. */
-const FEED_RETENTION_DAYS = 30;
+/** Feed items older than this are dropped, whatever filled them in; the *arr have had plenty of RSS syncs to see them. */
+export const FEED_RETENTION_DAYS = 30;
 /** A UI search this recent postpones the run: the user is watching results a new search would replace. */
 const INTERACTIVE_SEARCH_GRACE_MS = 2 * 60_000;
 
@@ -160,7 +164,7 @@ export class ArrSyncService {
 		const config = parseArrConfig(ext.config);
 		const state = this.runStateByExtension.get(ext.id);
 		let nextRunAt: number | null = null;
-		if (ext.enabled && config) {
+		if (ext.enabled && config && hasSearchProviders(config)) {
 			if (this.forcedRuns.has(ext.id)) nextRunAt = now;
 			else if (state) nextRunAt = state.lastRunAt + config.intervalMinutes * 60_000;
 			else if (this.startedAt !== null) nextRunAt = Math.max(now, this.startedAt + FIRST_TICK_DELAY_MS);
@@ -193,7 +197,9 @@ export class ArrSyncService {
 		const ext = this.db.getExtensionById(extensionId);
 		if (!ext || !isArrExtensionType(ext.type)) throw new Error('Extension is not a Sonarr/Radarr extension');
 		if (!ext.enabled) throw new Error('Extension is disabled');
-		if (!parseArrConfig(ext.config)) throw new Error('Extension has no valid API key configured');
+		const config = parseArrConfig(ext.config);
+		if (!config) throw new Error('Extension has no valid API key configured');
+		if (!hasSearchProviders(config)) throw new Error('Extension has no search providers selected');
 		this.forcedRuns.add(extensionId);
 		void this.tick();
 	}
@@ -244,7 +250,10 @@ export class ArrSyncService {
 
 	// ---- Scheduling -------------------------------------------------------------
 
-	/** Enabled sonarr/radarr extensions whose interval has elapsed since their last run, or with a run requested. */
+	/**
+	 * Enabled sonarr/radarr extensions whose interval has elapsed since their last run, or with a run
+	 * requested. One with no search providers selected is never due: there is nowhere to search.
+	 */
 	private getDueExtensions(now: number): Extension[] {
 		return this.db.getAllExtensions().filter((ext) => {
 			if (!ext.enabled || !isArrExtensionType(ext.type)) return false;
@@ -253,6 +262,7 @@ export class ArrSyncService {
 				this.logger.warn(`Extension "${ext.name}" (${ext.type}) has no valid API key configured; skipping`);
 				return false;
 			}
+			if (!hasSearchProviders(config)) return false;
 			if (this.forcedRuns.has(ext.id)) return true;
 			const lastRun = this.runStateByExtension.get(ext.id)?.lastRunAt ?? 0;
 			return now - lastRun >= config.intervalMinutes * 60_000;

@@ -1,6 +1,9 @@
+import type { IndexerFeedMediaType } from '../types/IndexerFeedTypes';
+
 /**
  * Helpers to match eD2k release names against what Sonarr/Radarr ask for. Shared by the Torznab
- * controller (episode searches) and the *arr wanted sync (see services/arrsync).
+ * controller (episode searches), the *arr wanted sync (see services/arrsync) and the provider feeds
+ * (see services/indexerfeed).
  */
 
 // 0* absorbs zero-padding (S01E07 == S1E7); \s? allows a split SxxEyy.
@@ -25,6 +28,24 @@ export function releaseMatchesEpisode(name: string, season: number, ep: number):
 
 export function filterByEpisode<T extends { name: string }>(results: T[], season: number, ep: number): T[] {
 	return results.filter((r) => releaseMatchesEpisode(r.name, season, ep));
+}
+
+/**
+ * Feed category of a release nobody classified: an episode marker (S01E07, 1x07) makes it TV, anything else
+ * is offered as a movie. The *arr parse the name themselves, so a wrong guess only means the release is
+ * served to the app that will ignore it.
+ */
+export function guessMediaType(name: string): IndexerFeedMediaType {
+	const normalized = normalizeSeparators(name);
+	return EPISODE_PATTERNS.some((pattern) => pattern.test(normalized)) ? 'tv' : 'movie';
+}
+
+const VIDEO_EXTENSIONS = new Set(['mkv', 'mp4', 'avi', 'm4v', 'mov', 'wmv', 'ts', 'm2ts', 'mpg', 'mpeg', 'webm', 'flv', 'ogm', 'divx', 'iso']);
+
+/** True when the file name has a video container extension: what the *arr can import, and all the feed offers them. */
+export function isVideoFileName(name: string): boolean {
+	const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+	return name.includes('.') && VIDEO_EXTENSIONS.has(ext);
 }
 
 /** True when the release name carries the given year as a standalone token (e.g. "Movie (1995)", "Movie.1995.1080p"). */

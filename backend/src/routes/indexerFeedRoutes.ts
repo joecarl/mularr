@@ -10,6 +10,7 @@ export const indexerFeedRoutes = () => {
 	router.get('/wanted', controller.wanted);
 	router.get('/sync-status', controller.syncStatus);
 	router.post('/sync/:extensionId', controller.runSync);
+	router.get('/sources', controller.providerFeeds);
 	router.delete('/:hash', controller.remove);
 
 	return router;
