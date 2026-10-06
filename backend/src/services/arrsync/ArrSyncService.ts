@@ -24,9 +24,11 @@ export interface ArrExtensionConfig {
 	/** Minutes between two sync runs of this instance. */
 	intervalMinutes: number;
 	/**
-	 * Search providers the wanted titles are periodically looked up on, e.g. without aMule when its results
-	 * are too unreliable for an unattended feed. Empty: the instance's wanted list is read but never searched.
-	 * Absent in configs saved before this existed: every provider.
+	 * Search providers of this instance: the ones its wanted titles are periodically looked up on, and the ones
+	 * the automatic searches of its app reach through the Torznab indexer (see arrSearchProvidersFor). E.g.
+	 * without aMule when its results are too unreliable for unattended downloads. Empty: the wanted list is read
+	 * but never searched, and the indexer answers the app's searches with nothing. Absent in configs saved before
+	 * this existed: every provider.
 	 */
 	searchProviders?: SearchProviderId[];
 }
@@ -65,6 +67,21 @@ function isSearchProviderId(value: unknown): value is SearchProviderId {
 /** Whether the wanted titles of this config are searched anywhere (every provider when the list is absent). */
 export function hasSearchProviders(config: ArrExtensionConfig): boolean {
 	return config.searchProviders === undefined || config.searchProviders.length > 0;
+}
+
+/**
+ * Search providers the automatic searches of an app (Sonarr or Radarr) reach through the Torznab indexer: the
+ * union of the selections of its enabled, configured extensions, since the indexer tells the app from the
+ * request (see IndexerController.selectedProvidersFor) but not the instance. Undefined, every provider, when the
+ * app has no such extension or one of them predates the selection; empty when they all have none selected.
+ */
+export function arrSearchProvidersFor(extensions: readonly Extension[], app: ArrApp): SearchProviderId[] | undefined {
+	const configs = extensions
+		.filter((ext) => ext.enabled && ext.type === app)
+		.map((ext) => parseArrConfig(ext.config))
+		.filter((config): config is ArrExtensionConfig => config !== null);
+	if (configs.length === 0 || configs.some((config) => config.searchProviders === undefined)) return undefined;
+	return [...new Set(configs.flatMap((config) => config.searchProviders ?? []))];
 }
 
 /** Client for the given app; the extension's `url` is the instance base URL. */

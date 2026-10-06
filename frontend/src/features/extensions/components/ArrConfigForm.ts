@@ -13,7 +13,7 @@ import tpl from './ArrConfigForm.html';
 
 /**
  * Config form for the sonarr/radarr extensions: endpoint, API key, how often the wanted list is synced and
- * which search providers it is looked up on.
+ * which search providers the instance uses, for the sync and for its own searches through the indexer.
  */
 export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, handle }) => {
 	const api = inject(ExtensionsApiService);
@@ -70,6 +70,11 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 		apiKeyInput: { _ref: refBindInput(apiKey) },
 		intervalInput: { _ref: refBindInput(interval), min: String(ARR_SYNC_MIN_INTERVAL_MINUTES) },
 		intervalHint: { inner: `min. ${ARR_SYNC_MIN_INTERVAL_MINUTES}; each run performs up to 10 searches` },
+		appName3: { inner: appName },
+		// Every extension of the app applies to its kind of search: the indexer tells the app from the request, not the instance
+		searchKind: {
+			inner: type === 'sonarr' ? 'TV searches, together with any other Sonarr extension' : 'movie searches, together with any other Radarr extension',
+		},
 		providersList: {
 			inner: () =>
 				availableProviders.get().map((id) =>

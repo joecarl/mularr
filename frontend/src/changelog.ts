@@ -88,6 +88,11 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'feature',
 				text: 'Indexer feed: besides the Sonarr/Radarr wanted sync, the feed can now carry the newest releases of the providers themselves. A Hispashare extension can poll the catalogue periodically (option in its settings) and Telegram can publish the video files its indexer finds in already indexed chats (toggle in the Telegram view). Each source keeps its latest 1000 releases; their state shows in the Indexer Feed view.',
 			},
+			{
+				id: 19,
+				type: 'improvement',
+				text: 'Indexer: the search providers selected in the Sonarr/Radarr extensions now also apply to the automatic searches those apps run through the Torznab indexer (Sonarr extensions to TV searches, Radarr extensions to movie searches). Without such an extension, or with one saved before the selection existed, every provider is searched as before.',
+			},
 		],
 	},
 ];

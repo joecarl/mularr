@@ -71,7 +71,10 @@ export const ARR_SYNC_MIN_INTERVAL_MINUTES = 15;
 export interface ArrExtensionConfig {
 	apiKey: string;
 	intervalMinutes: number;
-	/** Search providers the wanted titles are periodically looked up on; empty means never, undefined (configs saved before it existed) means all. */
+	/**
+	 * Search providers of the instance: for its wanted sync and for the automatic searches its app runs through the
+	 * Torznab indexer. Empty means none, undefined (configs saved before it existed) means all.
+	 */
 	searchProviders?: string[];
 }
 

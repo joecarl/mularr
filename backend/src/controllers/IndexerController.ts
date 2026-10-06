@@ -4,7 +4,8 @@ import { eD2kLinkToFakeMagnet, hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaSearchService, MediaSearchResult } from '../services/mediaprovider';
 import { MainDB, type IndexerFeedMediaType, type IndexerFeedRecord } from '../services/db/MainDB';
 import { expandApostrophes, filterByEpisode } from '../services/releaseNameTools';
-import { toImdbId } from '../services/arrsync/ArrApiClient';
+import { toImdbId, type ArrApp } from '../services/arrsync/ArrApiClient';
+import { arrSearchProvidersFor } from '../services/arrsync/ArrSyncService';
 import { parseEd2kLink } from '../services/eD2kTools';
 import { LoggerFactory } from '../services/logging/Logger';
 
@@ -21,6 +22,13 @@ function feedRecordToRssItem(r: IndexerFeedRecord): RssItem {
 		provider: r.provider,
 		pubDate: new Date(r.discovered_at),
 	};
+}
+
+/** Providers in both lists, where an absent list stands for every provider (see SearchCriteria.providers). */
+function restrictProviders(providers: readonly string[] | undefined, selected: readonly string[] | undefined): readonly string[] | undefined {
+	if (!providers) return selected;
+	if (!selected) return providers;
+	return providers.filter((p) => selected.includes(p));
 }
 
 const EMPTY_FEED_PLACEHOLDER: MediaSearchResult[] = [
@@ -42,6 +50,8 @@ const EMPTY_FEED_PLACEHOLDER: MediaSearchResult[] = [
  * - RSS syncs, the same actions with no search terms, which the *arr send every few minutes to learn
  *   about new releases. eD2k has no such feed, so it is served from the indexer_feed table filled by
  *   the *arr wanted sync (see services/arrsync) and the provider feeds (see services/indexerfeed).
+ *
+ * Searches reach the providers selected in the Sonarr/Radarr extensions of the calling app, see selectedProvidersFor.
  */
 export class IndexerController {
 	private readonly logger = LoggerFactory.create(this);
@@ -90,9 +100,13 @@ export class IndexerController {
 				queryStr = expandApostrophes(musicQuery);
 			}
 
-			const providers = this.getSearchProvidersFor(queryStr, imdbId);
+			// What the request can search with, narrowed to what the calling app selected
+			const selected = this.selectedProvidersFor(t);
+			const providers = restrictProviders(this.getSearchProvidersFor(queryStr, imdbId), selected);
 			if (providers?.length === 0) {
-				this.logger.debug(`No providers to search with (q "${queryStr}", IMDb id ${imdbId ?? 'none'}); returning empty valid RSS`);
+				this.logger.debug(
+					`No providers to search with (q "${queryStr}", IMDb id ${imdbId ?? 'none'}, selected: ${selected ? selected.join(', ') || 'none' : 'all'}); returning empty valid RSS`
+				);
 				return this.renderRss(res, [], cat as string);
 			}
 
@@ -142,10 +156,23 @@ export class IndexerController {
 	}
 
 	/**
-	 * Providers a Torznab search goes to: all of them for a text query (undefined), the id-searching ones for
-	 * an IMDb id alone, none when there is nothing to search with (the *arr Test sends no terms at all). The
-	 * id tier is advertised in caps only while an id-searching provider is available; its exact matches are
-	 * enough, and when it knows nothing the *arr falls back to its text tier on the empty answer.
+	 * Providers the calling app's searches are limited to: the ones selected in its Sonarr/Radarr extensions, the
+	 * same ones their wanted sync uses (see arrSearchProvidersFor), so a network whose results are too unreliable
+	 * for unattended downloads can be kept out of the automatic searches. The app is told by the action: with the
+	 * caps advertised, Sonarr searches with tvsearch and Radarr with movie. search and music (Lidarr, Prowlarr's
+	 * manual search) name no app and reach every provider, as do the apps without a selection (undefined).
+	 */
+	private selectedProvidersFor(t: unknown): readonly string[] | undefined {
+		const app: ArrApp | null = t === 'tvsearch' ? 'sonarr' : t === 'movie' ? 'radarr' : null;
+		return app ? arrSearchProvidersFor(this.db.getAllExtensions(), app) : undefined;
+	}
+
+	/**
+	 * Providers a Torznab search can go to, before the calling app's selection (see selectedProvidersFor): all of
+	 * them for a text query (undefined), the id-searching ones for an IMDb id alone, none when there is nothing to
+	 * search with (the *arr Test sends no terms at all). The id tier is advertised in caps only while an
+	 * id-searching provider is available; its exact matches are enough, and when it knows nothing, or the app left
+	 * it out of its selection, the *arr falls back to its text tier on the empty answer.
 	 */
 	private getSearchProvidersFor(queryStr: string, imdbId: string | null): string[] | undefined {
 		if (queryStr.trim()) return undefined;
@@ -161,6 +188,7 @@ export class IndexerController {
 		// "tv-search", Radarr "movie-search". imdbid is advertised only while a catalogue provider searches
 		// by id (see MediaSearchService.imdbIdSearchProviderIds): the *arr try an id-only tier first when it
 		// is listed, and with nobody to answer it that tier would always be empty. tv-search omits "rid" likewise.
+		// A caps request names no app, so the apps' provider selections cannot be applied here.
 		const idParams = this.searchService.imdbIdSearchProviderIds().length > 0 ? ',imdbid' : '';
 		const caps = `<?xml version="1.0" encoding="UTF-8"?>
 <caps>

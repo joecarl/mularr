@@ -114,7 +114,7 @@ To configure as download client use the following settings:
 
 Sonarr/Radarr discover new episodes and releases through the indexer's RSS feed, which they poll every few minutes. eD2k has no such feed, so Mularr builds one from their **Wanted > Missing** lists.
 
-In **Extensions**, add a **Sonarr** or **Radarr** extension with the instance URL and API key. Mularr will periodically search the providers for the missing titles and publish the matches in its Torznab feed, where Sonarr/Radarr grab them on their next RSS sync. The interval is configurable per instance (default 60 minutes).
+In **Extensions**, add a **Sonarr** or **Radarr** extension with the instance URL and API key. Mularr will periodically search the providers for the missing titles and publish the matches in its Torznab feed, where Sonarr/Radarr grab them on their next RSS sync. The interval is configurable per instance (default 60 minutes), and so are the search providers used. That selection also applies to the automatic searches Sonarr/Radarr run through the indexer: TV searches use the providers selected in the Sonarr extensions, movie searches those of the Radarr extensions, and every provider when there is no such extension.
 
 The feed can also include new releases reported by the providers themselves: enable it in the **Hispashare** extension settings (the catalogue is polled periodically) or with the **Indexer feed** toggle in the Telegram view (new video files from indexed chats). The **Indexer Feed** view shows the state of each source.
 
