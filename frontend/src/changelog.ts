@@ -7,7 +7,8 @@
  * entries can be appended to an in-development version and still be notified.
  *
  * When adding an entry: use the next free id (highest existing + 1), never
- * reuse or reorder ids.
+ * reuse or reorder ids. If the change is really progress on an entry of a
+ * version not released yet, edit that entry instead of adding a new one.
  */
 
 export type ChangelogEntryType = 'feature' | 'improvement' | 'fix';
@@ -30,13 +31,29 @@ export const CHANGELOG: ChangelogVersion[] = [
 	{
 		version: '1.0.0',
 		entries: [
-			{ id: 1, type: 'feature', text: 'Indexer feed: Mularr now exposes a Torznab-compatible feed so Sonarr/Radarr can pull releases from it.' },
+			{
+				id: 1,
+				type: 'feature',
+				text: 'Indexer feed: Mularr exposes a Torznab-compatible feed that Sonarr/Radarr poll for new releases. eD2k has no such feed, so it is built from the Sonarr/Radarr wanted lists (periodic searches, configured per extension) and from the new releases the providers themselves report: Hispashare (option in its extension settings) and Telegram (toggle in the Telegram view). The Indexer Feed view shows the state of each source.',
+			},
 			{ id: 2, type: 'feature', text: 'Extensions can be configured individually from a redesigned Extensions view.' },
-			{ id: 3, type: 'feature', text: 'Hispashare search provider for eD2k searches and downloads.' },
+			{
+				id: 3,
+				type: 'feature',
+				text: 'Hispashare search provider: its catalogue of eD2k releases shows up in searches next to aMule and is downloaded by aMule. With it enabled, Sonarr/Radarr automatic searches can also look releases up by IMDb id.',
+			},
 			{ id: 4, type: 'feature', text: 'Table columns can be shown, hidden and resized; the layout is remembered per table.' },
-			{ id: 5, type: 'improvement', text: 'Search providers can be selected per Arr sync and media search.' },
+			{
+				id: 5,
+				type: 'improvement',
+				text: 'Search providers can be chosen per search in the Search view and per Sonarr/Radarr extension, where the selection applies both to the wanted sync and to the automatic searches that app runs through the indexer (Sonarr extensions to TV searches, Radarr extensions to movie searches). The wanted sync itself is optional: with it off, the extension needs no URL or API key.',
+			},
 			{ id: 6, type: 'improvement', text: 'Transfer details and the indexer feed show the network and origin (search provider) of each download.' },
-			{ id: 7, type: 'improvement', text: 'Telegram has its own section in the sidebar and is no longer managed as an extension.' },
+			{
+				id: 7,
+				type: 'improvement',
+				text: 'Telegram has its own section in the sidebar and is no longer managed as an extension. Its chats table shows indexed messages and files, size, topics, last message, last check and last error per chat; it can be filtered and sorted, rows can be selected, chats can be indexed on demand, and the row menu (right click) can clear the index of chats or delete them, also several at once.',
+			},
 			{ id: 8, type: 'improvement', text: 'aMule updated to 3.1.0 in the Docker image.' },
 			{
 				id: 9,
@@ -44,24 +61,9 @@ export const CHANGELOG: ChangelogVersion[] = [
 				text: "What's new dialog: changes are grouped by version and shown once after each update. Click the version in the sidebar to open the full changelog.",
 			},
 			{
-				id: 10,
-				type: 'improvement',
-				text: 'Telegram: the chats table shows indexed messages and files, size, topics, last message, last check and last error per chat, can be filtered, and chats can be indexed on demand.',
-			},
-			{
-				id: 11,
-				type: 'improvement',
-				text: 'Indexer: with Hispashare enabled, Sonarr/Radarr automatic searches can look releases up by IMDb id, answered from the Hispashare catalogue.',
-			},
-			{
-				id: 12,
-				type: 'improvement',
-				text: 'Telegram: the chats table can be sorted by column and rows can be selected; the row menu (right click) can clear the index of a chat or delete it, also for several chats at once.',
-			},
-			{
 				id: 13,
 				type: 'fix',
-				text: 'Telegram: a chat the account has left or that no longer exists is disabled automatically, and messages of disabled chats are left out of searches, so they no longer cause errors.',
+				text: 'Telegram: a chat the account has left or that no longer exists is disabled automatically and its messages are left out of searches. Renaming a chat or a topic no longer leaves stale entries in the search index, which could end in a "database disk image is malformed" error; the index is rebuilt once after this update and repairs itself if the error ever shows up again.',
 			},
 			{
 				id: 14,
@@ -71,27 +73,12 @@ export const CHANGELOG: ChangelogVersion[] = [
 			{
 				id: 15,
 				type: 'fix',
-				text: 'Removing a finished download no longer sends a delete to aMule for a file it already considers complete, which could bring the daemon down.',
+				text: 'Removing a finished download no longer sends a EC delete command to aMule, which could bring the daemon down.',
 			},
 			{
 				id: 16,
 				type: 'feature',
 				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away. Links of chats the account is already in are skipped.',
-			},
-			{
-				id: 17,
-				type: 'fix',
-				text: 'Telegram: renaming a chat or a topic on Telegram no longer leaves stale entries in the search index, which could end in a "database disk image is malformed" error when clearing or deleting the chat. The index is rebuilt once after this update and repairs itself if the error ever shows up again.',
-			},
-			{
-				id: 18,
-				type: 'feature',
-				text: 'Indexer feed: besides the Sonarr/Radarr wanted sync, the feed can now carry the newest releases of the providers themselves. A Hispashare extension can poll the catalogue periodically (option in its settings) and Telegram can publish the video files its indexer finds in already indexed chats (toggle in the Telegram view). Each source keeps its latest 1000 releases; their state shows in the Indexer Feed view.',
-			},
-			{
-				id: 19,
-				type: 'improvement',
-				text: 'Indexer: the search providers selected in the Sonarr/Radarr extensions now also apply to the automatic searches those apps run through the Torznab indexer (Sonarr extensions to TV searches, Radarr extensions to movie searches). Without such an extension, or with one saved before the selection existed, every provider is searched as before.',
 			},
 		],
 	},

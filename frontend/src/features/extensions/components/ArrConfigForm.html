@@ -1,22 +1,33 @@
 <div>
 	<p style="margin: 0 0 12px 0; font-size: 0.9em">
-		Mularr periodically reads the <b>wanted</b> list of this <span data-cb="appName"></span> instance (monitored items without a file), searches the
-		providers for them and publishes the matching releases in its Torznab RSS feed, where <span data-cb="appName2"></span> picks them up on its next RSS
-		sync.
+		Tells Mularr how to work with <span data-cb="appName"></span>: which search providers its automatic searches use and, optionally, the <b>wanted</b> list
+		sync, where Mularr periodically reads the monitored items without a file, searches the providers for them and publishes the matching releases in its
+		Torznab RSS feed, where <span data-cb="appName2"></span> picks them up on its next RSS sync.
 	</p>
 
 	<div class="form-group" style="margin-bottom: 10px">
-		<label style="display: block; margin-bottom: 3px">URL:</label>
-		<input data-cb="urlInput" type="url" placeholder="http://sonarr:8989" style="width: 100%; font-family: monospace" />
+		<label style="display: flex; align-items: center; gap: 5px; cursor: pointer">
+			<input type="checkbox" data-cb="syncCheckbox" />
+			<span>Sync the wanted list of this instance</span>
+		</label>
+		<span style="display: block; font-size: 0.82em; color: #666; margin-top: 3px"
+			>Needs the instance URL and API key. Leave it off to only choose the search providers below.</span
+		>
 	</div>
-	<div class="form-group" style="margin-bottom: 10px">
-		<label style="display: block; margin-bottom: 3px">API Key (Settings &gt; General):</label>
-		<input data-cb="apiKeyInput" type="password" autocomplete="off" style="width: 100%; font-family: monospace" />
-	</div>
-	<div class="form-group" style="margin-bottom: 10px">
-		<label style="display: block; margin-bottom: 3px">Sync interval (minutes):</label>
-		<input data-cb="intervalInput" type="number" step="1" style="width: 100px" />
-		<span data-cb="intervalHint" style="font-size: 0.82em; color: #666; margin-left: 6px"></span>
+	<div data-cb="syncFields">
+		<div class="form-group" style="margin-bottom: 10px">
+			<label style="display: block; margin-bottom: 3px">URL:</label>
+			<input data-cb="urlInput" type="url" placeholder="http://sonarr:8989" style="width: 100%; font-family: monospace" />
+		</div>
+		<div class="form-group" style="margin-bottom: 10px">
+			<label style="display: block; margin-bottom: 3px">API Key (Settings &gt; General):</label>
+			<input data-cb="apiKeyInput" type="password" autocomplete="off" style="width: 100%; font-family: monospace" />
+		</div>
+		<div class="form-group" style="margin-bottom: 10px">
+			<label style="display: block; margin-bottom: 3px">Sync interval (minutes):</label>
+			<input data-cb="intervalInput" type="number" step="1" style="width: 100px" />
+			<span data-cb="intervalHint" style="font-size: 0.82em; color: #666; margin-left: 6px"></span>
+		</div>
 	</div>
 	<div class="form-group" style="margin-bottom: 4px">
 		<label style="display: block; margin-bottom: 3px">Search providers for this instance:</label>

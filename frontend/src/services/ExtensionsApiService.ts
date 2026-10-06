@@ -11,14 +11,14 @@ export interface Extension {
 	config?: string;
 }
 
-export const EXTENSION_TYPES: Record<ExtensionType, { label: string; requiresUrl: boolean }> = {
-	// validator: { label: 'Validator', requiresUrl: true },
-	// enhanced_search: { label: 'Enhanced Search', requiresUrl: false },
-	webhook: { label: 'Webhook', requiresUrl: true },
-	media_previewer: { label: 'Media Previewer', requiresUrl: true },
-	sonarr: { label: 'Sonarr', requiresUrl: true },
-	radarr: { label: 'Radarr', requiresUrl: true },
-	hispashare: { label: 'Hispashare', requiresUrl: true },
+export const EXTENSION_TYPES: Record<ExtensionType, { label: string }> = {
+	// validator: { label: 'Validator' },
+	// enhanced_search: { label: 'Enhanced Search' },
+	webhook: { label: 'Webhook' },
+	media_previewer: { label: 'Media Previewer' },
+	sonarr: { label: 'Sonarr' },
+	radarr: { label: 'Radarr' },
+	hispashare: { label: 'Hispashare' },
 };
 
 /** Must match HISPASHARE_DEFAULT_API_URL in backend/src/services/hispashare/HispashareApiClient.ts. */
@@ -65,10 +65,12 @@ export const ARR_SYNC_DEFAULT_INTERVAL_MINUTES = 60;
 export const ARR_SYNC_MIN_INTERVAL_MINUTES = 15;
 
 /**
- * Settings of a sonarr/radarr extension, stored as { apiKey, intervalMinutes, searchProviders } in its config.
+ * Settings of a sonarr/radarr extension, stored as { syncWanted, apiKey, intervalMinutes, searchProviders } in its config.
  * Must match ArrExtensionConfig in backend/src/services/arrsync/ArrSyncService.ts.
  */
 export interface ArrExtensionConfig {
+	/** Periodically sync the instance's wanted list, which needs the URL and API key; off, the extension only selects search providers. */
+	syncWanted: boolean;
 	apiKey: string;
 	intervalMinutes: number;
 	/**
@@ -82,6 +84,8 @@ export function parseArrConfig(config?: string): ArrExtensionConfig {
 	try {
 		const parsed = JSON.parse(config || '{}');
 		return {
+			// Configs saved before the sync was optional have no flag: they sync
+			syncWanted: parsed.syncWanted === undefined ? true : parsed.syncWanted === true,
 			apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
 			intervalMinutes: Number.isInteger(parsed.intervalMinutes) ? parsed.intervalMinutes : ARR_SYNC_DEFAULT_INTERVAL_MINUTES,
 			searchProviders: Array.isArray(parsed.searchProviders)
@@ -89,7 +93,7 @@ export function parseArrConfig(config?: string): ArrExtensionConfig {
 				: undefined,
 		};
 	} catch {
-		return { apiKey: '', intervalMinutes: ARR_SYNC_DEFAULT_INTERVAL_MINUTES };
+		return { syncWanted: true, apiKey: '', intervalMinutes: ARR_SYNC_DEFAULT_INTERVAL_MINUTES };
 	}
 }
 

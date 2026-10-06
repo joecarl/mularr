@@ -1,4 +1,4 @@
-import { component, inject, refBindInput, signal } from 'chispa';
+import { component, inject, refBindCheckbox, refBindInput, signal } from 'chispa';
 import {
 	ARR_SYNC_MIN_INTERVAL_MINUTES,
 	EXTENSION_TYPES,
@@ -12,14 +12,16 @@ import type { ConfigFormProps, ConfigFormValues } from './ConfigForm';
 import tpl from './ArrConfigForm.html';
 
 /**
- * Config form for the sonarr/radarr extensions: endpoint, API key, how often the wanted list is synced and
- * which search providers the instance uses, for the sync and for its own searches through the indexer.
+ * Config form for the sonarr/radarr extensions: which search providers the instance uses (for its own searches
+ * through the indexer and for the wanted sync) and, when the wanted sync is on, the endpoint, API key and how
+ * often the wanted list is synced.
  */
 export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, handle }) => {
 	const api = inject(ExtensionsApiService);
 	const stored = parseArrConfig(extension?.config);
 	const appName = EXTENSION_TYPES[type]?.label ?? type;
 
+	const syncWanted = signal(stored.syncWanted);
 	const url = signal(extension?.url ?? '');
 	const apiKey = signal(stored.apiKey);
 	const interval = signal(String(stored.intervalMinutes));
@@ -38,14 +40,21 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 		});
 
 	const read = (): (ConfigFormValues & { config: ArrExtensionConfig }) | { error: string } => {
+		const sync = syncWanted.get();
 		const urlValue = url.get().trim();
-		if (!urlValue) return { error: 'URL is required' };
 		const intervalMinutes = Number(interval.get());
-		if (!Number.isInteger(intervalMinutes) || intervalMinutes < ARR_SYNC_MIN_INTERVAL_MINUTES) {
-			return { error: `The sync interval must be a whole number of at least ${ARR_SYNC_MIN_INTERVAL_MINUTES} minutes` };
+		const intervalValid = Number.isInteger(intervalMinutes) && intervalMinutes >= ARR_SYNC_MIN_INTERVAL_MINUTES;
+		// The connection settings only matter while the sync is on; what was typed is kept either way
+		if (sync) {
+			if (!urlValue) return { error: 'URL is required to sync the wanted list' };
+			if (!intervalValid) return { error: `The sync interval must be a whole number of at least ${ARR_SYNC_MIN_INTERVAL_MINUTES} minutes` };
+			if (!apiKey.get().trim()) return { error: 'API key is required to sync the wanted list' };
 		}
-		if (!apiKey.get().trim()) return { error: 'API key is required' };
-		const config: Record<string, unknown> & ArrExtensionConfig = { apiKey: apiKey.get().trim(), intervalMinutes };
+		const config: Record<string, unknown> & ArrExtensionConfig = {
+			syncWanted: sync,
+			apiKey: apiKey.get().trim(),
+			intervalMinutes: intervalValid ? intervalMinutes : stored.intervalMinutes,
+		};
 		const available = availableProviders.get();
 		if (available.length > 0) {
 			// Only providers listed can be kept: one whose extension was disabled meanwhile is dropped
@@ -58,6 +67,7 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 
 	handle.read = read;
 	handle.test = async () => {
+		if (!syncWanted.get()) throw new Error('Enable the wanted list sync to test the connection');
 		const values = read();
 		if ('error' in values) throw new Error(values.error);
 		return (await api.testConnection(type, values.url, values.config)).message;
@@ -66,6 +76,8 @@ export const ArrConfigForm = component<ConfigFormProps>(({ type, extension, hand
 	return tpl.fragment({
 		appName: { inner: appName },
 		appName2: { inner: appName },
+		syncCheckbox: { _ref: refBindCheckbox(syncWanted) },
+		syncFields: { style: { display: () => (syncWanted.get() ? '' : 'none') } },
 		urlInput: { _ref: refBindInput(url) },
 		apiKeyInput: { _ref: refBindInput(apiKey) },
 		intervalInput: { _ref: refBindInput(interval), min: String(ARR_SYNC_MIN_INTERVAL_MINUTES) },

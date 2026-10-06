@@ -50,8 +50,10 @@ export interface ArrSyncExtensionStatus {
 	name: string;
 	type: 'sonarr' | 'radarr';
 	enabled: boolean;
-	/** False when the stored config has no usable API key; such an extension is never synced. */
+	/** False when the stored config is not usable (e.g. sync on with no API key); such an extension is never synced. */
 	configured: boolean;
+	/** The wanted list of this instance is synced (opted in, with URL and API key); false: the extension only selects search providers. */
+	syncWanted: boolean;
 	intervalMinutes: number | null;
 	/** Ids of the search providers this extension's titles are looked up on; empty when it is never searched, null when it searches all of them. */
 	searchProviders: string[] | null;

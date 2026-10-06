@@ -110,13 +110,13 @@ To configure as download client use the following settings:
 - **Type**: qBittorrent
 - **URL Base**: `/api/as-qbittorrent`
 
-### Automatic downloads (RSS sync)
+### Automatic downloads & RSS sync
 
-Sonarr/Radarr discover new episodes and releases through the indexer's RSS feed, which they poll every few minutes. eD2k has no such feed, so Mularr builds one from their **Wanted > Missing** lists.
+eD2k has no RSS feed for Sonarr/Radarr to poll, so Mularr builds one. In **Extensions**, add a **Sonarr** or **Radarr** extension with the instance URL and API key: Mularr periodically searches for the titles in its **Wanted > Missing** list and publishes the matches in its Torznab feed.
 
-In **Extensions**, add a **Sonarr** or **Radarr** extension with the instance URL and API key. Mularr will periodically search the providers for the missing titles and publish the matches in its Torznab feed, where Sonarr/Radarr grab them on their next RSS sync. The interval is configurable per instance (default 60 minutes), and so are the search providers used. That selection also applies to the automatic searches Sonarr/Radarr run through the indexer: TV searches use the providers selected in the Sonarr extensions, movie searches those of the Radarr extensions, and every provider when there is no such extension.
+The extension also chooses which search providers that app uses, for the sync and for its own automatic searches.
 
-The feed can also include new releases reported by the providers themselves: enable it in the **Hispashare** extension settings (the catalogue is polled periodically) or with the **Indexer feed** toggle in the Telegram view (new video files from indexed chats). The **Indexer Feed** view shows the state of each source.
+Unlike eD2k, Telegram and Hispashare do report new releases, and Mularr can add them to the same feed: enable it in the **Hispashare** extension settings or with the **Indexer feed** toggle in the Telegram view. The **Indexer Feed** view shows the state of the feed.
 
 ## Hispashare provider
 

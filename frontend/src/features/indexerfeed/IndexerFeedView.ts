@@ -48,7 +48,8 @@ function parseSearchResult(item: IndexerFeedItem): SourceInfo {
 
 function badgeOf(s: ArrSyncExtensionStatus): { text: string; color: string } {
 	if (!s.enabled) return { text: 'Disabled', color: '#808080' };
-	if (!s.configured) return { text: 'No API key', color: '#ff4d4d' };
+	if (!s.configured) return { text: 'Not configured', color: '#ff4d4d' };
+	if (!s.syncWanted) return { text: 'Sync off', color: '#808080' };
 	if (s.searchProviders?.length === 0) return { text: 'Not searched', color: '#808080' };
 	if (s.running) return { text: 'Running', color: '#2b7bd6' };
 	if (s.queued) return { text: 'Queued', color: '#2b7bd6' };
@@ -377,7 +378,7 @@ export const IndexerFeedView = component(() => {
 							cardBadge: { inner: badge.text, style: { color: badge.color } },
 							cardRunBtn: {
 								onclick: () => runSync(s),
-								disabled: !s.enabled || !s.configured || s.searchProviders?.length === 0 || s.running || s.queued,
+								disabled: !s.enabled || !s.configured || !s.syncWanted || s.searchProviders?.length === 0 || s.running || s.queued,
 							},
 							cardLastRun: {
 								inner: s.lastRunAt

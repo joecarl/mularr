@@ -98,13 +98,6 @@ export const ExtensionsView = component(() => {
 		});
 	};
 
-	const openConfigDialog = (ext: Extension) => {
-		if (hasConfigDialog(ext)) openEditDialog(ext);
-	};
-
-	// Every extension that points to a URL must stay editable after creation
-	const hasConfigDialog = (ext: Extension) => !!EXTENSION_TYPES[ext.type]?.requiresUrl;
-
 	refresh();
 
 	return tpl.fragment({
@@ -132,12 +125,7 @@ export const ExtensionsView = component(() => {
 												inner: v.enabled ? 'Enabled' : 'Disabled',
 												style: { color: v.enabled ? '#46d369' : '#ff4d4d', fontWeight: 'bold' },
 											},
-											mobBtnConfigure: {
-												style: { display: hasConfigDialog(v) ? '' : 'none' },
-												onclick: () => {
-													openConfigDialog(v);
-												},
-											},
+											mobBtnConfigure: { onclick: () => openEditDialog(v) },
 											mobBtnToggle: {
 												onclick: () => handleToggle(v.id, !!v.enabled),
 												inner: v.enabled ? 'Disable' : 'Enable',
@@ -151,12 +139,7 @@ export const ExtensionsView = component(() => {
 							typeCol: { inner: () => EXTENSION_TYPES[v.type]?.label ?? v.type },
 							enabledCol: { inner: v.enabled ? 'Yes' : 'No' },
 
-							btnConfigure: {
-								style: { display: hasConfigDialog(v) ? '' : 'none' },
-								onclick: () => {
-									openConfigDialog(v);
-								},
-							},
+							btnConfigure: { onclick: () => openEditDialog(v) },
 
 							btnToggle: {
 								onclick: () => handleToggle(v.id, !!v.enabled),

@@ -20,6 +20,13 @@ export function isArrExtensionType(type: string): type is ArrApp {
 
 /** Stored as the extension's `config` JSON. The base URL lives in the extension's `url` column. */
 export interface ArrExtensionConfig {
+	/**
+	 * Periodically sync the instance's wanted list (see ArrSyncService), which needs the extension URL and apiKey.
+	 * Off, the extension only holds the search provider selection of its app (see arrSearchProvidersFor). Absent
+	 * in configs saved before this existed: on.
+	 */
+	syncWanted: boolean;
+	/** API key of the instance; may be empty while syncWanted is off. */
 	apiKey: string;
 	/** Minutes between two sync runs of this instance. */
 	intervalMinutes: number;
@@ -40,8 +47,9 @@ export const ARR_SYNC_MIN_INTERVAL_MINUTES = 15;
  * Validates a config object as received from the API. Throws a message fit for the user on invalid input.
  */
 export function validateArrConfig(config: Record<string, unknown>): ArrExtensionConfig {
+	const syncWanted = config.syncWanted === undefined ? true : config.syncWanted === true;
 	const apiKey = typeof config.apiKey === 'string' ? config.apiKey.trim() : '';
-	if (!apiKey) throw new Error('apiKey is required');
+	if (syncWanted && !apiKey) throw new Error('apiKey is required to sync the wanted list');
 	let intervalMinutes = ARR_SYNC_DEFAULT_INTERVAL_MINUTES;
 	if (config.intervalMinutes !== undefined && config.intervalMinutes !== null && config.intervalMinutes !== '') {
 		const n = Number(config.intervalMinutes);
@@ -50,7 +58,7 @@ export function validateArrConfig(config: Record<string, unknown>): ArrExtension
 		}
 		intervalMinutes = n;
 	}
-	const normalized: ArrExtensionConfig = { apiKey, intervalMinutes };
+	const normalized: ArrExtensionConfig = { syncWanted, apiKey, intervalMinutes };
 	if (config.searchProviders !== undefined) {
 		if (!Array.isArray(config.searchProviders) || !config.searchProviders.every(isSearchProviderId)) {
 			throw new Error(`searchProviders must be an array of ${SEARCH_PROVIDER_IDS.join(', ')}`);
@@ -67,6 +75,15 @@ function isSearchProviderId(value: unknown): value is SearchProviderId {
 /** Whether the wanted titles of this config are searched anywhere (every provider when the list is absent). */
 export function hasSearchProviders(config: ArrExtensionConfig): boolean {
 	return config.searchProviders === undefined || config.searchProviders.length > 0;
+}
+
+/**
+ * Whether the wanted list of this extension is synced: opted in (see ArrExtensionConfig.syncWanted) and with the
+ * instance URL to read it; the API key is checked when the config is validated. Otherwise the extension only
+ * selects the search providers of its app.
+ */
+export function syncsWanted(ext: Extension, config: ArrExtensionConfig): boolean {
+	return config.syncWanted && !!ext.url?.trim();
 }
 
 /**
@@ -89,7 +106,7 @@ export function createArrApiClient(app: ArrApp, url: string, apiKey: string): Ar
 	return app === 'sonarr' ? new SonarrApiClient(url, apiKey) : new RadarrApiClient(url, apiKey);
 }
 
-/** Parses a stored config; null when it is missing or unusable (no API key). */
+/** Parses a stored config; null when it is missing or unusable (e.g. the sync is on with no API key). */
 export function parseArrConfig(config?: string | null): ArrExtensionConfig | null {
 	try {
 		return validateArrConfig(JSON.parse(config || '{}'));
@@ -180,8 +197,9 @@ export class ArrSyncService {
 	private toExtensionStatus(ext: Extension, now: number): ArrSyncExtensionStatus {
 		const config = parseArrConfig(ext.config);
 		const state = this.runStateByExtension.get(ext.id);
+		const syncWanted = !!config && syncsWanted(ext, config);
 		let nextRunAt: number | null = null;
-		if (ext.enabled && config && hasSearchProviders(config)) {
+		if (ext.enabled && config && syncWanted && hasSearchProviders(config)) {
 			if (this.forcedRuns.has(ext.id)) nextRunAt = now;
 			else if (state) nextRunAt = state.lastRunAt + config.intervalMinutes * 60_000;
 			else if (this.startedAt !== null) nextRunAt = Math.max(now, this.startedAt + FIRST_TICK_DELAY_MS);
@@ -192,6 +210,7 @@ export class ArrSyncService {
 			type: ext.type as ArrApp,
 			enabled: !!ext.enabled,
 			configured: !!config,
+			syncWanted,
 			intervalMinutes: config?.intervalMinutes ?? null,
 			searchProviders: config?.searchProviders ?? null,
 			running: this.currentExtensionId === ext.id,
@@ -215,14 +234,15 @@ export class ArrSyncService {
 		if (!ext || !isArrExtensionType(ext.type)) throw new Error('Extension is not a Sonarr/Radarr extension');
 		if (!ext.enabled) throw new Error('Extension is disabled');
 		const config = parseArrConfig(ext.config);
-		if (!config) throw new Error('Extension has no valid API key configured');
+		if (!config) throw new Error('Extension has no valid configuration');
+		if (!syncsWanted(ext, config)) throw new Error('The wanted sync is off for this extension');
 		if (!hasSearchProviders(config)) throw new Error('Extension has no search providers selected');
 		this.forcedRuns.add(extensionId);
 		void this.tick();
 	}
 
 	/**
-	 * Wanted titles of every enabled, configured instance, read live from Sonarr/Radarr, with what the sync
+	 * Wanted titles of every enabled instance with the sync on, read live from Sonarr/Radarr, with what the sync
 	 * knows about each: when it was last searched and how many of its releases sit in the feed. Instances
 	 * that cannot be read are reported in `errors` instead of failing the whole list.
 	 */
@@ -233,7 +253,7 @@ export class ArrSyncService {
 		for (const ext of this.db.getAllExtensions()) {
 			if (!ext.enabled || !isArrExtensionType(ext.type)) continue;
 			const config = parseArrConfig(ext.config);
-			if (!config) continue;
+			if (!config || !syncsWanted(ext, config)) continue;
 			try {
 				const jobs = await createArrApiClient(ext.type, ext.url, config.apiKey).getWantedSearchJobs();
 				for (const job of jobs) {
@@ -268,18 +288,18 @@ export class ArrSyncService {
 	// ---- Scheduling -------------------------------------------------------------
 
 	/**
-	 * Enabled sonarr/radarr extensions whose interval has elapsed since their last run, or with a run
-	 * requested. One with no search providers selected is never due: there is nowhere to search.
+	 * Enabled sonarr/radarr extensions with the sync on whose interval has elapsed since their last run, or with
+	 * a run requested. One with no search providers selected is never due: there is nowhere to search.
 	 */
 	private getDueExtensions(now: number): Extension[] {
 		return this.db.getAllExtensions().filter((ext) => {
 			if (!ext.enabled || !isArrExtensionType(ext.type)) return false;
 			const config = parseArrConfig(ext.config);
 			if (!config) {
-				this.logger.warn(`Extension "${ext.name}" (${ext.type}) has no valid API key configured; skipping`);
+				this.logger.warn(`Extension "${ext.name}" (${ext.type}) has no valid configuration; skipping`);
 				return false;
 			}
-			if (!hasSearchProviders(config)) return false;
+			if (!syncsWanted(ext, config) || !hasSearchProviders(config)) return false;
 			if (this.forcedRuns.has(ext.id)) return true;
 			const lastRun = this.runStateByExtension.get(ext.id)?.lastRunAt ?? 0;
 			return now - lastRun >= config.intervalMinutes * 60_000;
@@ -341,7 +361,7 @@ export class ArrSyncService {
 
 	private async sync(ext: Extension): Promise<{ wantedCount: number; searched: number; found: number }> {
 		const config = parseArrConfig(ext.config);
-		if (!config || !isArrExtensionType(ext.type)) throw new Error('Extension is not configured');
+		if (!config || !isArrExtensionType(ext.type) || !syncsWanted(ext, config)) throw new Error('Extension is not configured for the wanted sync');
 
 		const jobs = await createArrApiClient(ext.type, ext.url, config.apiKey).getWantedSearchJobs();
 		// Never searched first, then least recently searched, so a backlog larger than one run is covered over time
