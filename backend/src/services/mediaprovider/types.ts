@@ -16,6 +16,7 @@ export type {
 	MediaTransfer,
 	MediaTransfersResponse,
 	MediaSearchResult,
+	MediaSearchStartedResponse,
 	MediaSearchResponse,
 	MediaSearchStatusResponse,
 } from '../../types/MediaTypes';
@@ -50,6 +51,20 @@ export interface SearchCriteria {
 	providers?: readonly string[];
 }
 
+/**
+ * One search as a provider runs it: its own result buffer, independent of any other search on the same
+ * provider, so several clients searching at once each read their own results. Handed out by
+ * IMediaProvider.startSearch and kept by MediaSearchService for as long as the search is retrievable.
+ */
+export interface ProviderSearch {
+	/** Results gathered so far; the full set once done. */
+	getResults(): Promise<MediaSearchResult[]>;
+	/** 0 = not started / in progress, 1 = complete. */
+	getProgress(): Promise<number>;
+	/** True while the provider has not started it yet because it is busy with an earlier search (see AmuleMediaProvider). */
+	readonly queued: boolean;
+}
+
 export interface IMediaProvider {
 	readonly providerId: string;
 
@@ -62,8 +77,8 @@ export interface IMediaProvider {
 	/** Return true if this provider should handle the given link/hash. */
 	canHandleDownload(link: string): boolean;
 
-	/** Fire-and-forget search initiation. */
-	startSearch(criteria: SearchCriteria): Promise<void>;
+	/** Starts a search and returns right away with the handle its results are read from while it runs in the background. */
+	startSearch(criteria: SearchCriteria): Promise<ProviderSearch>;
 
 	/**
 	 * True for catalogue providers that answer SearchCriteria.imdbId on its own, with no text query. The
@@ -71,12 +86,6 @@ export interface IMediaProvider {
 	 * to them alone (see MediaSearchService.imdbIdSearchProviderIds).
 	 */
 	readonly searchesByImdbId?: boolean;
-
-	/** Return cached/latest search results for this provider. */
-	getSearchResults(): Promise<MediaSearchResult[]>;
-
-	/** 0 = not started / in-progress, 1 = complete. */
-	getSearchStatus(): Promise<number>;
 
 	addDownload(link: string): Promise<void>;
 	removeDownload(hash: string): Promise<void>;

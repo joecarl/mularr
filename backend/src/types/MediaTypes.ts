@@ -133,6 +133,11 @@ export interface MediaSearchResult {
 	providerData?: unknown;
 }
 
+/** Answer to starting a search: the id its results and status are polled with. */
+export interface MediaSearchStartedResponse {
+	searchId: string;
+}
+
 export interface MediaSearchResponse {
 	raw: string;
 	list: MediaSearchResult[];
@@ -143,4 +148,6 @@ export interface MediaSearchResponse {
 export interface MediaSearchStatusResponse {
 	raw: string;
 	progress: number; // 0–1
+	/** True while a provider has not started the search yet because it is busy with an earlier one (aMule runs one at a time). */
+	queued?: boolean;
 }

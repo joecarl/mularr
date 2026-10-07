@@ -1,8 +1,9 @@
+import { randomUUID } from 'crypto';
 import { container } from '../container/ServiceContainer';
 import { MainDB, blacklistEntryMatches } from '../db/MainDB';
 import { AppEvents } from '../AppEvents';
 import { MediaProviderService } from './MediaProviderService';
-import type { IMediaProvider, MediaSearchResult, MediaSearchResponse, MediaSearchStatusResponse, SearchCriteria } from './types';
+import type { IMediaProvider, MediaSearchResult, MediaSearchResponse, MediaSearchStatusResponse, ProviderSearch, SearchCriteria } from './types';
 import { LoggerFactory } from '../logging/Logger';
 
 /**
@@ -11,60 +12,101 @@ import { LoggerFactory } from '../logging/Logger';
  * keeps trickling results for many seconds; returning early yields a small, non-deterministic snapshot
  * (observed ~17 vs ~126) that drops long-tail releases. So the set is polled and the wait ends only once
  * its size is stable across STABLE_POLLS polls AND the search reports done, or MAX_WAIT_MS elapses —
- * favouring completeness over speed, within the *arr request timeout.
+ * favouring completeness over speed, within the *arr request timeout. That wait only starts once every
+ * provider has begun the search (see SEARCH_QUEUE_TIMEOUT_MS).
  */
 const SEARCH_POLL_MS = 1500;
 const SEARCH_MAX_WAIT_MS = 12000;
 const SEARCH_STABLE_POLLS = 3;
+/**
+ * Longest a collected search waits for its providers to begin before it is collected as is. aMule runs one
+ * search at a time and holds a new one in a queue while an earlier search has the daemon (see AmuleMediaProvider).
+ */
+const SEARCH_QUEUE_TIMEOUT_MS = 60000;
+/** Searches kept retrievable by id, most recent first; older ones are dropped with their results. */
+const MAX_KEPT_SEARCHES = 20;
+
+/** A search across providers, with the handle each provider gave for it. */
+interface Search {
+	id: string;
+	criteria: SearchCriteria;
+	parts: { provider: IMediaProvider; search: ProviderSearch }[];
+}
 
 /**
- * Coordinates searches across the media providers. There is one search at a time (aMule keeps a single
- * active search whose results are replaced by the next one), so everything that starts a search goes
- * through here: the web UI, which polls the results itself, and the callers that need the settled result
- * set (the Torznab indexer, the *arr wanted sync), which are serialized.
+ * Coordinates searches across the media providers. Every search gets an id and its own result buffers
+ * (see ProviderSearch), so searches started at the same time by several clients (two web UI sessions, the
+ * Torznab indexer, the *arr wanted sync) never read each other's results. Whether two can actually run at
+ * once is the provider's business: aMule queues them, the others run them side by side.
  */
 export class MediaSearchService {
 	private readonly logger = LoggerFactory.create(this);
 	private readonly db = container.get(MainDB);
 	private readonly events = container.get(AppEvents);
 	private readonly providers = container.get(MediaProviderService).providers;
-	public readonly searchHistory = new SearchHistory();
-	/** Tail of the searchAndCollect queue; every collected search chains on it so two never overlap. */
-	private searchQueue: Promise<unknown> = Promise.resolve();
-	private _lastInteractiveSearchAt = 0;
+	/** Kept searches by id, in start order (Map keeps insertion order). */
+	private readonly searches = new Map<string, Search>();
 
 	constructor() {
 		// A download is added by hash or link; the result it came from is only known here, so it is attached
-		// to the record right away, before another search displaces it from the history.
-		this.events.on('download.added', ({ hash }) => this.recordSearchResult(hash));
+		// to the record right away, before the search is dropped from the kept ones.
+		this.events.on('download.added', ({ hash }) => void this.recordSearchResult(hash));
 	}
 
 	/**
 	 * Keeps on the download record a snapshot of the search result it was added from, so Transfers can show
 	 * where the release came from (label, website page) without the frontend carrying that along. Looked up
-	 * in the recent searches first, then in the indexer feed, which still has it for releases the *arr grabs
-	 * from the RSS feed long after the search left the history.
+	 * in the kept searches first, then in the indexer feed, which still has it for releases the *arr grabs
+	 * from the RSS feed long after the search was dropped.
 	 */
-	private recordSearchResult(hash: string): void {
-		const result = this.searchHistory.findByHash(hash);
-		const json = result ? JSON.stringify(result) : (this.db.getIndexerFeedItem(hash)?.search_result ?? null);
-		if (json) {
-			this.db.setDownloadSearchResult(hash, json);
+	private async recordSearchResult(hash: string): Promise<void> {
+		try {
+			const result = await this.findResultByHash(hash);
+			const json = result ? JSON.stringify(result) : (this.db.getIndexerFeedItem(hash)?.search_result ?? null);
+			if (json) this.db.setDownloadSearchResult(hash, json);
+		} catch (e: any) {
+			this.logger.warn(`Could not record the search result of download ${hash}:`, e?.message ?? e);
 		}
 	}
 
+	/** A result of a kept search, most recent search first, by hash (case-insensitive); undefined when none matches. */
+	private async findResultByHash(hash: string): Promise<MediaSearchResult | undefined> {
+		const wanted = hash.toLowerCase();
+		for (const search of [...this.searches.values()].reverse()) {
+			for (const part of search.parts) {
+				const found = (await part.search.getResults()).find((r) => r.hash.toLowerCase() === wanted);
+				if (found) return found;
+			}
+		}
+		return undefined;
+	}
+
 	/**
-	 * Fire-and-forget search on the providers the criteria select (see SearchCriteria.providers). `interactive`
-	 * marks one driven by a client that polls getSearchResults itself (the web UI): background searches (see
-	 * searchAndCollect) hold off while such a search is recent, because starting another one would replace
-	 * the results the client is watching.
+	 * Starts a search on the providers the criteria select (see SearchCriteria.providers) and returns its id,
+	 * which getSearchResults / getSearchStatus take. `interactive` marks one a user is waiting for (the web
+	 * UI); rate-limited providers keep quota for those.
 	 */
-	async startSearch(criteria: SearchCriteria, interactive = false): Promise<void> {
+	async startSearch(criteria: SearchCriteria, interactive = false): Promise<string> {
 		const providers = this.selectProviders(criteria);
-		if (interactive) this._lastInteractiveSearchAt = Date.now();
-		await Promise.allSettled(providers.map((p) => p.startSearch({ ...criteria, interactive })));
-		this.searchHistory.addEntry(criteria.query, criteria.query);
+		const started = await Promise.allSettled(providers.map((p) => p.startSearch({ ...criteria, interactive })));
+		const parts: Search['parts'] = [];
+		started.forEach((r, i) => {
+			if (r.status === 'fulfilled') parts.push({ provider: providers[i], search: r.value });
+			else this.logger.warn(`${providers[i].providerId} could not start the search:`, r.reason?.message ?? r.reason);
+		});
+		const search: Search = { id: randomUUID(), criteria, parts };
+		this.keep(search);
 		this.events.emit('search.started', { query: criteria.query });
+		return search.id;
+	}
+
+	private keep(search: Search): void {
+		this.searches.set(search.id, search);
+		while (this.searches.size > MAX_KEPT_SEARCHES) {
+			const oldest = this.searches.keys().next().value;
+			if (oldest === undefined) break;
+			this.searches.delete(oldest);
+		}
 	}
 
 	/** Providers taking part in a search: those named by criteria.providers, or all of them. Throws when none of the named ones exists. */
@@ -84,24 +126,23 @@ export class MediaSearchService {
 		return this.providers.filter((p) => p.searchesByImdbId && p.isAvailable()).map((p) => p.providerId);
 	}
 
-	/** Epoch ms of the last interactive startSearch; 0 when none happened yet. */
-	get lastInteractiveSearchAt(): number {
-		return this._lastInteractiveSearchAt;
+	/** A kept search by id; throws when it is unknown or was dropped (see MAX_KEPT_SEARCHES). */
+	private getSearch(id: string): Search {
+		const search = this.searches.get(id);
+		if (!search) throw new UnknownSearchError(id);
+		return search;
 	}
 
-	/** Results of the current search across every provider, as the web UI polls them. */
-	getSearchResults(): Promise<MediaSearchResponse> {
-		return this.collectResults(this.providers);
+	/** Results of a search so far, as the web UI polls them. */
+	getSearchResults(id: string): Promise<MediaSearchResponse> {
+		return this.collectResults(this.getSearch(id));
 	}
 
-	private async collectResults(providers: IMediaProvider[]): Promise<MediaSearchResponse> {
-		const perProvider = await Promise.allSettled(providers.map((p) => p.getSearchResults()));
+	private async collectResults(search: Search): Promise<MediaSearchResponse> {
+		const perProvider = await Promise.allSettled(search.parts.map((part) => part.search.getResults()));
 		const combined: MediaSearchResult[] = [];
 		for (const r of perProvider) {
-			if (r.status === 'fulfilled') {
-				combined.push(...r.value);
-				this.searchHistory.pushResults(r.value);
-			}
+			if (r.status === 'fulfilled') combined.push(...r.value);
 		}
 		const { visible, blacklistedCount } = this.filterBlacklisted(combined);
 		return { raw: `Found ${visible.length} results`, list: visible, blacklistedCount };
@@ -119,123 +160,66 @@ export class MediaSearchService {
 		return { visible, blacklistedCount: results.length - visible.length };
 	}
 
-	getSearchStatus(): Promise<MediaSearchStatusResponse> {
-		return this.collectStatus(this.providers);
+	getSearchStatus(id: string): Promise<MediaSearchStatusResponse> {
+		return this.collectStatus(this.getSearch(id));
 	}
 
-	private async collectStatus(providers: IMediaProvider[]): Promise<MediaSearchStatusResponse> {
+	private async collectStatus(search: Search): Promise<MediaSearchStatusResponse> {
 		// Overall progress = minimum across providers (all must finish before we report 1.0)
-		const statuses = await Promise.allSettled(providers.map((p) => p.getSearchStatus()));
+		const statuses = await Promise.allSettled(search.parts.map((part) => part.search.getProgress()));
 		let min = 1;
 		for (const s of statuses) {
 			if (s.status === 'fulfilled') min = Math.min(min, s.value);
 		}
-		return { raw: `Search progress: ${(min * 100).toFixed(0)}%`, progress: min };
+		const queued = search.parts.some((part) => part.search.queued);
+		const raw = queued ? 'Waiting for an earlier search to finish' : `Search progress: ${(min * 100).toFixed(0)}%`;
+		return { raw, progress: min, queued };
 	}
 
 	/**
 	 * Runs a search and resolves with its (blacklist-filtered) results once they settle, see the SEARCH_*
-	 * constants. Concurrent callers are serialized: a second search would replace the first one's results.
+	 * constants. Several callers may collect at once; each gets its own search's results.
 	 */
-	searchAndCollect(criteria: SearchCriteria): Promise<MediaSearchResult[]> {
-		const run = this.searchQueue.then(() => this.doSearchAndCollect(criteria));
-		this.searchQueue = run.catch(() => {});
-		return run;
+	async searchAndCollect(criteria: SearchCriteria): Promise<MediaSearchResult[]> {
+		const search = this.getSearch(await this.startSearch(criteria));
+		if (await this.waitUntilStarted(search)) await this.waitUntilSettled(search);
+		else this.logger.warn(`Search "${criteria.query}" still queued after ${SEARCH_QUEUE_TIMEOUT_MS / 1000} s; collecting what there is`);
+		return (await this.collectResults(search)).list;
 	}
 
-	private async doSearchAndCollect(criteria: SearchCriteria): Promise<MediaSearchResult[]> {
-		// Only the providers searched are polled: a provider left out would report the results of its previous search
-		const providers = this.selectProviders(criteria);
-		await this.startSearch(criteria);
-		const startedAt = Date.now();
+	/** True once no provider holds the search in its queue; false when SEARCH_QUEUE_TIMEOUT_MS passes first. */
+	private async waitUntilStarted(search: Search): Promise<boolean> {
+		const deadline = Date.now() + SEARCH_QUEUE_TIMEOUT_MS;
+		while (Date.now() < deadline) {
+			if (!(await this.collectStatus(search)).queued) return true;
+			await sleep(SEARCH_POLL_MS);
+		}
+		return false;
+	}
+
+	/** Returns once the search reports done and its result count held still for SEARCH_STABLE_POLLS polls, or after SEARCH_MAX_WAIT_MS. */
+	private async waitUntilSettled(search: Search): Promise<void> {
+		const deadline = Date.now() + SEARCH_MAX_WAIT_MS;
 		let lastCount = -1;
 		let stable = 0;
-		while (Date.now() - startedAt < SEARCH_MAX_WAIT_MS) {
-			await new Promise((r) => setTimeout(r, SEARCH_POLL_MS));
-			const status = await this.collectStatus(providers);
-			const current = (await this.collectResults(providers)).list.length;
-			if (current === lastCount) {
-				stable++;
-				if (status.progress >= 1 && stable >= SEARCH_STABLE_POLLS) break;
-			} else {
-				stable = 0;
-			}
+		while (Date.now() < deadline) {
+			await sleep(SEARCH_POLL_MS);
+			const status = await this.collectStatus(search);
+			const current = (await this.collectResults(search)).list.length;
+			stable = current === lastCount ? stable + 1 : 0;
 			lastCount = current;
 			this.logger.debug(`Search progress: ${Math.floor(status.progress * 100)}%, results so far: ${current}`);
+			if (status.progress >= 1 && stable >= SEARCH_STABLE_POLLS) return;
 		}
-		return (await this.collectResults(providers)).list;
 	}
 }
 
-type MediaSearchResultsByHash = Record<string, MediaSearchResult>;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-interface SearchHistoryEntry {
-	id: string;
-	query: string;
-	timestamp: number;
-	results: MediaSearchResultsByHash;
-}
-
-/**
- * A simple in-memory cache for search results, keyed by query string.
- * Bad things will happend if and external service triggers a search on amule which is not handled by mularr
- */
-class SearchHistory {
-	private readonly searchesById: Record<string, SearchHistoryEntry> = {};
-	private current: SearchHistoryEntry | null = null;
-
-	addEntry(id: string, query: string, results: MediaSearchResultsByHash = {}) {
-		if (this.current) {
-			this.controlHistorySize();
-			this.searchesById[this.current.id] = this.current;
-		}
-		this.current = { id, query, timestamp: Date.now(), results };
-	}
-
-	private controlHistorySize() {
-		const MAX_HISTORY_SIZE = 10;
-		const entries = Object.values(this.searchesById);
-		if (entries.length > MAX_HISTORY_SIZE) {
-			// Sort by timestamp and remove the oldest entries
-			entries.sort((a, b) => a.timestamp - b.timestamp);
-			const excessCount = entries.length - MAX_HISTORY_SIZE;
-			for (let i = 0; i < excessCount; i++) {
-				delete this.searchesById[entries[i].id];
-			}
-		}
-	}
-
-	/** A result of the current or a kept search, most recent first, by hash (case-insensitive); undefined when none matches. */
-	findByHash(hash: string): MediaSearchResult | undefined {
-		const wanted = hash.toLowerCase();
-		const kept = Object.values(this.searchesById).sort((a, b) => b.timestamp - a.timestamp);
-		for (const entry of this.current ? [this.current, ...kept] : kept) {
-			const found = entry.results[hash] ?? Object.values(entry.results).find((r) => r.hash.toLowerCase() === wanted);
-			if (found) return found;
-		}
-		return undefined;
-	}
-
-	pushResults(results: MediaSearchResult[]) {
-		if (!this.current) return;
-		for (const r of results) {
-			this.current.results[r.hash] = r;
-		}
-	}
-
-	/**
-	 * Returns a read-only view of the search history, keyed by search ID.
-	 * The current search (if any) is not included in the returned object.
-	 */
-	getFullHistory() {
-		return this.searchesById as Readonly<typeof this.searchesById>;
-	}
-
-	deleteEntry(id: string) {
-		if (this.current?.id === id) {
-			this.current = null;
-		} else {
-			delete this.searchesById[id];
-		}
+/** The id names no kept search: it never existed, was dropped (see MAX_KEPT_SEARCHES) or predates a restart. */
+export class UnknownSearchError extends Error {
+	constructor(id: string) {
+		super(`Unknown search: ${id}`);
+		this.name = 'UnknownSearchError';
 	}
 }

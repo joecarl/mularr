@@ -129,8 +129,6 @@ const MAX_QUERIES_PER_RUN = 10;
 const MAX_RESULTS_PER_QUERY = 50;
 /** Feed items older than this are dropped, whatever filled them in; the *arr have had plenty of RSS syncs to see them. */
 export const FEED_RETENTION_DAYS = 30;
-/** A UI search this recent postpones the run: the user is watching results a new search would replace. */
-const INTERACTIVE_SEARCH_GRACE_MS = 2 * 60_000;
 
 /** Outcome of the last run of one extension. In memory only: a restart shows every extension as never run. */
 interface ExtensionRunState {
@@ -314,12 +312,6 @@ export class ArrSyncService {
 			this.logger.debug(`${this.postponedReason}; postponing wanted sync`);
 			return;
 		}
-		if (Date.now() - this.searchService.lastInteractiveSearchAt < INTERACTIVE_SEARCH_GRACE_MS) {
-			this.postponedReason = 'A search from the web UI is in progress';
-			this.logger.debug(`${this.postponedReason}; postponing wanted sync`);
-			return;
-		}
-
 		this.running = true;
 		this.postponedReason = null;
 		try {

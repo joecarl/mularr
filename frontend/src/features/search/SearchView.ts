@@ -14,6 +14,7 @@ import { ClipboardService } from '../../services/ClipboardService';
 import { ColumnsMenuService } from '../../services/ColumnsMenuService';
 import { BlacklistService } from '../../services/BlacklistService';
 import { Ed2kDownloadForm } from './Ed2kDownloadForm';
+import { SearchTabsBar, SearchTabsManager } from './SearchTabs';
 import tpl from './SearchView.html';
 import './SearchView.css';
 
@@ -173,7 +174,6 @@ export const SearchView = component(() => {
 	const columnsMenu = inject(ColumnsMenuService);
 	const columns = new TableColumns({ prefs, prefsKey: 'search' });
 
-	const statusLog = signal('');
 	const searchQuery = signal('');
 	const searchType = signal(prefs.get('search.type', 'Global'));
 
@@ -210,82 +210,39 @@ export const SearchView = component(() => {
 		mgr.clearSelection();
 	});
 
-	const searchProgress = signal(0);
 	const downloadingHashes = signal<Set<string>>(new Set());
-	const blacklistedCount = signal(0);
 
-	let isPolling = false;
+	// ---- Tabs: one per search, the table shows the active one's results (see SearchTabs.ts) ----
+	const tabs = new SearchTabsManager({
+		api: apiService,
+		prefs,
+		showResults: (results) => mgr.items.set(results),
+		onSwitch: () => mgr.clearSelection(),
+	});
+	const activeTab = tabs.activeTab;
+	onUnmount(() => tabs.dispose());
 
 	const performSearch = async () => {
-		if (!searchQuery.get()) return;
+		const query = searchQuery.get();
+		if (!query) return;
 		try {
-			await apiService.search(searchQuery.get(), searchType.get());
-			statusLog.set('Search started. Waiting for results...');
-			mgr.items.set([]);
-			searchProgress.set(0);
-			blacklistedCount.set(0);
-			startPolling();
+			await tabs.start(query, searchType.get());
 		} catch (e: any) {
 			await dialogService.alert(e.message, 'Search Error');
 		}
 	};
 
-	const loadSearchStatus = smartLoad(async () => {
-		const status = await apiService.getSearchStatus();
-		// Progress comes as 0 to 1 from backend
-		searchProgress.set(status.progress);
-		return status.progress;
-	}, 'search-status');
+	const loadResults = () => tabs.loadResults();
 
-	const loadResults = async () => {
-		try {
-			const data = await apiService.getSearchResults();
-			blacklistedCount.set(data.blacklistedCount ?? 0);
-			if (data.list && data.list.length > 0) {
-				mgr.items.set(data.list);
-				statusLog.set(`Found ${data.list.length} results.`);
-			} else if (mgr.items.get().length === 0) {
-				statusLog.set('No results found yet or search is still in progress.');
-			}
-		} catch (e: any) {
-			statusLog.set('Error loading results: ' + e.message);
-		}
-	};
+	// ---- Downloads --------------------------------------------------------------
 
-	let intervalId: any = null;
-
-	const startPolling = () => {
-		if (isPolling) return;
-		isPolling = true;
-
-		if (intervalId) clearInterval(intervalId);
-
-		intervalId = setInterval(async () => {
-			const progress = await loadSearchStatus();
-			await loadResults();
-
-			if (progress == null || progress >= 1 || progress === 0) {
-				stopPolling();
-				// Final load to ensure we have the latest results
-				setTimeout(() => {
-					loadResults();
-				}, 1500);
-			}
-		}, 1000);
-	};
-
-	const stopPolling = () => {
-		if (intervalId) {
-			clearInterval(intervalId);
-			intervalId = null;
-		}
-		isPolling = false;
-	};
-
-	onUnmount(() => stopPolling());
-
-	// Initial load: check if a search is already in progress
-	startPolling();
+	/**
+	 * What to hand the backend to download a result: its ed2k link when it has one, the bare hash otherwise
+	 * (Telegram). A bare hash only works for aMule while the hash is in the daemon's current search, and a
+	 * tab shows its own buffered search, which another search may have replaced there by now; the link works
+	 * regardless (it is what the *arr send too), the sources just come from the servers instead of the search.
+	 */
+	const downloadRefOf = (result: MediaSearchResult): string => (result.link?.startsWith('ed2k://') ? result.link : result.hash);
 
 	const download = async (result: MediaSearchResult) => {
 		const hash = result.hash;
@@ -295,10 +252,7 @@ export const SearchView = component(() => {
 			s.add(hash);
 			downloadingHashes.set(s);
 
-			// aMule's own results go by bare hash, which seeds the download with the sources of the search; results
-			// found by other providers (Hispashare) are not in aMule's last search, so they need the whole ed2k link.
-			const link = result.provider !== 'amule' && result.link?.startsWith('ed2k://') ? result.link : hash;
-			await apiService.addDownload(link);
+			await apiService.addDownload(downloadRefOf(result));
 			console.log('Download added successfully');
 			loadResults();
 			mgr.clearSelection();
@@ -318,7 +272,8 @@ export const SearchView = component(() => {
 		for (const h of hashes) newSet.add(h);
 		downloadingHashes.set(newSet);
 		try {
-			await Promise.allSettled(hashes.map((hash) => apiService.addDownload(hash)));
+			const byHash = new Map(mgr.items.get().map((r) => [r.hash, r]));
+			await Promise.allSettled(hashes.map((hash) => apiService.addDownload(byHash.get(hash) ? downloadRefOf(byHash.get(hash)!) : hash)));
 			loadResults();
 			mgr.clearSelection();
 		} catch (e: any) {
@@ -329,6 +284,8 @@ export const SearchView = component(() => {
 			downloadingHashes.set(s);
 		}
 	};
+
+	const activeProgress = () => activeTab.get()?.progress ?? 0;
 
 	return tpl.fragment({
 		thName: { onclick: () => mgr.sort('name') },
@@ -351,14 +308,15 @@ export const SearchView = component(() => {
 			_ref: refBindSelect(searchType),
 		},
 		searchBtn: { onclick: performSearch },
-		refreshBtn: { onclick: loadResults },
+		refreshBtn: { onclick: loadResults, disabled: () => activeTab.get() === null },
 		providerFilterBlock: {
 			style: { display: () => (providerFilterOptions.get().length > 0 ? '' : 'none') },
 		},
 		providerFilterSelect: {
 			_ref: refBindSelect(providerFilter, providerFilterOptions),
 		},
-		resultsList: { inner: statusLog },
+		searchTabs: SearchTabsBar({ tabs }),
+		resultsList: { inner: () => activeTab.get()?.status ?? '' },
 		resultsContainer: {
 			inner: () => ResultsRows(visibleResults, { onDownload: (r) => download(r), downloadingHashes, selectionMgr: mgr, onBlacklisted: loadResults }),
 		},
@@ -378,16 +336,16 @@ export const SearchView = component(() => {
 		},
 		searchProgressContainer: {
 			style: {
-				opacity: () => (searchProgress.get() === 0 ? '0.5' : ''),
+				opacity: () => (activeProgress() === 0 ? '0.5' : ''),
 			},
 		},
 		searchProgressBar: {
 			style: {
-				width: () => `${Math.min(100, searchProgress.get() * 100)}%`,
+				width: () => `${Math.min(100, activeProgress() * 100)}%`,
 			},
 		},
 		searchProgressText: {
-			inner: () => `${Math.floor(Math.min(1, searchProgress.get()) * 100)}%`,
+			inner: () => `${Math.floor(Math.min(1, activeProgress()) * 100)}%`,
 		},
 		resultsCountLabel: {
 			style: { display: () => (visibleResults.get().length > 0 ? '' : 'none') },
@@ -397,9 +355,9 @@ export const SearchView = component(() => {
 			},
 		},
 		blacklistHiddenLabel: {
-			style: { display: () => (blacklistedCount.get() > 0 ? '' : 'none') },
+			style: { display: () => ((activeTab.get()?.blacklistedCount ?? 0) > 0 ? '' : 'none') },
 			inner: () => {
-				const n = blacklistedCount.get();
+				const n = activeTab.get()?.blacklistedCount ?? 0;
 				return n > 0 ? `🚫 ${n} result${n === 1 ? '' : 's'} hidden by blacklist` : '';
 			},
 		},

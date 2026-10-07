@@ -2,7 +2,7 @@ import { container } from '../../container/ServiceContainer';
 import { parseEd2kLink } from '../../eD2kTools';
 import { HispashareApiClient, HispashareRateLimitError, hispashareTitleUrl, type HispashareTitle } from '../../hispashare/HispashareApiClient';
 import { HispashareService } from '../../hispashare/HispashareService';
-import type { IMediaProvider, MediaSearchResult, MediaTransfer, SearchCriteria } from '../types';
+import type { IMediaProvider, MediaSearchResult, MediaTransfer, ProviderSearch, SearchCriteria } from '../types';
 import { LoggerFactory } from '../../logging/Logger';
 
 export const HISPASHARE_PROVIDER_ID = 'hispashare';
@@ -17,8 +17,6 @@ export class HispashareMediaProvider implements IMediaProvider {
 	readonly providerId = HISPASHARE_PROVIDER_ID;
 	readonly searchesByImdbId = true;
 	private readonly hispashare = container.get(HispashareService);
-	private results: MediaSearchResult[] = [];
-	private searchDone = true;
 
 	isAvailable(): boolean {
 		return this.hispashare.getClient() !== null;
@@ -28,45 +26,47 @@ export class HispashareMediaProvider implements IMediaProvider {
 		return false;
 	}
 
-	async startSearch(criteria: SearchCriteria): Promise<void> {
-		this.results = [];
+	/** One HTTP request per search, each into its own buffer: searches never interfere with each other. */
+	async startSearch(criteria: SearchCriteria): Promise<ProviderSearch> {
+		let results: MediaSearchResult[] = [];
+		let done = false;
 		const client = this.hispashare.getClient();
-		if (!client) {
-			this.searchDone = true;
-			return;
+		if (client) {
+			// Runs in the background like the other providers; getProgress reports completion
+			this.runSearch(client, criteria)
+				.then((found) => {
+					results = found;
+				})
+				.catch((error: any) => {
+					if (error instanceof HispashareRateLimitError) this.logger.info(`Search skipped: ${error.message}`);
+					else this.logger.warn('Search failed:', error?.message ?? error);
+				})
+				.finally(() => {
+					done = true;
+				});
+		} else {
+			done = true;
 		}
-		this.searchDone = false;
-		// Runs in the background like the other providers; getSearchStatus reports completion
-		this.runSearch(client, criteria)
-			.catch((error: any) => {
-				if (error instanceof HispashareRateLimitError) this.logger.info(`Search skipped: ${error.message}`);
-				else this.logger.warn('Search failed:', error?.message ?? error);
-			})
-			.finally(() => {
-				this.searchDone = true;
-			});
+		return {
+			queued: false,
+			getResults: async () => results,
+			getProgress: async () => (done ? 1 : 0.5),
+		};
 	}
 
-	private async runSearch(client: HispashareApiClient, criteria: SearchCriteria): Promise<void> {
+	private async runSearch(client: HispashareApiClient, criteria: SearchCriteria): Promise<MediaSearchResult[]> {
 		const interactive = !!criteria.interactive;
 		let titles: HispashareTitle[];
 		if (criteria.imdbId) {
 			titles = await client.titlesByImdb(criteria.imdbId, interactive);
 		} else {
 			const q = firstQueryVariant(criteria.query);
-			if (!q) return;
+			if (!q) return [];
 			titles = await client.searchTitles(q, interactive);
 		}
-		this.results = hispashareSearchResults(titles);
-		this.logger.info(`Search completed: ${titles.length} title(s), ${this.results.length} file(s)`);
-	}
-
-	async getSearchResults(): Promise<MediaSearchResult[]> {
-		return this.results;
-	}
-
-	async getSearchStatus(): Promise<number> {
-		return this.searchDone ? 1 : 0.5;
+		const results = hispashareSearchResults(titles);
+		this.logger.info(`Search completed: ${titles.length} title(s), ${results.length} file(s)`);
+		return results;
 	}
 
 	// Downloads are eD2k transfers owned by aMule; MediaProviderService never routes them here (canHandleDownload is false)

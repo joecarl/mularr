@@ -1,5 +1,5 @@
 import { BaseApiService } from './BaseApiService';
-import type { MediaCategory, MediaTransfersResponse, MediaSearchResponse, MediaSearchStatusResponse } from './MediaApiService';
+import type { MediaCategory, MediaTransfersResponse } from './MediaApiService';
 
 export interface ConnectionState {
 	ed2kConnected?: boolean;
@@ -267,21 +267,6 @@ export class AmuleApiService extends BaseApiService {
 
 	async deleteSharedFile(hash: string): Promise<SuccessResponse> {
 		return this.request<SuccessResponse>(`/shared/${hash}`, { method: 'DELETE' });
-	}
-
-	async search(query: string, type: string): Promise<SuccessResponse> {
-		return this.request<SuccessResponse>('/search', {
-			method: 'POST',
-			body: JSON.stringify({ query, type }),
-		});
-	}
-
-	async getSearchResults(): Promise<MediaSearchResponse> {
-		return this.request<MediaSearchResponse>('/search/results');
-	}
-
-	async getSearchStatus(): Promise<MediaSearchStatusResponse> {
-		return this.request<MediaSearchStatusResponse>('/search/status');
 	}
 
 	async getUploadQueue(): Promise<UploadQueueResponse> {

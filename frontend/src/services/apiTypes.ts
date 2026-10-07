@@ -21,6 +21,7 @@ export type {
 	MediaTransfer,
 	MediaTransfersResponse,
 	MediaSearchResult,
+	MediaSearchStartedResponse,
 	MediaSearchResponse,
 	MediaSearchStatusResponse,
 	SearchProviderId,

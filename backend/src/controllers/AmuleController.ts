@@ -93,34 +93,6 @@ export class AmuleController {
 		}
 	};
 
-	search = async (req: Request, res: Response) => {
-		try {
-			const { query, type } = req.body;
-			await this.amuleService.startSearch(query, type);
-			res.json({ success: true });
-		} catch (e: any) {
-			res.status(500).json({ error: e.message });
-		}
-	};
-
-	getSearchResults = async (req: Request, res: Response) => {
-		try {
-			const results = await this.amuleService.getSearchResults();
-			res.json(results);
-		} catch (e: any) {
-			res.status(500).json({ error: e.message });
-		}
-	};
-
-	getSearchStatus = async (req: Request, res: Response) => {
-		try {
-			const status = await this.amuleService.getSearchStatus();
-			res.json(status);
-		} catch (e: any) {
-			res.status(500).json({ error: e.message });
-		}
-	};
-
 	getUploadQueue = async (req: Request, res: Response) => {
 		try {
 			const queue = await this.amuleService.getUploadQueue();

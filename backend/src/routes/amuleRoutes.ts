@@ -14,9 +14,6 @@ export const amuleRoutes = () => {
 	router.post('/transfers/clear-completed', controller.clearCompletedTransfers);
 	router.get('/shared', controller.getSharedFiles);
 	router.delete('/shared/:hash', controller.deleteSharedFile);
-	router.post('/search', controller.search);
-	router.get('/search/results', controller.getSearchResults);
-	router.get('/search/status', controller.getSearchStatus);
 	router.get('/upload-queue', controller.getUploadQueue);
 	router.get('/update', controller.getUpdate);
 	router.get('/categories', controller.getCategories);

@@ -80,6 +80,16 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'feature',
 				text: 'Telegram: a Join queue tab to paste a list of channel links (public usernames or invite links) that Mularr joins one by one in the background, pausing between joins and waiting whenever Telegram limits the account; joined chats can be enabled for indexing right away. Links of chats the account is already in are skipped.',
 			},
+			{
+				id: 17,
+				type: 'feature',
+				text: 'Search tabs: every search opens in its own tab with its own results, so several searches can be kept open, compared and downloaded from. Tabs survive navigating away and reloading; the backend keeps the last 20 searches. Searches from other browsers or devices no longer replace what you are looking at.',
+			},
+			{
+				id: 18,
+				type: 'fix',
+				text: 'A search from the Search view no longer gets its results replaced by the Sonarr/Radarr wanted sync or by an automatic search running at the same time (seen as unrelated Hispashare results showing up under your query). aMule runs one search at a time, so searches now queue: a new one waits for the previous one to settle (up to 15 s), and the tab shows while it is waiting.',
+			},
 		],
 	},
 ];
