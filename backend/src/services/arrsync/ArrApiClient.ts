@@ -1,6 +1,6 @@
 import type { IndexerFeedMediaType } from '../db/MainDB';
 import type { MediaSearchResult } from '../mediaprovider';
-import { expandApostrophes } from '../releaseNameTools';
+import { expandApostrophes } from '../../tools/releaseNameTools';
 
 /**
  * Base client for the *arr v3 API (Sonarr, Radarr): authentication, paging, the endpoints they share and

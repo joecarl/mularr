@@ -2,7 +2,7 @@ import { container } from '../../container/ServiceContainer';
 import type { HispashareTitle } from '../../hispashare/HispashareApiClient';
 import { HISPASHARE_FEED_DEFAULT_INTERVAL_MINUTES, HispashareService } from '../../hispashare/HispashareService';
 import { hispashareSearchResults } from '../../mediaprovider/adapters/HispashareMediaProvider';
-import { guessMediaType } from '../../releaseNameTools';
+import { guessMediaType } from '../../../tools/releaseNameTools';
 import type { IndexerFeedMediaType } from '../../../types/IndexerFeedTypes';
 import { FEED_RELEASE_MAX_AGE_MS, type FeedRelease, type IFeedProvider } from '../types';
 import { LoggerFactory } from '../../logging/Logger';

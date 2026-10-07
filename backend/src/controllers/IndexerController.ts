@@ -3,10 +3,10 @@ import { container } from '../services/container/ServiceContainer';
 import { eD2kLinkToFakeMagnet, hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaSearchService, MediaSearchResult } from '../services/mediaprovider';
 import { MainDB, type Extension, type IndexerFeedMediaType, type IndexerFeedRecord } from '../services/db/MainDB';
-import { expandApostrophes, filterByEpisode } from '../services/releaseNameTools';
+import { expandApostrophes, filterByEpisode } from '../tools/releaseNameTools';
 import { toImdbId, type ArrApp } from '../services/arrsync/ArrApiClient';
 import { arrSearchProvidersFor, isArrExtensionType, parseArrConfig } from '../services/arrsync/ArrSyncService';
-import { parseEd2kLink } from '../services/eD2kTools';
+import { parseEd2kLink } from '../tools/eD2kTools';
 import { LoggerFactory } from '../services/logging/Logger';
 
 /** What renderRss needs from a release. pubDate defaults to now (live search results). */

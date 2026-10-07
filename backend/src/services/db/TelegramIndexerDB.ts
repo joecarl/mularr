@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { LoggerFactory } from '../logging/Logger';
+import { sleep } from '../../tools/asyncTools';
 
 export interface Chat {
 	id: string;
@@ -622,7 +623,7 @@ export class TelegramIndexerDB {
 	public async searchFiles(query: string, limit: number = 50, cursorId: number = 0): Promise<{ rows: MessageRow[]; nextCursor: number | null }> {
 		// better-sqlite3 is synchronous; yield to the event loop before running the
 		// query so callers in pagination loops don't starve other async work.
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		await sleep(0);
 
 		const match = toFtsMatchExpr(query);
 		if (match === null) return { rows: [], nextCursor: null };

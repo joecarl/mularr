@@ -6,7 +6,7 @@ import { AmuleService } from '../AmuleService';
 import { AmuledService } from '../AmuledService';
 import { MainDB, blacklistEntryMatches, type DownloadDbRecord } from '../db/MainDB';
 import { AppEvents, toDownloadEventPayload } from '../AppEvents';
-import { parseEd2kLink } from '../eD2kTools';
+import { parseEd2kLink } from '../../tools/eD2kTools';
 import { AmuleMediaProvider } from './adapters/AmuleMediaProvider';
 import { TelegramMediaProvider } from './adapters/TelegramMediaProvider';
 import { HispashareMediaProvider } from './adapters/HispashareMediaProvider';

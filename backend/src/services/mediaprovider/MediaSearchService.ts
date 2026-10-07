@@ -5,6 +5,7 @@ import { AppEvents } from '../AppEvents';
 import { MediaProviderService } from './MediaProviderService';
 import type { IMediaProvider, MediaSearchResult, MediaSearchResponse, MediaSearchStatusResponse, ProviderSearch, SearchCriteria } from './types';
 import { LoggerFactory } from '../logging/Logger';
+import { sleep } from '../../tools/asyncTools';
 
 /**
  * Polling parameters of searchAndCollect. Gather until the result set stops growing, not just until EC
@@ -213,8 +214,6 @@ export class MediaSearchService {
 		}
 	}
 }
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** The id names no kept search: it never existed, was dropped (see MAX_KEPT_SEARCHES) or predates a restart. */
 export class UnknownSearchError extends Error {

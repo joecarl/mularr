@@ -1,11 +1,10 @@
 import { __APP_CONFIG__ } from '../app-env';
 import { LoggerFactory } from '../services/logging/Logger';
 import { getMockWorld } from './MockWorld';
+import { sleep } from '../tools/asyncTools';
 
 /** How long a simulated daemon restart keeps `isRestarting` up, so the UI banner can be seen. */
 const RESTART_MS = 3000;
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Stand-in for AmuledService in MOCK_MODE. There is no process to spawn or amule.conf to rewrite: the

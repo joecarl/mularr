@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { parseEd2kLink } from '../services/eD2kTools';
+import { parseEd2kLink } from '../tools/eD2kTools';
 import type { MediaTransfer } from '../types/MediaTypes';
 
 /** Seed limits as configured (see AppConfig.seeding); 0 means no limit of that kind. */

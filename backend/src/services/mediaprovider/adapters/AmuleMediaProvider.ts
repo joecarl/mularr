@@ -2,6 +2,7 @@ import { container } from '../../container/ServiceContainer';
 import { AmuleService } from '../../AmuleService';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer, ProviderSearch, SearchCriteria } from '../types';
 import { LoggerFactory } from '../../logging/Logger';
+import { sleep } from '../../../tools/asyncTools';
 
 /** How often the active search copies the daemon's result list into its buffer. */
 const POLL_MS = 1500;
@@ -81,7 +82,7 @@ export class AmuleMediaProvider implements IMediaProvider {
 			const startedAt = Date.now();
 			let stablePolls = 0;
 			while (true) {
-				await new Promise((r) => setTimeout(r, POLL_MS));
+				await sleep(POLL_MS);
 				const before = search.results.length;
 				// The daemon's list only grows during a search; a shorter one is a failed read (see readResults)
 				const list = await this.readResults();

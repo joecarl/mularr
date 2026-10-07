@@ -1,4 +1,4 @@
-import { releaseMatchesYear } from '../releaseNameTools';
+import { releaseMatchesYear } from '../../tools/releaseNameTools';
 import { ArrApiClient, titleToSearchQuery, toImdbId, type SearchJob } from './ArrApiClient';
 
 /** A monitored movie without a file (Radarr `wanted/missing`). */

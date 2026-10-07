@@ -1,4 +1,4 @@
-import { releaseMatchesEpisode } from '../releaseNameTools';
+import { releaseMatchesEpisode } from '../../tools/releaseNameTools';
 import { ArrApiClient, titleToSearchQuery, toImdbId, type SearchJob } from './ArrApiClient';
 
 /** A monitored, already aired episode without a file (Sonarr `wanted/missing`). */

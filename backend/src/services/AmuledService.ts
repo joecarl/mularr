@@ -6,6 +6,7 @@ import net from 'net';
 import { __APP_CONFIG__ } from '../app-env';
 import { AmuleLogWatcher } from './AmuleLogWatcher';
 import { LoggerFactory } from './logging/Logger';
+import { sleep } from '../tools/asyncTools';
 
 const execPromise = util.promisify(exec);
 
@@ -131,7 +132,7 @@ export class AmuledService {
 			this.logger.warn('amuled did not stop gracefully, sending SIGKILL...');
 			await this.killDaemon('KILL');
 			// Give the kernel a moment to reap it
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await sleep(500);
 		}
 		this._isStopping = false;
 	}
@@ -154,7 +155,7 @@ export class AmuledService {
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
 			if (!(await this.isDaemonRunning())) return true; // Process is dead
-			await new Promise((resolve) => setTimeout(resolve, interval));
+			await sleep(interval);
 		}
 		return false;
 	}
@@ -202,7 +203,7 @@ export class AmuledService {
 			}
 			this.logger.warn('amuled process found but EC port unreachable — force killing zombie...');
 			await this.killDaemon('KILL');
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await sleep(1500);
 		}
 		// Remove stale lock files that prevent amuled from starting after a hard kill
 		for (const lockFile of ['amuled.lock', 'amuled.pid', '.lock', 'muleLock']) {
@@ -427,7 +428,7 @@ export class AmuledService {
 				this.sharedDirsManager.setSharedDirectories(sharedDirs);
 			}
 
-			await new Promise((resolve) => setTimeout(resolve, 5000)); // Give the kernel a moment to release the port
+			await sleep(5000); // Give the kernel a moment to release the port
 
 			let content = fs.readFileSync(confPath, 'utf-8');
 			for (const [key, value] of Object.entries(replacements)) {

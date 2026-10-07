@@ -8,9 +8,10 @@ import { __APP_CONFIG__ } from '../app-env';
 import { container } from './container/ServiceContainer';
 import { MainDB, DownloadDbRecord } from '../services/db/MainDB';
 import { AppEvents, toDownloadEventPayload } from './AppEvents';
-import { buildEd2kLink, parseEd2kLink } from './eD2kTools';
+import { buildEd2kLink, parseEd2kLink } from '../tools/eD2kTools';
 import { MediaCategory, ChunkInfo, TransferSource, TransferSourceNameCount } from './mediaprovider/types';
 import { LoggerFactory } from './logging/Logger';
+import { sleep } from '../tools/asyncTools';
 
 function normalizeCategoryName(name: string | null, ctgs: MediaCategory[]): string {
 	const DEFAULT_VALUE = 'default';
@@ -512,7 +513,7 @@ export class AmuleService {
 		let results = { list: [] as any[] };
 
 		while (Date.now() - start < timeoutMs) {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await sleep(1500);
 			results = await this.getSearchResults();
 			// If we have a decent amount of results, return early
 			if (results.list.length >= resultsThreshold) break;

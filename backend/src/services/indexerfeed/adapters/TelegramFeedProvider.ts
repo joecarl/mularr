@@ -3,7 +3,7 @@ import type { MessageRow } from '../../db/TelegramIndexerDB';
 import { TelegramIndexerService } from '../../TelegramIndexerService';
 import { telegramSourceName } from '../../mediaprovider/adapters/TelegramMediaProvider';
 import type { MediaSearchResult } from '../../mediaprovider';
-import { guessMediaType, isVideoFileName } from '../../releaseNameTools';
+import { guessMediaType, isVideoFileName } from '../../../tools/releaseNameTools';
 import { FEED_RELEASE_MAX_AGE_MS, type FeedRelease, type FeedReleaseListener, type IFeedProvider } from '../types';
 
 /**

@@ -12,6 +12,7 @@ import { TelegramDownloadManager, getDownloadableDocument } from './TelegramDown
 import { JoinedChat, JoinQueueStatus, TelegramJoinManager, usernameOf } from './TelegramJoinManager';
 import { LoggerFactory } from './logging/Logger';
 import { __APP_CONFIG__ } from '../app-env';
+import { sleep } from '../tools/asyncTools';
 
 export type AuthStatus = 'disconnected' | 'waiting_code' | 'waiting_password' | 'connected' | 'authenticating';
 
@@ -639,12 +640,12 @@ export class TelegramIndexerService {
 				}
 
 				// Rate limiting pause
-				await new Promise((resolve) => setTimeout(resolve, this.RATE_LIMIT_DELAY));
+				await sleep(this.RATE_LIMIT_DELAY);
 			} catch (err) {
 				if (err instanceof FloodWaitError) {
 					const waitSeconds = err.seconds;
 					this.logger.warn(`FloodWaitError: Waiting for ${waitSeconds} seconds.`);
-					await new Promise((resolve) => setTimeout(resolve, (waitSeconds + 1) * 1000));
+					await sleep((waitSeconds + 1) * 1000);
 				} else {
 					this.logger.error(`Error fetching history for ${chatName}:`, err);
 					lastError = err instanceof Error ? err.message : String(err);
@@ -849,12 +850,12 @@ export class TelegramIndexerService {
 			if (err instanceof FloodWaitError) {
 				const waitSeconds = err.seconds;
 				this.logger.warn(`FloodWait caught in wrapper: waiting ${waitSeconds}s`);
-				await new Promise((resolve) => setTimeout(resolve, (waitSeconds + 1) * 1000));
+				await sleep((waitSeconds + 1) * 1000);
 				return this.executeWithRetry(fn, retries - 1);
 			}
 			if (retries > 0) {
 				this.logger.error(`Error in API call, retrying... (${retries} left)`, err);
-				await new Promise((resolve) => setTimeout(resolve, 2000));
+				await sleep(2000);
 				return this.executeWithRetry(fn, retries - 1);
 			}
 			throw err;

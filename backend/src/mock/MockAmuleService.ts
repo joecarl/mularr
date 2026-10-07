@@ -5,10 +5,11 @@ import type { ServerPriority, UpdateResponse } from 'amule-ec-client';
 import { container } from '../services/container/ServiceContainer';
 import { MainDB, type DownloadDbRecord } from '../services/db/MainDB';
 import { AppEvents, toDownloadEventPayload } from '../services/AppEvents';
-import { buildEd2kLink, parseEd2kLink } from '../services/eD2kTools';
+import { buildEd2kLink, parseEd2kLink } from '../tools/eD2kTools';
 import { LoggerFactory } from '../services/logging/Logger';
 import type { MediaCategory, MediaTransfer } from '../types/MediaTypes';
 import { getMockWorld, type MockQueueEntry } from './MockWorld';
+import { sleep } from '../tools/asyncTools';
 
 /** Same rule as AmuleService: unknown names and the default category read as 'default'. */
 function normalizeCategoryName(name: string | null, categories: MediaCategory[]): string {
@@ -239,7 +240,7 @@ export class MockAmuleService {
 		const start = Date.now();
 		let results = await this.getSearchResults();
 		while (Date.now() - start < timeoutMs && this.world.getSearchProgress() < 1 && results.list.length < resultsThreshold) {
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await sleep(500);
 			results = await this.getSearchResults();
 		}
 		return results;

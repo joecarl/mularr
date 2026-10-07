@@ -13,7 +13,7 @@ import type { DownloadStatus } from '../services/TelegramDownloadManager';
 import type { Chat, IndexingProgress, JoinQueueRow, MessageRow } from '../services/db/TelegramIndexerDB';
 import type { IndexingCycleStatus, TelegramChatsResponse } from '../services/TelegramIndexerService';
 import { parseJoinLink, type JoinQueueStatus } from '../services/TelegramJoinManager';
-import { buildEd2kLink } from '../services/eD2kTools';
+import { buildEd2kLink } from '../tools/eD2kTools';
 import { MockRandom } from './MockRandom';
 import * as F from './fixtures';
 

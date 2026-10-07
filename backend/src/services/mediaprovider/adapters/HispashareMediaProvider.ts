@@ -1,5 +1,5 @@
 import { container } from '../../container/ServiceContainer';
-import { parseEd2kLink } from '../../eD2kTools';
+import { parseEd2kLink } from '../../../tools/eD2kTools';
 import { HispashareApiClient, HispashareRateLimitError, hispashareTitleUrl, type HispashareTitle } from '../../hispashare/HispashareApiClient';
 import { HispashareService } from '../../hispashare/HispashareService';
 import type { IMediaProvider, MediaSearchResult, MediaTransfer, ProviderSearch, SearchCriteria } from '../types';
