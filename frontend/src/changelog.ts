@@ -30,6 +30,7 @@ export interface ChangelogVersion {
 export const CHANGELOG: ChangelogVersion[] = [
 	{
 		version: '1.0.0',
+		date: '2026-10-07',
 		entries: [
 			{
 				id: 1,
