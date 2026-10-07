@@ -44,7 +44,7 @@ const Net = component<NetworkProps>(({ systemInfo }) => {
 				nodes: {
 					infoIcon: { inner: () => i.get().icon },
 					infoLabel: { inner: () => i.get().label },
-					infoValue: { inner: () => i.get().value },
+					infoValue: { inner: () => i.get().value, title: () => i.get().value },
 				},
 			});
 		},

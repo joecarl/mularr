@@ -61,7 +61,7 @@ export const Sidebar = component<SidebarProps>((props) => {
 		navLinks: { inner: links },
 		connectionContainer: ConnectionContainer(),
 		networkContainer: NetworkContainer(),
-		statsContainer: StatsContainer(),
+		statsBox: StatsContainer(),
 		appVersion: {
 			inner: `${changelogService.isUnstable ? '⚠️ ' : ''}v${changelogService.appVersion}`,
 			classes: { 'sidebar-version-unstable': changelogService.isUnstable },

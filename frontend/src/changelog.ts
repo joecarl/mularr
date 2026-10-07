@@ -90,6 +90,16 @@ export const CHANGELOG: ChangelogVersion[] = [
 				type: 'fix',
 				text: 'A search from the Search view no longer gets its results replaced by the Sonarr/Radarr wanted sync or by an automatic search running at the same time (seen as unrelated Hispashare results showing up under your query). aMule runs one search at a time, so searches now queue: a new one waits for the previous one to settle (up to 15 s), and the tab shows while it is waiting.',
 			},
+			{
+				id: 19,
+				type: 'feature',
+				text: 'The Storage & Status panel of the sidebar shows the free space of the disk holding the downloads (the volume mounted at the incoming and temp directories when running in Docker), refreshed every minute.',
+			},
+			{
+				id: 20,
+				type: 'improvement',
+				text: 'The download speed in the bottom bar now includes the Telegram transfers, like the Total Download on the dashboard. The Storage & Status panel of the sidebar shows the main aMule figures only, with a "Show more" button for the rest.',
+			},
 		],
 	},
 ];

@@ -184,6 +184,9 @@
 				}
 
 				.network-item-right {
+					min-width: 0;
+					flex: 1;
+
 					.network-item-label {
 						font-size: 8px;
 						font-weight: bold;
@@ -196,8 +199,10 @@
 						font-size: 10px;
 						font-weight: bold;
 						color: var(--sidebar-text-value);
-						word-break: break-all;
 						line-height: 1.2;
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
 					}
 				}
 			}
@@ -332,6 +337,82 @@
 			flex-direction: column;
 			gap: 2px;
 
+			.disks-container {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				margin-bottom: 6px;
+			}
+
+			.disk-item {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+				font-size: 10px;
+				color: var(--sidebar-text-dim);
+
+				/* Roles on the left, used share on the right; when the roles get long ("Incoming + Temp + Categories")
+				   only the roles text wraps onto more lines, the share keeps its place */
+				.disk-item-header {
+					display: flex;
+					justify-content: space-between;
+					align-items: flex-start;
+					gap: 6px;
+
+					.disk-item-roles {
+						flex: 1;
+						min-width: 0;
+						font-size: 8px;
+						font-weight: bold;
+						color: var(--sidebar-text-label);
+						text-transform: uppercase;
+						line-height: 12px;
+					}
+
+					.disk-item-pct {
+						flex-shrink: 0;
+						font-weight: bold;
+						color: var(--sidebar-text-value);
+						white-space: nowrap;
+					}
+				}
+
+				.disk-bar {
+					height: 5px;
+					border-radius: 3px;
+					background: var(--sidebar-border-light);
+					overflow: hidden;
+
+					.disk-bar-fill {
+						height: 100%;
+						border-radius: 3px;
+						background: #4caf50;
+						transition: width 0.4s ease;
+
+						&.disk-bar-warn {
+							background: #ff9800;
+						}
+						&.disk-bar-crit {
+							background: #f44336;
+						}
+					}
+				}
+
+				.disk-item-footer {
+					display: flex;
+					gap: 3px;
+					white-space: nowrap;
+
+					.disk-item-free {
+						font-weight: bold;
+						color: var(--sidebar-text-value);
+					}
+					.disk-item-footer-sep {
+						opacity: 0.8;
+					}
+				}
+			}
+
 			.stat-row {
 				display: flex;
 				justify-content: space-between;
@@ -363,6 +444,22 @@
 				border: 0;
 				border-top: 1px solid var(--sidebar-item-active);
 				margin: 5px 0;
+			}
+
+			.stat-toggle-btn {
+				align-self: flex-end;
+				margin-top: 4px;
+				padding: 0;
+				border: none;
+				background: none;
+				font: inherit;
+				font-size: 9px;
+				color: var(--sidebar-text-secondary);
+				cursor: pointer;
+
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}

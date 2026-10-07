@@ -254,6 +254,10 @@ export const AMULE_CONFIG: Record<string, string | boolean> = {
 
 /** Documentation-reserved address and AS number, so the dashboard never shows anyone's real network. */
 export const PUBLIC_IP = '203.0.113.42';
+/** Size of the filesystem holding the mock incoming dir; the used part is derived from the seeded and simulated files (MockWorld.getDiskUsedBytes). */
+export const DISK_TOTAL_BYTES = 4 * 1024 ** 4;
+/** Space taken on that filesystem by things other than the mock files (the rest of the pretend library). */
+export const DISK_OTHER_USED_BYTES = 2.6 * 1024 ** 4;
 export const VPN_FORWARDED_PORT = 45123;
 export const IP_DETAILS = {
 	ip: PUBLIC_IP,

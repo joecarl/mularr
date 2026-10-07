@@ -176,7 +176,8 @@ export class MockWorld {
 	constructor() {
 		this.kadId = this.rng.hex(32).toUpperCase();
 		this.categories = [
-			{ id: 0, name: 'Default', path: '', comment: 'aMule default category', color: 0, priority: 0 },
+			// As aMule reports it once other categories exist: the default category carries the incoming dir as its path
+			{ id: 0, name: 'Default', path: this.incomingDir, comment: 'aMule default category', color: 0, priority: 0 },
 			...F.CATEGORIES.map((c, i) => ({
 				id: i + 1,
 				name: c.name,
@@ -375,6 +376,14 @@ export class MockWorld {
 	getQueue(): readonly MockQueueEntry[] {
 		this.advance();
 		return this.queue;
+	}
+
+	/** Bytes the mock files occupy on the pretend disk: shared files, the downloaded part of the queue and a fixed remainder (see fixtures). */
+	getDiskUsedBytes(): number {
+		this.advance();
+		const shared = this.shared.reduce((sum, f) => sum + f.sizeFull, 0);
+		const downloading = this.queue.reduce((sum, e) => sum + e.done, 0);
+		return Math.round(F.DISK_OTHER_USED_BYTES + shared + downloading);
 	}
 
 	findQueueEntry(hash: string): MockQueueEntry | undefined {

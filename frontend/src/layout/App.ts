@@ -59,7 +59,9 @@ export const App = component<IAppProps>(({ routes }) => {
 			inner: () => {
 				const s = statsService.stats.get();
 				if (!s || typeof s.downloadSpeed !== 'number') return '';
-				const ds = formatSpeed(s.downloadSpeed);
+				const transfers = ws.transfers.get()?.list ?? [];
+				const telegramSpeed = transfers.reduce((sum, t) => (t.provider === 'telegram' ? sum + (t.speed ?? 0) : sum), 0);
+				const ds = formatSpeed(s.downloadSpeed + telegramSpeed);
 				return `${ds.text} ${ds.unit}`;
 			},
 		},

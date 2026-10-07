@@ -85,8 +85,24 @@
 	</div>
 
 	<div class="sidebar-box">
-		<div class="sidebar-box-header">🫀 Status</div>
-		<div class="stats-container sidebar-box-content">
+		<div class="sidebar-box-header">💾 Storage &amp; Status</div>
+		<div class="stats-container sidebar-box-content" data-cb="statsBox">
+			<div class="disks-container" data-cb="disksContainer">
+				<div data-cb="diskItem" class="disk-item sidebar-box-info-card">
+					<div class="disk-item-header">
+						<span data-cb="diskRoles" class="disk-item-roles"></span>
+						<span data-cb="diskUsedPct" class="disk-item-pct"></span>
+					</div>
+					<div class="disk-bar">
+						<div data-cb="diskBarFill" class="disk-bar-fill"></div>
+					</div>
+					<div class="disk-item-footer">
+						<span data-cb="diskFree" class="disk-item-free"></span>
+						<span class="disk-item-footer-sep">free of</span>
+						<span data-cb="diskTotal" class="disk-item-total"></span>
+					</div>
+				</div>
+			</div>
 			<div class="sidebar-box-info-card" data-cb="statsContainer">
 				Loading stats...
 				<!-- Plantillas: usar desde TS con tpl.statRow/tpl.statsSep/tpl.statsBr en lugar de crear nodos manualmente -->
@@ -100,6 +116,7 @@
 				<hr data-cb="statsSep" />
 				<br data-cb="statsBr" />
 			</div>
+			<button data-cb="statsToggle" class="stat-toggle-btn"></button>
 		</div>
 	</div>
 

@@ -37,7 +37,7 @@ const WS_CLOSE_UNAUTHORIZED = 4401;
  *   amule:log          – snapshot of recent lines on client connect
  *   amule:log-append   – new lines pushed as amuled writes them (file watcher)
  *   amule:servers      – AmuleService.getServers()         every 10 s
- *   system:info        – SystemService.getSystemInfo()     every 5 min
+ *   system:info        – SystemService.getSystemInfo()     every 60 s (VPN, public IP, disk space)
  *   stats:speed-history – full history on client connect
  *   stats:speed-sample  – new sample from SpeedHistoryService on each tick
  */
@@ -99,8 +99,8 @@ export class WsBroadcastService {
 		// Server list at 10 s
 		this.intervals.push(setInterval(() => this.pollServers(), 10_000));
 
-		// System / VPN info at 5 min
-		this.intervals.push(setInterval(() => this.pollSystemInfo(), 300_000));
+		// System info at 60 s: the disk space moves with the downloads; the public IP lookups inside are cached (see SystemService)
+		this.intervals.push(setInterval(() => this.pollSystemInfo(), 60_000));
 
 		// Notify clients of restart state changes
 		this.intervals.push(setInterval(() => this.pollRestartingStatus(), 1000));

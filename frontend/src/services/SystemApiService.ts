@@ -1,4 +1,8 @@
 import { BaseApiService } from './BaseApiService';
+import type { DiskDir, DiskRole, DiskSpace } from './apiTypes';
+
+// Wire contract owned by the backend (see apiTypes.ts)
+export type { DiskDir, DiskRole, DiskSpace };
 
 export interface SystemInfo {
 	vpn: {
@@ -16,6 +20,8 @@ export interface SystemInfo {
 		org?: string;
 		timezone?: string;
 	};
+	/** Filesystems behind the incoming and temp directories; empty when neither could be read. */
+	disks: DiskSpace[];
 }
 
 export class SystemApiService extends BaseApiService {
