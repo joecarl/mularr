@@ -3,7 +3,7 @@ import { container } from '../services/container/ServiceContainer';
 import { eD2kLinkToFakeMagnet, hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaSearchService, MediaSearchResult } from '../services/mediaprovider';
 import { MainDB, type Extension, type IndexerFeedMediaType, type IndexerFeedRecord } from '../services/db/MainDB';
-import { expandApostrophes, filterByEpisode } from '../tools/releaseNameTools';
+import { expandApostrophes, filterByEpisode, hoistMovieYear } from '../tools/releaseNameTools';
 import { toImdbId, type ArrApp } from '../services/arrsync/ArrApiClient';
 import { arrSearchProvidersFor, isArrExtensionType, parseArrConfig } from '../services/arrsync/ArrSyncService';
 import { parseEd2kLink } from '../tools/eD2kTools';
@@ -114,7 +114,7 @@ export class IndexerController {
 				this.logger.debug(
 					`No providers to search with (q "${queryStr}", IMDb id ${imdbId ?? 'none'}, selected: ${selected ? selected.join(', ') || 'none' : 'all'}); returning empty valid RSS`
 				);
-				return this.renderRss(res, [], cat as string);
+				return this.renderRss(res, [], cat as string, t);
 			}
 
 			// tvsearch: search by title alone, then filter names locally by
@@ -138,7 +138,7 @@ export class IndexerController {
 					`Returning ${list.length} results (offset: ${start}, limit: ${size}) for ${queryStr ? `query "${queryStr}"` : `IMDb id ${imdbId}`}`
 				);
 
-				return this.renderRss(res, list, cat as string);
+				return this.renderRss(res, list, cat as string, t);
 			} catch (e: any) {
 				this.logger.error('Indexer Search Error:', e);
 				return res.status(500).send(e.message);
@@ -155,11 +155,11 @@ export class IndexerController {
 		if (total > 0) {
 			const items = this.db.getIndexerFeed({ mediaType }, start, size).map((r) => feedRecordToRssItem(r));
 			this.logger.info(`RSS sync (${t}): returning ${items.length} feed item(s) (offset: ${start}, limit: ${size}, total: ${total})`);
-			return this.renderRss(res, items, cat, total);
+			return this.renderRss(res, items, cat, t, total);
 		}
 
 		this.logger.debug('No search terms provided (q/imdbid/artist/album) and the feed is empty — returning one fake item for compatibility');
-		return this.renderRss(res, EMPTY_FEED_PLACEHOLDER, cat);
+		return this.renderRss(res, EMPTY_FEED_PLACEHOLDER, cat, t);
 	}
 
 	/**
@@ -246,8 +246,23 @@ export class IndexerController {
 		res.send(caps);
 	}
 
-	/** `total` is the size of the whole result set when `results` is one page of it (feed paging). */
-	private renderRss(res: Response, results: RssItem[], requestedCat?: string, total: number = results.length) {
+	/**
+	 * The name the *arr should read for a release. Only a Radarr movie request (`t=movie`) gets its year moved
+	 * in front of whatever the uploader put between it and the title (hoistMovieYear): that is the shape
+	 * Radarr's movie parser reads. Sonarr matches a series by its season/episode marker, and moving the year
+	 * out of "Perdidos (Lost) (2004) 1x01.mkv" (to "Perdidos (2004) (Lost) 1x01.mkv") leaves it with a name it
+	 * no longer reads, and a plain search is read by all three apps at once. Everything else is published as is.
+	 */
+	private publishTitle(item: RssItem, t?: string): string {
+		if (t !== 'movie' || item.type === 'series') return item.name;
+		return hoistMovieYear(item.name);
+	}
+
+	/**
+	 * `t` is the Torznab action of the request, which tells publishTitle whose parser will read the names;
+	 * `total` is the size of the whole result set when `results` is one page of it (feed paging).
+	 */
+	private renderRss(res: Response, results: RssItem[], requestedCat?: string, t?: string, total: number = results.length) {
 		res.header('Content-Type', 'application/xml');
 
 		const category = requestedCat || '2000';
@@ -255,7 +270,11 @@ export class IndexerController {
 
 		let itemsXml = '';
 		for (const item of results) {
-			const title = this.escapeXml(item.name);
+			// Radarr's movie parser keeps everything before the first year as the movie title, so a file name
+			// that carries the director next to the year ("(Nick.Cassavetes,2009)") is matched to no movie at
+			// all and the release is rejected as Unknown Movie. The year is moved in front of it, see
+			// publishTitle; a name Radarr already reads right comes back untouched.
+			const title = this.escapeXml(this.publishTitle(item, t));
 			const hash = item.hash;
 			// Any ed2k link (aMule's own results, Hispashare's) travels whole so aMule can add it without a prior search
 			const link = item.link && parseEd2kLink(item.link) ? eD2kLinkToFakeMagnet(item.link) : hashToFakeMagnet(hash);
