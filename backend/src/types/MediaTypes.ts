@@ -127,6 +127,14 @@ export interface MediaSearchResult {
 	/** IMDb id of the title the release belongs to, when the provider knows it. */
 	imdbId?: string;
 	/**
+	 * Year the provider's catalogue gives the work this file belongs to ("La decisión de Anne" -> 2009), when
+	 * it reports one. Never read from the file name: it is the year the *arr are told when their name carries
+	 * none (see withMovieYear), which is what lets them match the release at all.
+	 */
+	year?: number;
+	/** Title of the work as the provider catalogued it, for a file name that does not say which movie it is. */
+	title?: string;
+	/**
 	 * Everything the provider knew about the release beyond the fields above, in the provider's own shape
 	 * (e.g. the Hispashare title and release). Opaque to the UI; kept with the download's search_result snapshot.
 	 */

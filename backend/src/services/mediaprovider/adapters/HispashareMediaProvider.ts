@@ -112,6 +112,10 @@ export function hispashareSearchResults(titles: HispashareTitle[]): MediaSearchR
 	const byHash = new Map<string, MediaSearchResult>();
 	for (const title of titles) {
 		const webUrl = hispashareTitleUrl(title.id);
+		// What the catalogue says about the work itself, beyond what the uploader typed in the file name: the
+		// *arr are told the title and year when their name carries no year (see withMovieYear)
+		const year = title.production_year > 0 ? title.production_year : undefined;
+		const catalogueTitle = title.title?.trim() || undefined;
 		// The title without its releases: each result carries its own release, not the siblings
 		const { releases, ...titleData } = title;
 		for (const release of releases ?? []) {
@@ -132,6 +136,8 @@ export function hispashareSearchResults(titles: HispashareTitle[]): MediaSearchR
 					sourceName,
 					webUrl,
 					imdbId: title.imdb_id ?? undefined,
+					year,
+					title: catalogueTitle,
 					providerData: { title: titleData, release },
 				});
 			}

@@ -3,7 +3,7 @@ import { container } from '../services/container/ServiceContainer';
 import { eD2kLinkToFakeMagnet, hashToFakeMagnet } from './qbittorrentMappings';
 import { MediaSearchService, MediaSearchResult } from '../services/mediaprovider';
 import { MainDB, type Extension, type IndexerFeedMediaType, type IndexerFeedRecord } from '../services/db/MainDB';
-import { expandApostrophes, filterByEpisode, hoistMovieYear } from '../tools/releaseNameTools';
+import { expandApostrophes, filterByEpisode, hoistMovieYear, withMovieYear } from '../tools/releaseNameTools';
 import { toImdbId, type ArrApp } from '../services/arrsync/ArrApiClient';
 import { arrSearchProvidersFor, isArrExtensionType, parseArrConfig } from '../services/arrsync/ArrSyncService';
 import { parseEd2kLink } from '../tools/eD2kTools';
@@ -12,7 +12,28 @@ import { LoggerFactory } from '../services/logging/Logger';
 /** What renderRss needs from a release. pubDate defaults to now (live search results). */
 type RssItem = MediaSearchResult & { pubDate?: Date };
 
+/**
+ * Year, catalogue title and IMDb id of the work a feed row was found for, read back from its search_result
+ * snapshot (see IndexerFeedItem.search_result). The feed columns do not carry the first two, and a row written
+ * before the providers reported them simply has none, which leaves this release name as it was.
+ */
+function knownWork(searchResult: string | null): Pick<RssItem, 'type' | 'year' | 'title' | 'imdbId'> {
+	if (!searchResult) return {};
+	try {
+		const { type, year, title, imdbId } = JSON.parse(searchResult) as Partial<MediaSearchResult>;
+		return {
+			type: typeof type === 'string' ? type : undefined,
+			year: typeof year === 'number' ? year : undefined,
+			title: typeof title === 'string' ? title : undefined,
+			imdbId: typeof imdbId === 'string' ? imdbId : undefined,
+		};
+	} catch {
+		return {};
+	}
+}
+
 function feedRecordToRssItem(r: IndexerFeedRecord): RssItem {
+	const work = knownWork(r.search_result);
 	return {
 		name: r.name,
 		size: r.size,
@@ -21,6 +42,9 @@ function feedRecordToRssItem(r: IndexerFeedRecord): RssItem {
 		sourceCount: r.source_count,
 		provider: r.provider,
 		pubDate: new Date(r.discovered_at),
+		...work,
+		// The id the *arr gave when they asked for the work outranks the one in the snapshot
+		imdbId: r.imdb_id ?? work.imdbId,
 	};
 }
 
@@ -247,15 +271,26 @@ export class IndexerController {
 	}
 
 	/**
-	 * The name the *arr should read for a release. Only a Radarr movie request (`t=movie`) gets its year moved
-	 * in front of whatever the uploader put between it and the title (hoistMovieYear): that is the shape
-	 * Radarr's movie parser reads. Sonarr matches a series by its season/episode marker, and moving the year
-	 * out of "Perdidos (Lost) (2004) 1x01.mkv" (to "Perdidos (2004) (Lost) 1x01.mkv") leaves it with a name it
-	 * no longer reads, and a plain search is read by all three apps at once. Everything else is published as is.
+	 * The name the *arr should read for a release. Only a Radarr movie request (`t=movie`) is read as a movie,
+	 * and it gets its year moved in front of whatever the uploader put between it and the title
+	 * (hoistMovieYear) plus, when the file name carries no year at all, the title and year the catalogue knows
+	 * (withMovieYear). Sonarr matches a series by its season/episode marker, and moving the year out of
+	 * "Perdidos (Lost) (2004) 1x01.mkv" (to "Perdidos (2004) (Lost) 1x01.mkv") leaves it with a name it no
+	 * longer reads; a plain search is read by all three apps at once. Everything else is published as is.
 	 */
 	private publishTitle(item: RssItem, t?: string): string {
 		if (t !== 'movie' || item.type === 'series') return item.name;
-		return hoistMovieYear(item.name);
+		return withMovieYear(hoistMovieYear(item.name), item.year, item.title);
+	}
+
+	/**
+	 * The `imdb` attribute of a release, when its id is known. Torznab carries the digits alone, without the
+	 * "tt" prefix: Radarr parses the number and Sonarr rebuilds the id from it with the prefix ("0133093" ->
+	 * "tt0133093"). Both then match the release to the work they asked for by id, whatever the name says.
+	 */
+	private imdbAttribute(imdbId?: string): string {
+		const digits = (imdbId ?? '').replace(/^tt/i, '');
+		return /^\d+$/.test(digits) ? `<torznab:attr name="imdb" value="${digits}" />` : '';
 	}
 
 	/**
@@ -291,6 +326,7 @@ export class IndexerController {
       <torznab:attr name="seeders" value="${item.sourceCount || 0}" />
       <torznab:attr name="peers" value="${item.sourceCount || 0}" />
       <torznab:attr name="infohash" value="${hash}" />
+      ${this.imdbAttribute(item.imdbId)}
       <torznab:attr name="category" value="${category}" />
       <torznab:attr name="downloadvolumefactor" value="1" />
       <torznab:attr name="uploadvolumefactor" value="1" />
