@@ -1,4 +1,4 @@
-import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FileStatus, SearchType, ServerPriority } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FilePriority, FileStatus, SearchType, ServerPriority } from 'amule-ec-client';
 import type { AmuleCategory, SourceNameCount } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
@@ -810,6 +810,18 @@ export class AmuleService {
 			await this.client.setFileCategory(Buffer.from(hashHex, 'hex'), categoryId);
 		} catch (e) {
 			this.logger.error('Set File Category Error:', e);
+			throw e;
+		}
+	}
+
+	/**
+	 * Set a download's priority by its hash (hex string).
+	 */
+	async setFilePriority(hashHex: string, priority: FilePriority) {
+		try {
+			await this.client.setFilePriority(Buffer.from(hashHex, 'hex'), priority);
+		} catch (e) {
+			this.logger.error('EC Client Set File Priority Error:', e);
 			throw e;
 		}
 	}

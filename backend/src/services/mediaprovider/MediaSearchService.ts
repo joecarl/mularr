@@ -1,11 +1,22 @@
 import { randomUUID } from 'crypto';
+import { FilePriority } from 'amule-ec-client';
+import { __APP_CONFIG__, type HispashareDownloadPriority } from '../../app-env';
 import { container } from '../container/ServiceContainer';
 import { MainDB, blacklistEntryMatches } from '../db/MainDB';
 import { AppEvents } from '../AppEvents';
+import { AmuleService } from '../AmuleService';
 import { MediaProviderService } from './MediaProviderService';
+import { HISPASHARE_PROVIDER_ID } from './adapters/HispashareMediaProvider';
 import type { IMediaProvider, MediaSearchResult, MediaSearchResponse, MediaSearchStatusResponse, ProviderSearch, SearchCriteria } from './types';
 import { LoggerFactory } from '../logging/Logger';
 import { sleep } from '../../tools/asyncTools';
+
+const HISPASHARE_FILE_PRIORITIES: Record<HispashareDownloadPriority, FilePriority> = {
+	low: FilePriority.LOW,
+	normal: FilePriority.NORMAL,
+	high: FilePriority.HIGH,
+	very_high: FilePriority.VERY_HIGH,
+};
 
 /**
  * Polling parameters of searchAndCollect. Gather until the result set stops growing, not just until EC
@@ -64,7 +75,21 @@ export class MediaSearchService {
 		try {
 			const result = await this.findResultByHash(hash);
 			const json = result ? JSON.stringify(result) : (this.db.getIndexerFeedItem(hash)?.search_result ?? null);
-			if (json) this.db.setDownloadSearchResult(hash, json);
+			if (json) {
+				this.db.setDownloadSearchResult(hash, json);
+				// Hispashare releases are plain eD2k files, so the download itself says 'amule'; the origin is
+				// only in this snapshot. Give those catalogue releases the configured priority in aMule.
+				const provider = result?.provider ?? (JSON.parse(json) as MediaSearchResult | null)?.provider;
+				const priority = __APP_CONFIG__.hispashare.downloadPriority;
+				if (provider === HISPASHARE_PROVIDER_ID && priority !== null) {
+					try {
+						await container.get(AmuleService).setFilePriority(hash, HISPASHARE_FILE_PRIORITIES[priority]);
+						this.logger.info(`Set ${priority} download priority for Hispashare release ${hash}`);
+					} catch (e: any) {
+						this.logger.warn(`Could not set the download priority of Hispashare release ${hash}:`, e?.message ?? e);
+					}
+				}
+			}
 		} catch (e: any) {
 			this.logger.warn(`Could not record the search result of download ${hash}:`, e?.message ?? e);
 		}
