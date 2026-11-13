@@ -6,6 +6,7 @@ import { MainDB, type Extension, type IndexerFeedMediaType, type IndexerFeedReco
 import { expandApostrophes, filterByEpisode, hoistMovieYear } from '../tools/releaseNameTools';
 import { toImdbId, type ArrApp } from '../services/arrsync/ArrApiClient';
 import { arrSearchProvidersFor, isArrExtensionType, parseArrConfig } from '../services/arrsync/ArrSyncService';
+import { ArrIdResolver } from '../services/arrsync/ArrIdResolver';
 import { parseEd2kLink } from '../tools/eD2kTools';
 import { LoggerFactory } from '../services/logging/Logger';
 
@@ -57,6 +58,7 @@ const EMPTY_FEED_PLACEHOLDER: MediaSearchResult[] = [
 export class IndexerController {
 	private readonly logger = LoggerFactory.create(this);
 	private readonly searchService = container.get(MediaSearchService);
+	private readonly arrIdResolver = container.get(ArrIdResolver);
 	private readonly db = container.get(MainDB);
 
 	handle = async (req: Request, res: Response) => {
@@ -99,12 +101,26 @@ export class IndexerController {
 			// Releases often drop apostrophes (e.g. "Widow's Bay" -> "Widows Bay").
 			// Done here so every search type benefits.
 			let queryStr = expandApostrophes((q as string) || '');
-			const imdbId = toImdbId(imdbid);
+			let imdbId = toImdbId(imdbid);
 
 			// Lidarr sends a literal empty `q=` alongside artist/album —
 			// fall back to the structured params whenever q is blank.
 			if (t === 'music' && !queryStr.trim()) {
 				queryStr = expandApostrophes(musicQuery);
+			}
+
+			// The *arr search by the original title their database holds, which the Spanish catalogue does not
+			// index. When the request brought no id, ask the calling app for the IMDb id and give it to the
+			// id-searching providers; the text query keeps reaching the others unchanged.
+			if (!imdbId && queryStr.trim() && this.searchService.imdbIdSearchProviderIds().length > 0) {
+				const app = this.appFromRequest(t, cat);
+				if (app) {
+					const resolvedId = await this.arrIdResolver.resolve(app, queryStr);
+					if (resolvedId) {
+						imdbId = resolvedId;
+						this.logger.info(`Resolved query "${queryStr}" to ${resolvedId} for the id-searching providers`);
+					}
+				}
 			}
 
 			// What the request can search with, narrowed to what the calling app selected
@@ -174,6 +190,30 @@ export class IndexerController {
 		const extension = Number.isInteger(id) ? this.db.getExtensionById(id) : undefined;
 		if (!extension || !isArrExtensionType(extension.type)) return { error: `No Sonarr/Radarr extension with id ${raw}` };
 		return { extension };
+	}
+
+	/**
+	 * The app that sent a request, from its action and, for a plain search, its categories.
+	 *
+	 * t=movie is Radarr and t=tvsearch Sonarr. Radarr 6.4.4 never sends t=movie: its automatic searches
+	 * arrive as t=search&q=<title>&cat=2000&extended=1. For t=search (or any other action) the action names
+	 * no app, so the category is the only clue: 2xxx are the movie categories (Radarr, 2000-2999) and 5xxx
+	 * the TV ones (Sonarr, 5000-5999, including the 5030/5040 subcategories). cat may be missing, one value
+	 * or a comma-separated list, so the first category in either family decides.
+	 */
+	private appFromRequest(t: unknown, cat: unknown): ArrApp | null {
+		if (t === 'movie') return 'radarr';
+		if (t === 'tvsearch') return 'sonarr';
+		const values = Array.isArray(cat) ? cat : [cat];
+		for (const value of values) {
+			if (typeof value !== 'string') continue;
+			for (const raw of value.split(',')) {
+				const category = raw.trim();
+				if (category.startsWith('2')) return 'radarr';
+				if (category.startsWith('5')) return 'sonarr';
+			}
+		}
+		return null;
 	}
 
 	/**
