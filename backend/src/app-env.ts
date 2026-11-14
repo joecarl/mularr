@@ -18,6 +18,9 @@ export const __APP_MANIFEST__ = JSON.parse(readFileSync(path.join(__dirname, '..
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+export const HISPASHARE_DOWNLOAD_PRIORITIES = ['low', 'normal', 'high', 'very_high', 'off'] as const;
+export type HispashareDownloadPriority = Exclude<(typeof HISPASHARE_DOWNLOAD_PRIORITIES)[number], 'off'>;
+
 export interface AppConfig {
 	/**
 	 * Serve generated data instead of talking to aMule, Gluetun, Telegram or the public IP lookups (see
@@ -93,6 +96,20 @@ export interface AppConfig {
 			password: string;
 		};
 	};
+	hispashare: {
+		/**
+		 * aMule download priority given to releases grabbed from Hispashare, so the Spanish eD2k catalogue
+		 * releases the user wants first are fetched first. One of low, normal, high (default) or very_high;
+		 * null leaves the priority aMule chose untouched.
+		 */
+		downloadPriority: HispashareDownloadPriority | null;
+		/**
+		 * Keep Hispashare downloads sharing after completion: the seed limits Sonarr/Radarr set on them are
+		 * stored as -1 (no limit of that kind), so the *arr never remove the download, and its file, once it
+		 * is imported. Enabled by default.
+		 */
+		keepSharing: boolean;
+	};
 }
 
 /** Raw value, or undefined when the variable is unset or empty. */
@@ -134,9 +151,10 @@ function envEnum<T extends string>(name: string, allowed: readonly T[], fallback
 	return value as T;
 }
 
-/** True only for "true" (case-insensitive), the convention documented in docker-compose.example.yml. */
-function envBool(name: string): boolean {
-	return envString(name)?.toLowerCase() === 'true';
+/** True only for "true" (case-insensitive), the convention documented in docker-compose.example.yml; `fallback` when unset. */
+function envBool(name: string, fallback = false): boolean {
+	const raw = envString(name);
+	return raw === undefined ? fallback : raw.toLowerCase() === 'true';
 }
 
 /** Semicolon-separated absolute paths; non-absolute entries are dropped with a warning. Undefined when the variable is unset. */
@@ -175,6 +193,7 @@ function loadConfig(): AppConfig {
 		: legacyDatabasePath
 			? path.dirname(legacyDatabasePath)
 			: (envString('DATA_DIR') ?? path.join(__dirname, '../../dev-data'));
+	const hispashareDownloadPriority = envEnum('HISPASHARE_DOWNLOAD_PRIORITY', HISPASHARE_DOWNLOAD_PRIORITIES, 'high');
 	return {
 		mockMode,
 		port: envInt('PORT', 8940),
@@ -210,6 +229,10 @@ function loadConfig(): AppConfig {
 				port: envInt('AMULE_EC_CLIENT_PORT', 4712),
 				password: envString('AMULE_EC_CLIENT_PASSWORD') ?? 'secret',
 			},
+		},
+		hispashare: {
+			downloadPriority: hispashareDownloadPriority === 'off' ? null : hispashareDownloadPriority,
+			keepSharing: envBool('HISPASHARE_KEEP_SHARING', true),
 		},
 	};
 }

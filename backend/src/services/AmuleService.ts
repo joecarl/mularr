@@ -1,4 +1,4 @@
-import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FileStatus, SearchType, ServerPriority } from 'amule-ec-client';
+import { AmuleClient, AmuleFile, AmuleTransferringFile, AmuleUpDownClient, FilePriority, FileStatus, SearchType, ServerPriority } from 'amule-ec-client';
 import type { AmuleCategory, SourceNameCount } from 'amule-ec-client';
 import { exec } from 'child_process';
 import util from 'util';
@@ -66,6 +66,10 @@ interface Download {
 	addedOn?: string | null;
 	completedOn?: string | null;
 	uploadedTotal?: number;
+	/** aMule still lists the finished file as shared, so it keeps uploading it. */
+	seeding?: boolean;
+	/** Uploaded bytes over size, rounded to 3 decimals. */
+	ratio?: number;
 	chunkInfo?: ChunkInfo;
 	sources?: TransferSource[];
 	sourceNames?: TransferSourceNameCount[];
@@ -380,6 +384,8 @@ export class AmuleService {
 					// aMule keeps sharing the finished file; its all-time upload count is what the qBittorrent
 					// API reports as the seed ratio to Sonarr/Radarr. Absent once the file left the shared list.
 					const sharedFile = findByHash(await getSharedFiles(), dbRecord.hash);
+					const uploadedTotal = sharedFile?.getAllXferred ?? 0;
+					const ratio = sizeFull > 0 ? Math.round((uploadedTotal / sizeFull) * 1000) / 1000 : 0;
 
 					return {
 						rawLine: `> ${dbRecord.name} [${mbSize} MB] Completed 100%`,
@@ -399,7 +405,9 @@ export class AmuleService {
 						remaining: 0,
 						addedOn: dbRecord.added_at,
 						completedOn: dbRecord.completed_at ?? null,
-						uploadedTotal: sharedFile?.getAllXferred ?? 0,
+						uploadedTotal: uploadedTotal,
+						seeding: !!sharedFile,
+						ratio: ratio,
 						timeLeft: 0,
 						categoryName: normalizeCategoryName(dbRecord.category_name, categories),
 						isCompleted: true,
@@ -810,6 +818,18 @@ export class AmuleService {
 			await this.client.setFileCategory(Buffer.from(hashHex, 'hex'), categoryId);
 		} catch (e) {
 			this.logger.error('Set File Category Error:', e);
+			throw e;
+		}
+	}
+
+	/**
+	 * Set a download's priority by its hash (hex string).
+	 */
+	async setFilePriority(hashHex: string, priority: FilePriority) {
+		try {
+			await this.client.setFilePriority(Buffer.from(hashHex, 'hex'), priority);
+		} catch (e) {
+			this.logger.error('EC Client Set File Priority Error:', e);
 			throw e;
 		}
 	}

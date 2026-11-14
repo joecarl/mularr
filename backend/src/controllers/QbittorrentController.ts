@@ -6,6 +6,7 @@ import { ExtensionsService } from '../services/ExtensionsService';
 import { AmuledService } from '../services/AmuledService';
 import { AuthService } from '../services/AuthService';
 import { hashToBtih, extractFileRefFromMagnet, clientHashMatchesMularrHash, seedStats, parseShareLimit } from './qbittorrentMappings';
+import { applyHispashareSeedPolicy } from '../services/mediaprovider/hispashareSeedPolicy';
 import { LoggerFactory } from '../services/logging/Logger';
 import { __APP_CONFIG__ } from '../app-env';
 
@@ -377,12 +378,18 @@ export class QbittorrentController {
 			for (const hash of (hashes as string).split('|')) {
 				if (!hash) continue;
 				const match = transfers.list.find((t) => clientHashMatchesMularrHash(t.hash, hash));
-				const found = this.mediaProviderService.setSeedLimits(match?.hash ?? hash, ratio, minutes);
+				const targetHash = match?.hash ?? hash;
+				// Hispashare downloads never get a limit: the *arr keep reading what they sent, but the stored
+				// -1/-1 means "no limit of that kind", so they never remove the download, and its file.
+				const keepSharing = applyHispashareSeedPolicy(targetHash);
+				const found = this.mediaProviderService.setSeedLimits(targetHash, keepSharing ? -1 : ratio, keepSharing ? -1 : minutes);
 				if (!found) {
 					this.logger.warn(`Share limits requested for an unknown download: ${hash}`);
 					return res.status(404).send('Torrent hash was not found');
 				}
-				this.logger.info(`Seed limits for ${match?.hash ?? hash}: ratio ${ratio ?? 'none'}, time ${minutes === null ? 'none' : `${minutes} min`}`);
+				this.logger.info(
+					`Seed limits for ${targetHash}: ratio ${keepSharing ? 'none (Hispashare keeps sharing)' : (ratio ?? 'none')}, time ${keepSharing ? 'none (Hispashare keeps sharing)' : minutes === null ? 'none' : `${minutes} min`}`
+				);
 			}
 			res.send('Ok.');
 		} catch (e: any) {

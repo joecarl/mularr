@@ -37,6 +37,8 @@ export function seedStats(t: MediaTransfer, defaults: SeedLimits, now = Date.now
 	// ratio, so a ratio limit would keep the download forever; only the time limit applies to it.
 	const defaultRatio = defaults.ratioLimit > 0 ? defaults.ratioLimit : null;
 	const defaultTime = defaults.timeLimitMinutes > 0 ? defaults.timeLimitMinutes : null;
+	// A stored -1 is the explicit no-limit sentinel used for Hispashare downloads: the *arr interpret -1 as
+	// "no limit of that kind" and never remove them (see hispashareSeedPolicy).
 	const ratioLimit = t.uploadedTotal !== undefined ? (t.seedRatioLimit ?? defaultRatio) : null;
 	const timeLimit = t.seedTimeLimit ?? defaultTime;
 	const hasLimit = ratioLimit !== null || timeLimit !== null;
