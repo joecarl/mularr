@@ -103,6 +103,12 @@ export interface AppConfig {
 		 * null leaves the priority aMule chose untouched.
 		 */
 		downloadPriority: HispashareDownloadPriority | null;
+		/**
+		 * Keep Hispashare downloads sharing after completion: the seed limits Sonarr/Radarr set on them are
+		 * stored as -1 (no limit of that kind), so the *arr never remove the download, and its file, once it
+		 * is imported. Enabled by default.
+		 */
+		keepSharing: boolean;
 	};
 }
 
@@ -145,9 +151,10 @@ function envEnum<T extends string>(name: string, allowed: readonly T[], fallback
 	return value as T;
 }
 
-/** True only for "true" (case-insensitive), the convention documented in docker-compose.example.yml. */
-function envBool(name: string): boolean {
-	return envString(name)?.toLowerCase() === 'true';
+/** True only for "true" (case-insensitive), the convention documented in docker-compose.example.yml; `fallback` when unset. */
+function envBool(name: string, fallback = false): boolean {
+	const raw = envString(name);
+	return raw === undefined ? fallback : raw.toLowerCase() === 'true';
 }
 
 /** Semicolon-separated absolute paths; non-absolute entries are dropped with a warning. Undefined when the variable is unset. */
@@ -225,6 +232,7 @@ function loadConfig(): AppConfig {
 		},
 		hispashare: {
 			downloadPriority: hispashareDownloadPriority === 'off' ? null : hispashareDownloadPriority,
+			keepSharing: envBool('HISPASHARE_KEEP_SHARING', true),
 		},
 	};
 }

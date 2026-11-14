@@ -7,6 +7,7 @@ import { AppEvents } from '../AppEvents';
 import { AmuleService } from '../AmuleService';
 import { MediaProviderService } from './MediaProviderService';
 import { HISPASHARE_PROVIDER_ID } from './adapters/HispashareMediaProvider';
+import { applyHispashareSeedPolicy } from './hispashareSeedPolicy';
 import type { IMediaProvider, MediaSearchResult, MediaSearchResponse, MediaSearchStatusResponse, ProviderSearch, SearchCriteria } from './types';
 import { LoggerFactory } from '../logging/Logger';
 import { sleep } from '../../tools/asyncTools';
@@ -77,6 +78,7 @@ export class MediaSearchService {
 			const json = result ? JSON.stringify(result) : (this.db.getIndexerFeedItem(hash)?.search_result ?? null);
 			if (json) {
 				this.db.setDownloadSearchResult(hash, json);
+				applyHispashareSeedPolicy(hash);
 				// Hispashare releases are plain eD2k files, so the download itself says 'amule'; the origin is
 				// only in this snapshot. Give those catalogue releases the configured priority in aMule.
 				const provider = result?.provider ?? (JSON.parse(json) as MediaSearchResult | null)?.provider;
