@@ -111,7 +111,7 @@ export function authenticateRequest(req: IncomingMessage): AuthOutcome {
 	return { authorized: false, clearSid };
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+function handleAuth(req: Request, res: Response, next: NextFunction, reject: (res: Response) => void): void {
 	const outcome = authenticateRequest(req);
 	const authService = container.get(AuthService);
 
@@ -130,5 +130,19 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 		`Unauthorized request to ${req.method} ${req.path} from ${req.socket.remoteAddress} (credentials presented: ${describePresentedCredentials(req)})`
 	);
 
-	res.status(401).json({ error: 'Unauthorized' });
+	reject(res);
+}
+
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+	handleAuth(req, res, next, (r) => r.status(401).json({ error: 'Unauthorized' }));
+}
+
+/**
+ * Same checks as `authMiddleware`, but rejects like qBittorrent does: `403 Forbidden`.
+ * Sonarr/Radarr only drop their cached SID and log in again when the qBittorrent API
+ * answers 403; on a 401 they keep retrying with the stale cookie forever. That happens
+ * whenever a credentials-based session expires (7 days) or the JWT secret changes.
+ */
+export function qbittorrentAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+	handleAuth(req, res, next, (r) => r.status(403).send('Forbidden'));
 }
