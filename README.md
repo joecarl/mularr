@@ -122,6 +122,8 @@ Unlike eD2k, Telegram and Hispashare do report new releases, and Mularr can add 
 
 [Hispashare](https://www.hispashare.org/) catalogues eD2k releases by title, with IMDb ids. In **Extensions**, add a **Hispashare** extension with the personal token from [hispashare.org/token](https://www.hispashare.org/token/). Its releases then show up in searches next to aMule's, linked to their Hispashare page, and are downloaded by aMule like any other eD2k file. The Sonarr/Radarr sync looks titles up by IMDb id on Hispashare when it knows it, and so do their automatic searches: with Hispashare enabled the indexer accepts IMDb ids and answers them from the Hispashare catalogue.
 
+Hispashare releases are given a high download priority in aMule by default, because they are the Spanish eD2k catalogue the user wants first; set `HISPASHARE_DOWNLOAD_PRIORITY=off` to disable it.
+
 The API allows 250 requests per hour per token. Mularr caches identical searches for 15 minutes and stops background searches when fewer than 30 requests are left, keeping them for the ones you run yourself.
 
 ## Tech Stack

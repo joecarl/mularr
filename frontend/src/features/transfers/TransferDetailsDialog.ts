@@ -78,9 +78,11 @@ const SourceNameRows = componentList<NonNullable<MediaTransfer['sourceNames']>[n
 );
 
 export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ transfer: t, onClose }) => {
-	const statusText = computed(() =>
-		t.get().isCompleted ? 'Completed' : t.get().stopped ? 'Stopped' : statusMap[t.get().statusId ?? -1] || t.get().status || 'Unknown'
-	);
+	const statusText = computed(() => {
+		const tfer = t.get();
+		if (tfer.isCompleted) return tfer.seeding ? `Seeding · ratio ${tfer.ratio ?? 0}` : 'Completed';
+		return tfer.stopped ? 'Stopped' : statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
+	});
 	const addedOnText = computed(() => {
 		const addedOn = t.get().addedOn;
 		return addedOn ? new Date(addedOn).toLocaleString() : '-';
@@ -114,6 +116,8 @@ export const TransferDetailsDialog = component<TransferDetailsDialogProps>(({ tr
 		valStatus: { inner: statusText },
 		valSize: { inner: () => fbytes(t.get().size) },
 		valCompleted: { inner: () => fbytes(t.get().completed) },
+		valShared: { inner: () => (t.get().uploadedTotal !== undefined ? fbytes(t.get().uploadedTotal) : '-') },
+		valRatio: { inner: () => (t.get().ratio !== undefined ? String(t.get().ratio) : '-') },
 		valSpeed: { inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : '-') },
 		valRemaining: { inner: () => formatRemaining(t.get().remaining, t.get().speed) },
 		valSources: { inner: () => formatSourcesSummary(t.get()) },

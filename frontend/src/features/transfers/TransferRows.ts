@@ -21,6 +21,15 @@ import './TransfersView.css';
 
 export const DEFAULT_VALUE = 'default';
 
+function statusText(t: MediaTransfer): string {
+	if (t.isCompleted) {
+		if (t.seeding) return `Seeding · ratio ${t.ratio ?? 0}`;
+		return 'Completed';
+	}
+	if (t.stopped) return 'Stopped';
+	return statusMap[t.statusId ?? -1] || t.status || 'Unknown';
+}
+
 const numberToColor = (num: number) => {
 	const r = num & 0xff;
 	const g = (num >> 8) & 0xff;
@@ -205,12 +214,7 @@ export const TransfersRows = componentList<MediaTransfer, TransferListProps>(
 								},
 								mobSize: { inner: () => fbytes(t.get().size) },
 								mobStatus: {
-									inner: () => {
-										const tfer = t.get();
-										if (tfer.isCompleted) return 'Completed';
-										if (tfer.stopped) return 'Stopped';
-										return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
-									},
+									inner: () => statusText(t.get()),
 								},
 								mobSpeed: {
 									inner: () => ((t.get().speed ?? 0) > 0 ? fbytes(t.get().speed) + '/s' : ''),
@@ -246,12 +250,7 @@ export const TransfersRows = componentList<MediaTransfer, TransferListProps>(
 				sourcesCol: { inner: () => formatSourcesSummary(t.get()) },
 				priorityCol: { inner: () => String(t.get().priority || 0) },
 				statusCol: {
-					inner: () => {
-						const tfer = t.get();
-						if (tfer.isCompleted) return 'Completed';
-						if (tfer.stopped) return 'Stopped';
-						return statusMap[tfer.statusId ?? -1] || tfer.status || 'Unknown';
-					},
+					inner: () => statusText(t.get()),
 				},
 				remainingCol: { inner: () => formatRemaining(t.get().remaining, t.get().speed) },
 				addedOnCol: { inner: addedOn },

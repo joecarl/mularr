@@ -63,6 +63,10 @@ export interface MediaTransfer {
 	completedOn?: string | null;
 	/** Bytes uploaded to other peers over the file's lifetime (aMule's all-time stats), when the provider shares it. */
 	uploadedTotal?: number;
+	/** True while the provider still shares the finished file (aMule lists it in its shared files). */
+	seeding?: boolean;
+	/** Uploaded bytes over size, rounded to 3 decimals; 0 when the size is unknown. */
+	ratio?: number;
 	/** Seed ratio (uploadedTotal/size) after which Sonarr/Radarr may remove the download; set by them per download. Null: no ratio limit. */
 	seedRatioLimit?: number | null;
 	/** Minutes of sharing after completion after which they may remove it. Null: no time limit. */
