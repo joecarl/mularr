@@ -189,3 +189,24 @@ export function hoistMovieYear(name: string): string {
 	// "( George Scribner)" -> "(George Scribner)", in either separator style
 	return published.replace(/([([])[._\s]+/g, '$1');
 }
+
+/**
+ * hoistMovieYear for the file names that carry no year at all: Radarr has nothing to anchor the match on and
+ * the release is rejected as Unknown Movie, whatever the title looks like:
+ *
+ *   La.decision.de.Anne.(Spanish.English).HDrip.XviD-AC3.by.Triki.(proteinicos.es).avi
+ *   before: no year to find          after: "La decision de Anne (2009) ..."  title and year 2009
+ *
+ * The title and the year come from the provider's catalogue, never from the name, and go in front of it:
+ * Radarr reads the catalogue title as the movie and the year next to it. Nothing has to be lined up with the
+ * uploader's name, because the *arr are also told the IMDb id of the work when the provider knows it (see
+ * IndexerController.renderRss) and match the release by id before they look at the name at all.
+ *
+ * Names that already carry a year are returned untouched: hoistMovieYear owns those, and a year the uploader
+ * typed beats the one on the catalogue page (a remake, a re-release). So are episode names, which the *arr
+ * match by their season/episode marker and never by a year (see EPISODE_RE).
+ */
+export function withMovieYear(name: string, year?: number, title?: string): string {
+	if (!year || year <= 0 || !title || MOVIE_YEAR_RE.test(name) || EPISODE_RE.test(name)) return name;
+	return `${title} (${year}) ${name}`;
+}
