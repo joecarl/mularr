@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { QbittorrentController } from '../controllers/QbittorrentController';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { qbittorrentAuthMiddleware } from '../middleware/authMiddleware';
 
 export const qbittorrentRoutes = () => {
 	const router = Router();
@@ -13,8 +13,9 @@ export const qbittorrentRoutes = () => {
 	router.get('/app/version', controller.getVersion);
 	router.get('/app/webapiVersion', controller.getWebApiVersion);
 
-	// Everything below requires auth
-	router.use(authMiddleware);
+	// Everything below requires auth. Rejections are 403, as in qBittorrent, so Sonarr/Radarr
+	// log in again when their session expires instead of failing until restarted.
+	router.use(qbittorrentAuthMiddleware);
 
 	// App — preferences expose the save/temp paths on disk, so they stay behind auth
 	router.get('/app/preferences', controller.getPreferences);
