@@ -61,6 +61,11 @@ services:
             - SEED_RATIO_LIMIT=0
             - SEED_TIME_LIMIT_MINUTES=0
 
+            # Download priority aMule gives to releases grabbed from Hispashare: low | normal | high | very_high | off.
+            # Hispashare releases are the Spanish eD2k catalogue the user wants first, so they default to high.
+            # Set it to off to leave the priority aMule chose untouched.
+            - HISPASHARE_DOWNLOAD_PRIORITY=high
+
             # Auth (if no auth env vars are set, the web interface and API will be open without authentication, so make sure to set these if you are exposing the web interface or API to untrusted networks)
             - AUTH_USERNAME= # example: admin. Used to login to the mularr web interface and the qbitorrent api
             - AUTH_PASSWORD= # example: admin. Used to login to the mularr web interface and the qbitorrent api

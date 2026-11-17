@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { ECSearchFileDownloadStatus, FileStatus } from 'amule-ec-client';
-import type { ServerPriority, UpdateResponse } from 'amule-ec-client';
+import type { FilePriority, ServerPriority, UpdateResponse } from 'amule-ec-client';
 import { container } from '../services/container/ServiceContainer';
 import { MainDB, type DownloadDbRecord } from '../services/db/MainDB';
 import { AppEvents, toDownloadEventPayload } from '../services/AppEvents';
@@ -313,6 +313,10 @@ export class MockAmuleService {
 
 	async stopDownload(hash: string): Promise<void> {
 		this.world.stopEntry(hash);
+	}
+
+	async setFilePriority(hashHex: string, priority: FilePriority): Promise<void> {
+		this.logger.debug(`Priority of ${hashHex} set to ${priority}`);
 	}
 
 	async getUpdate(): Promise<UpdateResponse> {
