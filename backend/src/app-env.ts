@@ -18,6 +18,9 @@ export const __APP_MANIFEST__ = JSON.parse(readFileSync(path.join(__dirname, '..
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+export const HISPASHARE_DOWNLOAD_PRIORITIES = ['low', 'normal', 'high', 'very_high', 'off'] as const;
+export type HispashareDownloadPriority = Exclude<(typeof HISPASHARE_DOWNLOAD_PRIORITIES)[number], 'off'>;
+
 export interface AppConfig {
 	/**
 	 * Serve generated data instead of talking to aMule, Gluetun, Telegram or the public IP lookups (see
@@ -92,6 +95,14 @@ export interface AppConfig {
 			port: number;
 			password: string;
 		};
+	};
+	hispashare: {
+		/**
+		 * aMule download priority given to releases grabbed from Hispashare, so the Spanish eD2k catalogue
+		 * releases the user wants first are fetched first. One of low, normal, high (default) or very_high;
+		 * null leaves the priority aMule chose untouched.
+		 */
+		downloadPriority: HispashareDownloadPriority | null;
 	};
 }
 
@@ -175,6 +186,7 @@ function loadConfig(): AppConfig {
 		: legacyDatabasePath
 			? path.dirname(legacyDatabasePath)
 			: (envString('DATA_DIR') ?? path.join(__dirname, '../../dev-data'));
+	const hispashareDownloadPriority = envEnum('HISPASHARE_DOWNLOAD_PRIORITY', HISPASHARE_DOWNLOAD_PRIORITIES, 'high');
 	return {
 		mockMode,
 		port: envInt('PORT', 8940),
@@ -210,6 +222,9 @@ function loadConfig(): AppConfig {
 				port: envInt('AMULE_EC_CLIENT_PORT', 4712),
 				password: envString('AMULE_EC_CLIENT_PASSWORD') ?? 'secret',
 			},
+		},
+		hispashare: {
+			downloadPriority: hispashareDownloadPriority === 'off' ? null : hispashareDownloadPriority,
 		},
 	};
 }

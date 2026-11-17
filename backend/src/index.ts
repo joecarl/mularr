@@ -16,6 +16,7 @@ import { SystemService } from './services/SystemService';
 import { MularrMonitoringService } from './services/MularrMonitoringService';
 import { MediaProviderService, MediaSearchService } from './services/mediaprovider';
 import { ArrSyncService } from './services/arrsync/ArrSyncService';
+import { ArrIdResolver } from './services/arrsync/ArrIdResolver';
 import { ProviderFeedService } from './services/indexerfeed/ProviderFeedService';
 import { HispashareService } from './services/hispashare/HispashareService';
 import { ExtensionsService } from './services/ExtensionsService';
@@ -138,6 +139,9 @@ async function main() {
 	const arrSyncService = new ArrSyncService();
 	container.register(ArrSyncService, arrSyncService);
 	if (!mockMode) arrSyncService.start();
+
+	// Resolves text searches to IMDb ids through the calling *arr, for the providers that search by id
+	container.register(ArrIdResolver, new ArrIdResolver());
 
 	// Initialize provider feeds (the providers' own new releases into the Torznab RSS: Hispashare polled on a
 	// timer, Telegram pushed by its indexer). The poller reaches the internet, so it is not started in mock mode.

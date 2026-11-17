@@ -7,7 +7,7 @@
 		"dev": "tsx watch src/index.ts"
 	},
 	"dependencies": {
-		"amule-ec-client": "^0.7.4",
+		"amule-ec-client": "github:Kioraga/amule-ec-client#d96f7cb",
 		"axios": "^1.6.2",
 		"better-sqlite3": "^13.0.0",
 		"cors": "^2.8.5",
