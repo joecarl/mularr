@@ -118,6 +118,34 @@ The extension also chooses which search providers that app uses, for the sync an
 
 Unlike eD2k, Telegram and Hispashare do report new releases, and Mularr can add them to the same feed: enable it in the **Hispashare** extension settings or with the **Indexer feed** toggle in the Telegram view. The **Indexer Feed** view shows the state of the feed.
 
+### Seeding, hardlinks and moving
+
+Mularr does not move or link anything itself: it is the download client, and Sonarr/Radarr decide how to import a finished download. With **Remove Completed** on (their default), their rule is:
+
+- **The download cannot be removed yet** (a seed limit is still pending) → they **copy** the file into the library. With **Use Hardlinks** enabled in the download client settings, that copy is a **hardlink**: the same data on disk, no extra space, and aMule keeps sharing the file.
+- **The download can be removed** (a seed limit is reached) → they **move** the file and delete the download. A move never creates a hardlink, so **Use Hardlinks has no effect** on this path.
+
+Mularr reports the real upload ratio of each finished download and the seed limits are on by default (`SEED_RATIO_LIMIT=1`, `SEED_TIME_LIMIT_MINUTES=4320`), so downloads keep being shared until one of them is reached and are copied — and hardlinked, if enabled — on import. Setting **both to 0** restores the old behaviour: the file is moved into the library as soon as it is imported, the download is deleted and no hardlink is ever created. Nothing is left in the incoming directory afterwards, so aMule stops sharing those files: the download is not duplicated in the library, it is simply no longer seeded.
+
+A hardlink also depends on the filesystem, so it only works when:
+
+1. **Same volume**: the incoming directory and the library are on the same filesystem *as those paths are seen inside the Sonarr/Radarr container*. Two bind mounts of the same disk are fine; two different disks, or a Docker volume plus a bind mount, are not.
+2. **Same path**: Mularr reports the incoming directory it sees (`AMULE_INCOMING_DIR`). If Sonarr/Radarr see it under a different path, map it with **Remote Path Mappings** or mount it at the same path in both containers.
+3. **The filesystem supports it**: ext4, btrfs, xfs and zfs do; CIFS/SMB, exFAT and some NFS mounts do not.
+4. **Permissions allow it**: the Sonarr/Radarr user needs write permission on the library directory. With a different UID/GID, `UMASK=002` keeps the downloads group-writable.
+
+To check it from inside the Sonarr/Radarr container:
+
+```bash
+# same %d means same volume, so a hardlink is possible
+stat -c '%d  %n' "/downloads/incoming/file.mkv" "/movies/Movie (2020)/file.mkv"
+
+# the real test: "Invalid cross-device link" means it is impossible
+ln "/downloads/incoming/file.mkv" "/movies/_hardlink-test.mkv"
+```
+
+Their logs say `Attempting to hardlink ...` at **debug** level, and `Hardlinking from ... to ... failed, fallback to copy.` at **warn** level when it is attempted and the filesystem refuses.
+
 ## Hispashare provider
 
 [Hispashare](https://www.hispashare.org/) catalogues eD2k releases by title, with IMDb ids. In **Extensions**, add a **Hispashare** extension with the personal token from [hispashare.org/token](https://www.hispashare.org/token/). Its releases then show up in searches next to aMule's, linked to their Hispashare page, and are downloaded by aMule like any other eD2k file. The Sonarr/Radarr sync looks titles up by IMDb id on Hispashare when it knows it, and so do their automatic searches: with Hispashare enabled the indexer accepts IMDb ids and answers them from the Hispashare catalogue.

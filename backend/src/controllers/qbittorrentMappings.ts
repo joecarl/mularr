@@ -24,8 +24,9 @@ export function parseShareLimit(raw: unknown): number | null {
  * or `seeding_time >= seeding_time_limit` (minutes) when seeding_time_limit >= 0; -1 means no limit of
  * that kind. The limits are the ones they set themselves on the download (see MediaTransfer.seedRatioLimit,
  * from the Seed Ratio / Seed Time fields of their indexer), each falling back to the configured one
- * (qBittorrent's -2, "use the global limit"). Without any, the ratio limit is 0, which the ratio always
- * satisfies, so the download is removable right after import.
+ * (qBittorrent's -2, "use the global limit"), which is non-zero by default so a finished download is normally
+ * not removable and they copy it instead of moving it. Without any (both configured limits at 0), the ratio
+ * limit is 0, which the ratio always satisfies, so the download is removable right after import.
  */
 export function seedStats(t: MediaTransfer, defaults: SeedLimits, now = Date.now()) {
 	const size = t.size || 0;

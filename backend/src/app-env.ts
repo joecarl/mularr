@@ -18,6 +18,15 @@ export const __APP_MANIFEST__ = JSON.parse(readFileSync(path.join(__dirname, '..
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+/**
+ * Defaults of SEED_RATIO_LIMIT and SEED_TIME_LIMIT_MINUTES: a finished download keeps being shared until it has
+ * uploaded as much as it downloaded, or for three days, whichever comes first. Non-zero on purpose: while the
+ * download is not removable, Sonarr/Radarr copy the file into their library instead of moving it, and that copy is
+ * what their "Use Hardlinks" option turns into a hardlink to the file aMule keeps sharing.
+ */
+export const DEFAULT_SEED_RATIO_LIMIT = 1;
+export const DEFAULT_SEED_TIME_LIMIT_MINUTES = 3 * 24 * 60;
+
 export interface AppConfig {
 	/**
 	 * Serve generated data instead of talking to aMule, Gluetun, Telegram or the public IP lookups (see
@@ -54,15 +63,18 @@ export interface AppConfig {
 	};
 	/**
 	 * Seed limits: how long a finished download keeps being shared before a client of the qBittorrent API
-	 * (Sonarr/Radarr) may remove it, as a torrent client stops seeding. Both 0: removable right after import,
-	 * so they move the file and drop the download at once. Otherwise they copy the file on import and remove
-	 * the download, and its file, once either limit is reached. A client can override them per download
-	 * (torrents/setShareLimits).
+	 * (Sonarr/Radarr) may remove it, as a torrent client stops seeding. With a limit (the defaults) the download
+	 * is not removable when it is imported, so they copy the file into their library instead of moving it, and with
+	 * their "Use Hardlinks" option that copy is a hardlink to the file aMule keeps sharing: no extra space, and the
+	 * download is removed, with its file, once either limit is reached. Both 0 disables them: the download is
+	 * removable right after import, so they move the file and drop the download at once, a hardlink is never
+	 * created (they only hardlink what they copy) and aMule stops sharing it, since the file no longer sits in
+	 * the incoming directory. A client can override them per download (torrents/setShareLimits).
 	 */
 	seeding: {
-		/** Uploaded/size ratio (aMule's all-time upload stats); 0 disables. */
+		/** Uploaded/size ratio (aMule's all-time upload stats); 0 disables. Default: DEFAULT_SEED_RATIO_LIMIT. */
 		ratioLimit: number;
-		/** Minutes since completion; 0 disables. */
+		/** Minutes since completion; 0 disables. Default: DEFAULT_SEED_TIME_LIMIT_MINUTES (3 days). */
 		timeLimitMinutes: number;
 	};
 	gluetun: {
@@ -190,8 +202,8 @@ function loadConfig(): AppConfig {
 		},
 		telegramBot: telegramBotToken ? { token: telegramBotToken, chatId: envString('TELEGRAM_CHAT_ID'), topicId: envInt('TELEGRAM_TOPIC_ID') } : undefined,
 		seeding: {
-			ratioLimit: envNumber('SEED_RATIO_LIMIT', 0),
-			timeLimitMinutes: envInt('SEED_TIME_LIMIT_MINUTES', 0),
+			ratioLimit: envNumber('SEED_RATIO_LIMIT', DEFAULT_SEED_RATIO_LIMIT),
+			timeLimitMinutes: envInt('SEED_TIME_LIMIT_MINUTES', DEFAULT_SEED_TIME_LIMIT_MINUTES),
 		},
 		gluetun: {
 			enabled: envBool('GLUETUN_ENABLED'),

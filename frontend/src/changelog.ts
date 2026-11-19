@@ -29,6 +29,16 @@ export interface ChangelogVersion {
 
 export const CHANGELOG: ChangelogVersion[] = [
 	{
+		version: '1.0.1',
+		entries: [
+			{
+				id: 21,
+				type: 'improvement',
+				text: 'Seed limits are on by default (a ratio of 1 or 3 days, whichever comes first), so finished downloads keep being shared and Sonarr/Radarr copy them into their library instead of moving them: with the Use Hardlinks option of the download client, the library gets a hardlink to the file aMule keeps sharing, with no extra space. Setting both SEED_RATIO_LIMIT and SEED_TIME_LIMIT_MINUTES back to 0 restores the old behaviour, where the file is moved on import and a hardlink is never used.',
+			},
+		],
+	},
+	{
 		version: '1.0.0',
 		date: '2026-10-07',
 		entries: [
