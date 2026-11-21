@@ -60,6 +60,15 @@ const { port, dataDir, databasePath: dbPath, mockMode } = __APP_CONFIG__;
 if (mockMode) {
 	logger.warn(`MOCK_MODE is enabled: serving generated data, nothing connects to aMule, Gluetun or Telegram. Data directory: ${dataDir}`);
 }
+// Sonarr/Radarr only hardlink what they copy, and only copy a download they cannot remove yet: no seed limit means
+// they move it instead and "Use Hardlinks" never applies. Both limits are on by default, so this is deliberate.
+const { ratioLimit, timeLimitMinutes } = __APP_CONFIG__.seeding;
+if (!mockMode && ratioLimit <= 0 && timeLimitMinutes <= 0) {
+	logger.warn(
+		'SEED_RATIO_LIMIT and SEED_TIME_LIMIT_MINUTES are both 0: Sonarr/Radarr will move finished downloads into their library ' +
+			'instead of copying them, so "Use Hardlinks" never applies.'
+	);
+}
 
 app.use(cors());
 app.use(express.json());
