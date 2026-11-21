@@ -54,12 +54,12 @@ services:
             - AMULE_SHAREDDIR_EXPLICIT= # example: /my-storage/manual-share
             - AMULE_RESTART_INTERVAL_HOURS=12 # How often (in hours) the monitoring service automatically restarts the aMule daemon. Set to `0` to disable.
             # Seed limits: how long a finished download keeps being shared before Sonarr/Radarr (using Mularr as a qBittorrent download
-            # client) may remove it. With both at 0 (default) they move the file into the library and delete the download right after
-            # import. Set a ratio (uploaded/size, e.g. 1) and/or a number of minutes since completion (e.g. 4320 for 3 days) to keep
-            # sharing instead: they then copy the file on import and remove the download, and its file, once either limit is reached.
-            # The Seed Ratio / Seed Time of an indexer in Sonarr/Radarr, when set, override these for the downloads grabbed from it.
-            - SEED_RATIO_LIMIT=0
-            - SEED_TIME_LIMIT_MINUTES=0
+            # client) may remove it. While a limit is pending they COPY the file on import instead of moving it, and that copy is what
+            # their "Use Hardlinks" option turns into a hardlink to the file aMule keeps sharing. With both at 0 they move the file into
+            # the library and delete the download right after import, so no hardlink is ever created. Defaults below: 1 (uploaded/size)
+            # or 3 days, whichever comes first. The Seed Ratio / Seed Time of an indexer in Sonarr/Radarr, when set, override these.
+            - SEED_RATIO_LIMIT=1
+            - SEED_TIME_LIMIT_MINUTES=4320
 
             # Auth (if no auth env vars are set, the web interface and API will be open without authentication, so make sure to set these if you are exposing the web interface or API to untrusted networks)
             - AUTH_USERNAME= # example: admin. Used to login to the mularr web interface and the qbitorrent api

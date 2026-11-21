@@ -190,8 +190,8 @@ function loadConfig(): AppConfig {
 		},
 		telegramBot: telegramBotToken ? { token: telegramBotToken, chatId: envString('TELEGRAM_CHAT_ID'), topicId: envInt('TELEGRAM_TOPIC_ID') } : undefined,
 		seeding: {
-			ratioLimit: envNumber('SEED_RATIO_LIMIT', 0),
-			timeLimitMinutes: envInt('SEED_TIME_LIMIT_MINUTES', 0),
+			ratioLimit: envNumber('SEED_RATIO_LIMIT', 1),
+			timeLimitMinutes: envInt('SEED_TIME_LIMIT_MINUTES', 3 * 24 * 60),
 		},
 		gluetun: {
 			enabled: envBool('GLUETUN_ENABLED'),
